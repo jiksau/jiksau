@@ -162,7 +162,7 @@
     <script>
         // Check if the user is logged in
         if (!sessionStorage.getItem('loggedIn')) {
-            window.location.href = 'index.html';  // Redirect to login page if not logged in
+            window.location.href = 'gamelist.html';  // Redirect to login page if not logged in
         }
 
         let discussions = [];
@@ -256,7 +256,7 @@
 
         function logout() {
             sessionStorage.removeItem('loggedIn');
-            window.location.href = 'index.html'; // Redirect to login page
+            window.location.href = 'gamelist.html'; // Redirect to login page
         }
 
         renderDiscussions();
