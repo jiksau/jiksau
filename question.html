@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Question Generator</title>
+  <!-- © Extracourse - All rights reserved -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f9;
+    }
+
+    .container {
+      text-align: center;
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .question {
+      font-size: 24px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #addQuestionForm {
+      margin-top: 20px;
+    }
+
+    #userQuestion {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    #addQuestionBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #addQuestionBtn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Random Question Generator</h1>
+    <div id="question" class="question"></div>
+    <button onclick="generateQuestion()">Generate Random Question</button>
+
+    <div id="addQuestionForm">
+      <input type="text" id="userQuestion" placeholder="Type your own question here...">
+      <button id="addQuestionBtn" onclick="addUserQuestion()">Add Question</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [];
+
+    function generateQuestion() {
+      if (questions.length === 0) {
+        document.getElementById('question').textContent = "No questions available. Please add a question.";
+      } else {
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        const question = questions[randomIndex];
+        document.getElementById('question').textContent = question;
+      }
+    }
+
+    function addUserQuestion() {
+      const userQuestion = document.getElementById('userQuestion').value;
+      if (userQuestion.trim() !== "") {
+        questions.push(userQuestion);
+        document.getElementById('userQuestion').value = ""; // Clear input
+        alert("Your question has been added!");
+      } else {
+        alert("Please type a valid question.");
+      }
+    }
+  </script>
+</body>
+</html>
