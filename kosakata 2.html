@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Memorization Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
+        }
+        .left, .right {
+            width: 45%;
+        }
+        .hidden {
+            background-color: #f0f0f0;
+            color: #f0f0f0;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-row input, .input-row button {
+            padding: 5px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive English Memorization Tool</h1>
+    <div class="input-row">
+        <input type="text" id="wordInput" placeholder="Enter English word" />
+        <input type="text" id="translationInput" placeholder="Type your translation here" />
+        <button onclick="addWord()">Add</button>
+    </div>
+    <div class="container" id="memorizationList">
+        <!-- Rows will be populated by JavaScript -->
+    </div>
+    <script>
+        const container = document.getElementById('memorizationList');
+
+        function renderRow(pair) {
+            const row = document.createElement('div');
+            row.classList.add('row');
+
+            const leftCol = document.createElement('div');
+            leftCol.textContent = pair.left;
+            leftCol.classList.add('left');
+
+            const rightCol = document.createElement('input');
+            rightCol.setAttribute('placeholder', 'Type your answer');
+            rightCol.classList.add('right');
+
+            const submitButton = document.createElement('button');
+            submitButton.textContent = 'Submit';
+            submitButton.onclick = () => {
+                if (rightCol.value.trim().toLowerCase() === pair.right.toLowerCase()) {
+                    alert('Great job! You remembered it correctly!');
+                    rightCol.style.backgroundColor = '#d4edda'; // green background for correct
+                } else {
+                    alert('Try again!');
+                    rightCol.style.backgroundColor = '#f8d7da'; // red background for incorrect
+                }
+            };
+
+            row.appendChild(leftCol);
+            row.appendChild(rightCol);
+            row.appendChild(submitButton);
+            container.appendChild(row);
+        }
+
+        function addWord() {
+            const wordInput = document.getElementById('wordInput').value;
+            const translationInput = document.getElementById('translationInput').value;
+
+            if (wordInput && translationInput) {
+                const newPair = { left: wordInput, right: translationInput };
+                renderRow(newPair);
+
+                document.getElementById('wordInput').value = '';
+                document.getElementById('translationInput').value = '';
+            } else {
+                alert('Please fill in both fields!');
+            }
+        }
+    </script>
+</body>
+</html>
