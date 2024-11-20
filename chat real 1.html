@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat with Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .chat-container {
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-box {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            overflow-y: scroll;
+            border-radius: 5px;
+        }
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .start-chat-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .send-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #008CBA;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getDatabase, ref, set, push, onChildAdded } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkByiPGYxbeOKIY3mmXtjD90O7tEJcdsk",
+            authDomain: "ask-me-questions-25b22.firebaseapp.com",
+            databaseURL: "https://ask-me-questions-25b22-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ask-me-questions-25b22",
+            storageBucket: "ask-me-questions-25b22.firebasestorage.app",
+            messagingSenderId: "1086940684414",
+            appId: "1:1086940684414:web:ba7800fe01f0aa3a60782f",
+            measurementId: "G-JCJC6ZQYNN"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);  // Using the modular SDK to initialize Realtime Database
+
+        // Start chat function
+        window.startChat = function() {
+            const username = document.getElementById("username").value;
+            if (username) {
+                document.getElementById("username-form").style.display = "none";
+                document.getElementById("chat-container").style.display = "block";
+                document.getElementById("chat-box").innerHTML = `<p><strong>${username} has joined the chat</strong></p>`;
+            } else {
+                alert("Please enter a username!");
+            }
+        };
+
+        // Send message function
+        window.sendMessage = function() {
+            const message = document.getElementById("message").value;
+            const username = document.getElementById("username").value;
+
+            if (message.trim() === "") {
+                alert("Message cannot be empty!");
+                return;
+            }
+
+            if (username.trim() === "") {
+                alert("Please enter a username!");
+                return;
+            }
+
+            // Save message to Firebase Realtime Database
+            const newMessageRef = push(ref(database, 'messages'));
+            set(newMessageRef, {
+                username: username,
+                message: message,
+                timestamp: Date.now()
+            }).then(() => {
+                console.log("Message sent successfully!");
+                document.getElementById("message").value = ""; // Clear the message input
+            }).catch((error) => {
+                console.error("Error sending message: ", error);
+            });
+        };
+
+        function loadMessages() {
+            const messagesRef = ref(database, 'messages');
+            onChildAdded(messagesRef, (snapshot) => {
+                const messageData = snapshot.val();
+                const chatBox = document.getElementById("chat-box");
+                const messageElement = document.createElement("p");
+                messageElement.innerHTML = `<strong>${messageData.username}:</strong> ${messageData.message}`;
+                chatBox.appendChild(messageElement);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        window.onload = loadMessages;
+    </script>
+</head>
+<body>
+
+    <!-- Form to enter username -->
+    <div id="username-form">
+        <h2>Enter your username to start chatting</h2>
+        <input type="text" id="username" placeholder="Enter your username" required>
+        <button class="start-chat-btn" id="startChatBtn" onclick="startChat()">Start Chat</button>
+    </div>
+
+    <!-- Chat container -->
+    <div class="chat-container" id="chat-container">
+        <div class="chat-box" id="chat-box">
+            <!-- Chat messages will appear here -->
+        </div>
+        <textarea class="input-box" id="message" placeholder="Type your message..."></textarea>
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+
+</body>
+</html>
