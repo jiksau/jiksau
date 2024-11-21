@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Auth Example</title>
+  <title>Special Extra Course</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -90,7 +90,7 @@
             const user = userCredential.user;
             document.getElementById("status").innerText = `Sign Up Successful! Welcome, ${user.email}`;
             setTimeout(() => {
-              window.location.href = "dashboard.html";
+              window.location.href = "gamelist.html";
             }, 2000);
           })
           .catch((error) => {
@@ -107,7 +107,7 @@
             const user = userCredential.user;
             document.getElementById("status").innerText = `Sign In Successful! Welcome back, ${user.email}`;
             setTimeout(() => {
-              window.location.href = "chat.html";
+              window.location.href = "gamelist.html";
             }, 2000);
           })
           .catch((error) => {
