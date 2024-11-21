@@ -1,86 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - DiscussionHub</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
-        .login-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-        }
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .copyright {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #555;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Auth Example</title>
+  <script type="module">
+    // Import the necessary Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+      authDomain: "extra-course-d02c2.firebaseapp.com",
+      projectId: "extra-course-d02c2",
+      storageBucket: "extra-course-d02c2.firebasestorage.app",
+      messagingSenderId: "40624772967",
+      appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+      measurementId: "G-YNRJKV8T45",
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Sign Up Functionality
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("signup-button").addEventListener("click", () => {
+        const email = document.getElementById("signup-email").value;
+        const password = document.getElementById("signup-password").value;
+
+        createUserWithEmailAndPassword(auth, email, password)
+          .then((userCredential) => {
+            const user = userCredential.user;
+            document.getElementById("status").innerText = `Sign Up Successful! Welcome, ${user.email}`;
+            setTimeout(() => {
+              window.location.href = "dashboard.html";
+            }, 2000);
+          })
+          .catch((error) => {
+            document.getElementById("status").innerText = `Error: ${error.message}`;
+          });
+      });
+
+      // Sign In Functionality
+      document.getElementById("signin-button").addEventListener("click", () => {
+        const email = document.getElementById("signin-email").value;
+        const password = document.getElementById("signin-password").value;
+
+        signInWithEmailAndPassword(auth, email, password)
+          .then((userCredential) => {
+            const user = userCredential.user;
+            document.getElementById("status").innerText = `Sign In Successful! Welcome back, ${user.email}`;
+            setTimeout(() => {
+              window.location.href = "chat.html";
+            }, 2000);
+          })
+          .catch((error) => {
+            document.getElementById("status").innerText = `Error: ${error.message}`;
+          });
+      });
+    });
+  </script>
 </head>
 <body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button onclick="login()">Login</button>
+  <h1>Sign In & Sign Up</h1>
 
-        <div class="copyright">
-            &copy; 2024 ExtraCourse. All rights reserved.
-        </div>
-    </div>
+  <div>
+    <h2>Sign Up</h2>
+    <input type="email" id="signup-email" placeholder="Email" required>
+    <input type="password" id="signup-password" placeholder="Password" required>
+    <button id="signup-button">Sign Up</button>
+  </div>
 
-    <script>
-        function login() {
-            // Login logic (check username and password)
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+  <div>
+    <h2>Sign In</h2>
+    <input type="email" id="signin-email" placeholder="Email" required>
+    <input type="password" id="signin-password" placeholder="Password" required>
+    <button id="signin-button">Sign In</button>
+  </div>
 
-            // Check against the specified username and password
-            if (username === 'Extracourse' && password === 'Temanbelajar') {
-                // If correct, set session and redirect
-                sessionStorage.setItem('loggedIn', true);
-                window.location.href = 'gamelist.html';  // Redirect to the dashboard page
-            } else {
-                alert('Incorrect username or password!');
-            }
-        }
-    </script>
+  <div id="status"></div>
 </body>
 </html>
