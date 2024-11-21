@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Dashboard</title>
   <style>
+    /* Reset and global styles */
     * {
       margin: 0;
       padding: 0;
@@ -13,54 +14,80 @@
 
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f0f8ff;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
       flex-direction: column;
+      min-height: 100vh;
+      text-align: center;
     }
 
     h1 {
+      font-size: 2rem;
       margin-bottom: 20px;
-      color: #333;
+      letter-spacing: 1px;
     }
 
     .dashboard {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px;
+      width: 90%;
+      max-width: 800px;
     }
 
     .game-card {
-      background-color: #ffffff;
+      background: #ffffff;
+      color: #0056b3;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
       text-align: center;
-      width: 200px;
       cursor: pointer;
-      transition: transform 0.3s;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
     }
 
     .game-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-8px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0, 123, 255, 0.3), rgba(0, 86, 179, 0.3));
+      z-index: -1;
+      transition: opacity 0.3s ease-in-out;
+      opacity: 0;
+    }
+
+    .game-card:hover::before {
+      opacity: 1;
     }
 
     .game-title {
-      margin-bottom: 10px;
-      font-size: 18px;
+      font-size: 1.2rem;
       font-weight: bold;
+      margin-bottom: 15px;
     }
 
     .play-button {
-      padding: 10px 20px;
+      padding: 10px 15px;
       background-color: #007bff;
-      color: #ffffff;
+      color: #fff;
       border: none;
-      border-radius: 5px;
+      border-radius: 10px;
+      font-size: 1rem;
       cursor: pointer;
-      font-size: 14px;
+      transition: background 0.3s;
     }
 
     .play-button:hover {
@@ -87,7 +114,17 @@
     </div>
 
     <div class="game-card" onclick="window.location.href='chat real 1.html'">
-      <div class="game-title">Chat realtime</div>
+      <div class="game-title">Chat Realtime</div>
+      <button class="play-button">Play</button>
+    </div>
+
+    <div class="game-card" onclick="window.location.href='puzzle.html'">
+      <div class="game-title">Maintenence</div>
+      <button class="play-button">Play</button>
+    </div>
+
+    <div class="game-card" onclick="window.location.href='quiz.html'">
+      <div class="game-title">Maintenece</div>
       <button class="play-button">Play</button>
     </div>
   </div>
