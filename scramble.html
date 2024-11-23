@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scramble Sentences Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .input-box {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .sentence-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 15px 0;
+        }
+        .sentence-row label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .sentence-row input {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+        .incorrect {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scramble Sentences Game</h1>
+        <div class="input-box">
+            <label for="sentence">Enter your sentence:</label><br>
+            <input type="text" id="sentence" placeholder="Type a sentence here">
+        </div>
+        <button onclick="addSentence()">Add Sentence</button>
+        <button onclick="scrambleAll()">Scramble All</button>
+        <div id="sentenceList"></div>
+        <button onclick="checkAnswers()">Check Answers</button>
+    </div>
+
+    <script>
+        let sentences = [];
+        let scrambledSentences = [];
+
+        function addSentence() {
+            const sentenceInput = document.getElementById("sentence").value.trim();
+            if (sentenceInput === "") {
+                alert("Please enter a sentence!");
+                return;
+            }
+
+            sentences.push(sentenceInput);
+            document.getElementById("sentence").value = ""; // Clear input
+            updateSentenceList();
+        }
+
+        function scrambleSentence(sentence) {
+            const words = sentence.split(" ");
+            for (let i = words.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [words[i], words[j]] = [words[j], words[i]];
+            }
+            return words.join(" ");
+        }
+
+        function scrambleAll() {
+            if (sentences.length === 0) {
+                alert("No sentences to scramble! Add some first.");
+                return;
+            }
+
+            scrambledSentences = sentences.map(scrambleSentence);
+            updateSentenceList();
+        }
+
+        function updateSentenceList() {
+            const listContainer = document.getElementById("sentenceList");
+            listContainer.innerHTML = ""; // Clear the list
+
+            scrambledSentences.forEach((scrambled, index) => {
+                const sentenceRow = document.createElement("div");
+                sentenceRow.className = "sentence-row";
+
+                const scrambledLabel = document.createElement("label");
+                scrambledLabel.textContent = `Scrambled: ${scrambled}`;
+                sentenceRow.appendChild(scrambledLabel);
+
+                const inputBox = document.createElement("input");
+                inputBox.type = "text";
+                inputBox.placeholder = "Rewrite the correct sentence";
+                inputBox.id = `answer-${index}`;
+                sentenceRow.appendChild(inputBox);
+
+                listContainer.appendChild(sentenceRow);
+            });
+        }
+
+        function checkAnswers() {
+            if (scrambledSentences.length === 0) {
+                alert("No scrambled sentences to check!");
+                return;
+            }
+
+            scrambledSentences.forEach((_, index) => {
+                const userAnswer = document.getElementById(`answer-${index}`).value.trim();
+                const correctAnswer = sentences[index];
+
+                const feedback = document.createElement("span");
+                if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                    feedback.textContent = " ✔ Correct!";
+                    feedback.className = "correct";
+                } else {
+                    feedback.textContent = ` ✘ Incorrect! Correct answer: "${correctAnswer}"`;
+                    feedback.className = "incorrect";
+                }
+
+                const inputField = document.getElementById(`answer-${index}`);
+                inputField.parentNode.appendChild(feedback);
+                inputField.disabled = true; // Lock the input after checking
+            });
+        }
+    </script>
+</body>
+</html>
