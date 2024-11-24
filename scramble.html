@@ -18,13 +18,8 @@
             border-radius: 10px;
             background-color: #f9f9f9;
         }
-        .input-box {
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            width: 90%;
-            padding: 10px;
-            margin: 5px 0;
+        .hidden {
+            display: none;
         }
         .sentence-row {
             display: flex;
@@ -32,12 +27,16 @@
             align-items: flex-start;
             margin: 15px 0;
         }
-        .sentence-row label {
-            font-weight: bold;
-            margin-bottom: 5px;
+        input[type="text"], input[type="number"] {
+            width: 90%;
+            padding: 10px;
+            margin: 5px 0;
         }
-        .sentence-row input {
-            margin-bottom: 10px;
+        .timer {
+            font-size: 1.5em;
+            color: #ff0000;
+            font-weight: bold;
+            margin: 20px 0;
         }
         button {
             padding: 10px 20px;
@@ -63,21 +62,33 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="setupArea" class="container">
         <h1>Scramble Sentences Game</h1>
         <div class="input-box">
             <label for="sentence">Enter your sentence:</label><br>
             <input type="text" id="sentence" placeholder="Type a sentence here">
         </div>
+        <div class="input-box">
+            <label for="timeLimit">Set Timer (minutes):</label><br>
+            <input type="number" id="timeLimit" placeholder="Enter minutes (e.g., 2)" min="1" max="60">
+        </div>
         <button onclick="addSentence()">Add Sentence</button>
-        <button onclick="scrambleAll()">Scramble All</button>
+        <button onclick="startChallenge()">Start Challenge</button>
+    </div>
+
+    <div id="challengeArea" class="container hidden">
+        <h1>Unscramble the Sentences!</h1>
+        <div class="timer" id="timer">Time Left: 00:00</div>
         <div id="sentenceList"></div>
         <button onclick="checkAnswers()">Check Answers</button>
+        <button onclick="goBackToSetup()">Back to Home</button>
     </div>
 
     <script>
         let sentences = [];
         let scrambledSentences = [];
+        let timerInterval;
+        let isChallengeActive = false;
 
         function addSentence() {
             const sentenceInput = document.getElementById("sentence").value.trim();
@@ -88,7 +99,7 @@
 
             sentences.push(sentenceInput);
             document.getElementById("sentence").value = ""; // Clear input
-            updateSentenceList();
+            alert(`Added: "${sentenceInput}"`);
         }
 
         function scrambleSentence(sentence) {
@@ -101,13 +112,55 @@
         }
 
         function scrambleAll() {
+            scrambledSentences = sentences.map(scrambleSentence);
+        }
+
+        function startChallenge() {
             if (sentences.length === 0) {
-                alert("No sentences to scramble! Add some first.");
+                alert("Please add some sentences first!");
                 return;
             }
 
-            scrambledSentences = sentences.map(scrambleSentence);
+            if (isChallengeActive) {
+                alert("Challenge already in progress!");
+                return;
+            }
+
+            const timeInput = document.getElementById("timeLimit").value.trim();
+            const timeLimit = parseInt(timeInput, 10);
+
+            if (isNaN(timeLimit) || timeLimit <= 0) {
+                alert("Please enter a valid time in minutes!");
+                return;
+            }
+
+            scrambleAll();
+
+            // Switch to Challenge Area
+            document.getElementById("setupArea").classList.add("hidden");
+            document.getElementById("challengeArea").classList.remove("hidden");
+
+            // Populate sentences
             updateSentenceList();
+
+            // Set timer
+            let timeLeft = timeLimit * 60;
+            const timerDisplay = document.getElementById("timer");
+            isChallengeActive = true;
+
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Time's Up!";
+                    isChallengeActive = false;
+                    checkAnswers();
+                } else {
+                    const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                    const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                    timerDisplay.textContent = `Time Left: ${minutes}:${seconds}`;
+                    timeLeft--;
+                }
+            }, 1000);
         }
 
         function updateSentenceList() {
@@ -133,10 +186,13 @@
         }
 
         function checkAnswers() {
-            if (scrambledSentences.length === 0) {
-                alert("No scrambled sentences to check!");
+            if (!isChallengeActive && scrambledSentences.length === 0) {
+                alert("No challenge to check!");
                 return;
             }
+
+            clearInterval(timerInterval); // Stop the timer
+            isChallengeActive = false;
 
             scrambledSentences.forEach((_, index) => {
                 const userAnswer = document.getElementById(`answer-${index}`).value.trim();
@@ -152,9 +208,18 @@
                 }
 
                 const inputField = document.getElementById(`answer-${index}`);
-                inputField.parentNode.appendChild(feedback);
+                if (!inputField.parentNode.querySelector(".correct") && !inputField.parentNode.querySelector(".incorrect")) {
+                    inputField.parentNode.appendChild(feedback);
+                }
                 inputField.disabled = true; // Lock the input after checking
             });
+
+            alert("Answers checked! Review your results.");
+        }
+
+        function goBackToSetup() {
+            document.getElementById("challengeArea").classList.add("hidden");
+            document.getElementById("setupArea").classList.remove("hidden");
         }
     </script>
 </body>
