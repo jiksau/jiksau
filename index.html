@@ -29,12 +29,30 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       padding: 20px;
     }
-    .container h2 {
-      margin-top: 0;
-      text-align: center;
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      border-bottom: 2px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tabs button {
+      background: transparent;
+      border: none;
+      padding: 10px;
+      font-size: 18px;
+      color: #007BFF;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .tabs button:hover {
+      color: #0056b3;
     }
     .form-group {
+      display: none;
       margin-bottom: 15px;
+    }
+    .form-group.active {
+      display: block;
     }
     .form-group input {
       width: 100%;
@@ -63,9 +81,9 @@
     }
   </style>
   <script type="module">
-    // Firebase configurations remain unchanged
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
@@ -79,40 +97,60 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("signup-button").addEventListener("click", () => {
-        const email = document.getElementById("signup-email").value;
-        const password = document.getElementById("signup-password").value;
+      const signupButton = document.getElementById("signup-button");
+      const signinButton = document.getElementById("signin-button");
+      const signupTab = document.getElementById("signup-tab");
+      const signinTab = document.getElementById("signin-tab");
+      const signupForm = document.getElementById("signup-form");
+      const signinForm = document.getElementById("signin-form");
 
-        createUserWithEmailAndPassword(auth, email, password)
-          .then((userCredential) => {
-            const user = userCredential.user;
-            document.getElementById("status").innerText = `Sign Up Successful! Welcome, ${user.email}`;
-            setTimeout(() => {
-              window.location.href = "gamelist.html";
-            }, 2000);
-          })
-          .catch((error) => {
-            document.getElementById("status").innerText = `Error: ${error.message}`;
-          });
+      signupTab.addEventListener("click", () => {
+        signupForm.classList.add("active");
+        signinForm.classList.remove("active");
+        signupTab.classList.add("active");
+        signinTab.classList.remove("active");
       });
 
-      document.getElementById("signin-button").addEventListener("click", () => {
+      signinTab.addEventListener("click", () => {
+        signinForm.classList.add("active");
+        signupForm.classList.remove("active");
+        signinTab.classList.add("active");
+        signupTab.classList.remove("active");
+      });
+
+      signupButton.addEventListener("click", async () => {
+        const email = document.getElementById("signup-email").value;
+        const password = document.getElementById("signup-password").value;
+        const name = document.getElementById("signup-name").value;
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+          await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student" });
+
+          document.getElementById("status").innerText = `Sign Up Successful! Welcome, ${user.email}`;
+          setTimeout(() => window.location.href = "gamelist.html", 2000);
+        } catch (error) {
+          document.getElementById("status").innerText = `Error: ${error.message}`;
+        }
+      });
+
+      signinButton.addEventListener("click", async () => {
         const email = document.getElementById("signin-email").value;
         const password = document.getElementById("signin-password").value;
 
-        signInWithEmailAndPassword(auth, email, password)
-          .then((userCredential) => {
-            const user = userCredential.user;
-            document.getElementById("status").innerText = `Sign In Successful! Welcome back, ${user.email}`;
-            setTimeout(() => {
-              window.location.href = "gamelist.html";
-            }, 2000);
-          })
-          .catch((error) => {
-            document.getElementById("status").innerText = `Error: ${error.message}`;
-          });
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          document.getElementById("status").innerText = `Sign In Successful! Welcome back, ${user.email}`;
+          setTimeout(() => window.location.href = "gamelist.html", 2000);
+        } catch (error) {
+          document.getElementById("status").innerText = `Error: ${error.message}`;
+        }
       });
     });
   </script>
@@ -120,13 +158,18 @@
 <body>
   <div class="container">
     <h1>Special Extra Course</h1>
-    <div class="form-group">
+    <div class="tabs">
+      <button id="signup-tab" class="active">Sign Up</button>
+      <button id="signin-tab">Sign In</button>
+    </div>
+    <div id="signup-form" class="form-group active">
       <h2>Sign Up</h2>
+      <input type="text" id="signup-name" placeholder="Name" required>
       <input type="email" id="signup-email" placeholder="Email" required>
       <input type="password" id="signup-password" placeholder="Password" required>
       <button id="signup-button">Sign Up</button>
     </div>
-    <div class="form-group">
+    <div id="signin-form" class="form-group">
       <h2>Sign In</h2>
       <input type="email" id="signin-email" placeholder="Email" required>
       <input type="password" id="signin-password" placeholder="Password" required>
