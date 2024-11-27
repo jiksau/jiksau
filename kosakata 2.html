@@ -5,16 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive English Memorization Tool</title>
     <style>
-        /* Reset and global styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* General Styles */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f0f8ff;
+            background: linear-gradient(to bottom, #f0f8ff, #d9e7ff);
             color: #333;
             margin: 0;
             padding: 20px;
@@ -22,162 +16,276 @@
         }
 
         h1 {
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: #0056b3;
             margin-bottom: 20px;
-            letter-spacing: 1px;
         }
 
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Settings Page */
         .input-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
-            max-width: 500px;
-            margin: 0 auto;
         }
 
-        .input-row input, .input-row button {
+        .input-row input, button {
             padding: 10px;
             font-size: 1rem;
             border-radius: 5px;
             border: 1px solid #ccc;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .input-row input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .word-list {
+            margin-top: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .word-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Quiz Page */
+        #timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #dc3545;
+        }
+
+        .progress-bar {
             width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
         }
 
-        .input-row button {
+        .progress {
+            height: 10px;
             background-color: #007bff;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .input-row button:hover {
-            background-color: #0056b3;
+            width: 100%;
+            transition: width 1s linear;
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
+            text-align: left;
         }
 
         .row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #ffffff;
             padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .row:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .left {
-            font-weight: bold;
-            color: #0056b3;
-            flex: 1;
-        }
-
-        .right {
-            flex: 1;
-            padding: 8px;
-            font-size: 1rem;
             border: 1px solid #ddd;
             border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
         }
 
-        .right:focus {
-            border-color: #007bff;
+        .row.correct {
+            background-color: #d4edda;
+            animation: correctAnswer 1s forwards;
         }
 
-        .submit-button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+        .row.incorrect {
+            background-color: #f8d7da;
+            animation: incorrectAnswer 1s forwards;
         }
 
-        .submit-button:hover {
-            background-color: #0056b3;
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
-        /* Responsive styles */
-        @media (max-width: 600px) {
-            .input-row {
-                flex-direction: column;
-                gap: 10px;
-            }
+        @keyframes incorrectAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <h1>Interactive English Memorization Tool</h1>
-    <div class="input-row">
-        <input type="text" id="wordInput" placeholder="Enter English word" />
-        <input type="text" id="translationInput" placeholder="Type your translation here" />
-        <button onclick="addWord()">Add</button>
+    <div id="settingsPage">
+        <h1>Settings</h1>
+        <div class="input-row">
+            <input type="text" id="wordInput" placeholder="English word" />
+            <input type="text" id="translationInput" placeholder="Translation" />
+            <button onclick="addWord()">Add</button>
+        </div>
+        <div class="input-row">
+            <input type="number" id="timerDuration" placeholder="Timer (minutes)" min="1" />
+            <button onclick="startQuiz()">Start Quiz</button>
+        </div>
+        <div class="word-list" id="wordList"></div>
     </div>
-    <div class="container" id="memorizationList">
-        <!-- Rows will be populated by JavaScript -->
+
+    <div id="quizPage" class="hidden">
+        <h1>Quiz</h1>
+        <div id="timer">Time left: <span id="timeLeft">00:00</span></div>
+        <div class="progress-bar">
+            <div id="progress" class="progress"></div>
+        </div>
+        <div class="container" id="quizContainer"></div>
+        <button class="submit-button" onclick="manualSubmit()">Submit</button>
     </div>
 
     <script>
-        const container = document.getElementById('memorizationList');
+        let timerDuration = 0;
+        let timeLeft = 0;
+        let timerInterval;
 
-        function renderRow(pair) {
-            const row = document.createElement('div');
-            row.classList.add('row');
-
-            const leftCol = document.createElement('div');
-            leftCol.textContent = pair.left;
-            leftCol.classList.add('left');
-
-            const rightCol = document.createElement('input');
-            rightCol.setAttribute('placeholder', 'Type your answer');
-            rightCol.classList.add('right');
-
-            const submitButton = document.createElement('button');
-            submitButton.textContent = 'Submit';
-            submitButton.classList.add('submit-button');
-            submitButton.onclick = () => {
-                if (rightCol.value.trim().toLowerCase() === pair.right.toLowerCase()) {
-                    alert('Great job! You remembered it correctly!');
-                    rightCol.style.backgroundColor = '#d4edda'; // green background for correct
-                } else {
-                    alert('Try again!');
-                    rightCol.style.backgroundColor = '#f8d7da'; // red background for incorrect
-                }
-            };
-
-            row.appendChild(leftCol);
-            row.appendChild(rightCol);
-            row.appendChild(submitButton);
-            container.appendChild(row);
+        function switchPage(page) {
+            const pages = ["settingsPage", "quizPage"];
+            pages.forEach(p => {
+                document.getElementById(p).classList.add("hidden");
+            });
+            document.getElementById(page).classList.remove("hidden");
         }
 
         function addWord() {
-            const wordInput = document.getElementById('wordInput').value;
-            const translationInput = document.getElementById('translationInput').value;
+            const wordInput = document.getElementById('wordInput').value.trim();
+            const translationInput = document.getElementById('translationInput').value.trim();
 
             if (wordInput && translationInput) {
-                const newPair = { left: wordInput, right: translationInput };
-                renderRow(newPair);
+                const wordList = document.getElementById('wordList');
+                const div = document.createElement('div');
+                div.classList.add('word-item');
+                div.innerHTML = `<span>${wordInput}</span><span>${translationInput}</span>`;
+                wordList.appendChild(div);
 
                 document.getElementById('wordInput').value = '';
                 document.getElementById('translationInput').value = '';
             } else {
                 alert('Please fill in both fields!');
+            }
+        }
+
+        function startQuiz() {
+            const durationInput = document.getElementById('timerDuration').value;
+            if (!durationInput || durationInput <= 0) {
+                alert('Please set a valid timer duration in minutes!');
+                return;
+            }
+
+            timerDuration = parseInt(durationInput);
+            timeLeft = timerDuration * 60;
+            document.getElementById('timeLeft').textContent = formatTime(timeLeft);
+
+            const progress = document.getElementById('progress');
+            progress.style.width = "100%";
+
+            loadQuiz();
+            startTimer();
+            switchPage("quizPage");
+        }
+
+        function loadQuiz() {
+            const wordList = document.getElementById('wordList').children;
+            const quizContainer = document.getElementById('quizContainer');
+            quizContainer.innerHTML = "";
+
+            for (let word of wordList) {
+                const english = word.children[0].textContent;
+                const translation = word.children[1].textContent;
+
+                const div = document.createElement('div');
+                div.classList.add('row');
+                div.innerHTML = `
+                    <div>${english}</div>
+                    <input type="text" placeholder="Your answer" />
+                `;
+                div.dataset.correctAnswer = translation;
+                quizContainer.appendChild(div);
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timeLeft').textContent = formatTime(timeLeft);
+
+                const progress = document.getElementById('progress');
+                const percentage = (timeLeft / (timerDuration * 60)) * 100;
+                progress.style.width = `${percentage}%`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmit();
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function autoSubmit() {
+            evaluateAnswers();
+            alert('Time is up! Your answers have been submitted.');
+        }
+
+        function manualSubmit() {
+            clearInterval(timerInterval);
+            evaluateAnswers();
+            alert('Your answers have been submitted manually.');
+        }
+
+        function evaluateAnswers() {
+            const rows = document.getElementById('quizContainer').children;
+
+            for (let row of rows) {
+                const input = row.querySelector('input').value.trim().toLowerCase();
+                const correctAnswer = row.dataset.correctAnswer.toLowerCase();
+
+                if (input === correctAnswer) {
+                    row.classList.add('correct');
+                } else {
+                    row.classList.add('incorrect');
+                }
             }
         }
     </script>
