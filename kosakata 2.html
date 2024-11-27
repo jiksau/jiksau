@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive English Memorization Tool</title>
+    <title>Vocabulary Memorization</title>
     <style>
         /* General Styles */
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(45deg, #6cc3d2, #008cba);
-            color: #333;
+            background-color: #222; /* Dark background */
+            color: #fff;
             margin: 0;
             padding: 20px;
             text-align: center;
@@ -18,8 +18,14 @@
         h1 {
             font-size: 2.5rem;
             color: #fff;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: bold;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: #ddd;
+            margin-bottom: 20px;
         }
 
         button {
@@ -28,16 +34,16 @@
             border-radius: 8px;
             font-size: 1.1rem;
             cursor: pointer;
-            background-color: #ff6f61;
+            background-color: #006bb3;
             color: #fff;
             transition: background-color 0.3s, transform 0.3s;
             width: 100%;
-            max-width: 200px;
+            max-width: 250px;
             margin: 15px auto;
         }
 
         button:hover {
-            background-color: #ff5733;
+            background-color: #005f8b;
             transform: translateY(-2px);
         }
 
@@ -60,15 +66,15 @@
 
         input:focus {
             outline: none;
-            border-color: #ff6f61;
-            box-shadow: 0 0 5px rgba(255, 111, 97, 0.5);
+            border-color: #006bb3;
+            box-shadow: 0 0 5px rgba(0, 107, 179, 0.5);
         }
 
         .container {
             max-width: 500px;
             margin: 0 auto;
             text-align: left;
-            background: #fff;
+            background: #333;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -77,22 +83,30 @@
 
         .word-list {
             margin-top: 20px;
+            padding: 0;
         }
 
         .word-item {
             display: flex;
             justify-content: space-between;
-            background-color: #f9f9f9;
+            background-color: #444;
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 10px;
-            color: #555;
+            color: #fff;
             transition: background-color 0.3s ease;
+            flex-wrap: wrap;
         }
 
         .word-item:hover {
-            background-color: #f1f1f1;
+            background-color: #555;
+        }
+
+        .word-item div {
+            flex: 1;
+            text-align: center;
+            padding: 5px;
         }
 
         #timer {
@@ -125,8 +139,44 @@
             margin-bottom: 15px;
         }
 
-        .hidden {
-            display: none;
+        .feedback-message {
+            font-size: 1.4rem;
+            margin: 20px 0;
+            font-weight: bold;
+            transition: opacity 1s ease;
+        }
+
+        .centered-button {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* New Styles for Icons */
+        .correct {
+            color: #28a745;
+        }
+
+        .incorrect {
+            color: #dc3545;
+        }
+
+        .icon {
+            font-size: 1.2rem;
+            margin-left: 10px;
+        }
+
+        /* Centering buttons */
+        .centered-button {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* Retry button */
+        .retry-button {
+            background-color: #ffc107;
+            color: #000;
         }
 
         @media (max-width: 768px) {
@@ -144,7 +194,12 @@
 
             .word-item {
                 flex-direction: column;
-                align-items: center;
+                text-align: center;
+            }
+
+            .word-item div {
+                flex: none;
+                width: 100%;
                 text-align: center;
             }
         }
@@ -159,32 +214,50 @@
                 padding: 10px;
             }
         }
+
+        /* Hide elements initially */
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="settingsPage" class="container">
-        <h1>Settings</h1>
+        <h1>Vocabulary Memorization</h1>
+        <h2>Enter English words and their translations below. Then set the timer and start the quiz!</h2>
+
         <div class="input-row">
             <input type="text" id="wordInput" placeholder="Enter English word" />
             <input type="text" id="translationInput" placeholder="Type translation" />
+        </div>
+        <div class="centered-button">
             <button onclick="addWord()">Add Word</button>
         </div>
         <div class="word-list" id="wordList"></div>
+
         <div class="input-row">
             <label for="timeInput">Set Timer (Minutes):</label>
             <input type="number" id="timeInput" min="1" placeholder="Enter minutes" />
         </div>
-        <button onclick="startQuiz()">Start Quiz</button>
+        <div class="centered-button">
+            <button onclick="startQuiz()">Start Quiz</button>
+        </div>
     </div>
 
     <div id="quizPage" class="container hidden">
-        <h1>Quiz</h1>
+        <h1>Vocabulary Quiz</h1>
         <div id="timer"></div>
         <div class="progress-bar">
             <div id="progress" class="progress"></div>
         </div>
         <div class="container" id="quizContainer"></div>
-        <button onclick="manualSubmit()">Submit Quiz</button>
+        <div class="centered-button">
+            <button onclick="manualSubmit()">Submit Quiz</button>
+        </div>
+        <div id="feedback" class="feedback-message hidden"></div>
+        <div class="centered-button">
+            <button id="retryButton" class="retry-button hidden" onclick="retryQuiz()">Retry Quiz</button>
+        </div>
     </div>
 
     <script>
@@ -195,11 +268,14 @@
         const timer = document.getElementById('timer');
         const progressBar = document.getElementById('progress');
         const timeInput = document.getElementById('timeInput');
+        const feedback = document.getElementById('feedback');
+        const retryButton = document.getElementById('retryButton');
 
         let words = [];
         let countdown;
         let totalTime = 60; // Default time (1 minute)
         let remainingTime = totalTime;
+        let score = 0;
 
         // Add word to list
         function addWord() {
@@ -210,7 +286,7 @@
                 words.push({ word, translation });
                 const item = document.createElement('div');
                 item.className = 'word-item';
-                item.innerHTML = `<strong>${word}</strong>: ${translation}`;
+                item.innerHTML = `<div><strong>${word}</strong></div><div>${translation}</div>`;
                 wordList.appendChild(item);
 
                 document.getElementById('wordInput').value = '';
@@ -218,20 +294,10 @@
             }
         }
 
-        // Switch to quiz page
+        // Switch to quiz page and display words
         function startQuiz() {
-            if (words.length === 0) {
-                alert('Add at least one word before starting the quiz.');
-                return;
-            }
-
-            const customTime = parseInt(timeInput.value);
-            if (!isNaN(customTime) && customTime > 0) {
-                totalTime = customTime * 60; // Convert minutes to seconds
-            } else {
-                totalTime = 60; // Default to 1 minute if no valid input
-            }
-
+            const time = parseInt(timeInput.value);
+            totalTime = time > 0 ? time * 60 : 60; // Convert minutes to seconds or set to default if invalid
             remainingTime = totalTime;
 
             settingsPage.classList.add('hidden');
@@ -240,7 +306,7 @@
             startCountdown();
         }
 
-        // Render quiz inputs
+        // Render quiz input fields
         function renderQuiz() {
             quizContainer.innerHTML = '';
             words.forEach(pair => {
@@ -254,7 +320,7 @@
             });
         }
 
-        // Start countdown for timer
+        // Start countdown timer
         function startCountdown() {
             updateTimer();
             countdown = setInterval(() => {
@@ -273,28 +339,47 @@
             progressBar.style.width = `${(remainingTime / totalTime) * 100}%`;
         }
 
-        // Automatically submit quiz when time is up
+        // Automatically submit answers when time is up
         function autoSubmit() {
             evaluateAnswers();
         }
 
-        // Manually submit quiz
+        // Manually submit answers
         function manualSubmit() {
             clearInterval(countdown);
             evaluateAnswers();
         }
 
-        // Evaluate answers
+        // Evaluate answers and provide feedback
         function evaluateAnswers() {
             const rows = quizContainer.querySelectorAll('.row');
             rows.forEach((row, index) => {
                 const input = row.querySelector('input');
+                const answerDiv = document.createElement('div');
+                answerDiv.classList.add('icon');
+
                 if (input.value.trim().toLowerCase() === words[index].translation.toLowerCase()) {
-                    row.style.backgroundColor = '#d4edda';
+                    answerDiv.innerHTML = '<span class="correct">✔ Correct!</span>';
                 } else {
-                    row.style.backgroundColor = '#f8d7da';
+                    answerDiv.innerHTML = '<span class="incorrect">✘ Incorrect!</span>';
                 }
+
+                row.appendChild(answerDiv);
             });
+
+            feedback.classList.remove('hidden');
+            feedback.textContent = `You got ${score} out of ${words.length} correct!`;
+            retryButton.classList.remove('hidden');
+        }
+
+        // Retry the quiz
+        function retryQuiz() {
+            score = 0;
+            remainingTime = totalTime;
+            renderQuiz();
+            feedback.classList.add('hidden');
+            retryButton.classList.add('hidden');
+            startCountdown();
         }
     </script>
 </body>
