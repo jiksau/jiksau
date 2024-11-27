@@ -8,7 +8,7 @@
         /* General Styles */
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(to bottom, #f0f8ff, #d9e7ff);
+            background: linear-gradient(45deg, #6cc3d2, #008cba);
             color: #333;
             margin: 0;
             padding: 20px;
@@ -16,163 +16,136 @@
         }
 
         h1 {
-            font-size: 2.2rem;
-            color: #0056b3;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 30px;
+            font-weight: bold;
         }
 
         button {
-            padding: 12px 18px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 5px;
-            font-size: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
             cursor: pointer;
+            background-color: #ff6f61;
+            color: #fff;
             transition: background-color 0.3s, transform 0.3s;
+            width: 100%;
+            max-width: 200px;
+            margin: 15px auto;
         }
 
         button:hover {
-            transform: scale(1.05);
+            background-color: #ff5733;
+            transform: translateY(-2px);
+        }
+
+        .input-row {
+            margin-bottom: 15px;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 300px;
+            margin: 5px auto;
+            box-sizing: border-box;
+            display: block;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff6f61;
+            box-shadow: 0 0 5px rgba(255, 111, 97, 0.5);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: left;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .word-list {
+            margin-top: 20px;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: #555;
+            transition: background-color 0.3s ease;
+        }
+
+        .word-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        #timer {
+            font-size: 1.4rem;
+            color: #ff6f61;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #5cb85c;
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .hidden {
             display: none;
         }
 
-        /* Settings Page */
-        .input-row {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .input-row input, button {
-            padding: 10px;
-            font-size: 1rem;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .input-row input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-
-        .word-list {
-            margin-top: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-            text-align: left;
-        }
-
-        .word-item {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .word-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Quiz Page */
-        #timer {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #dc3545;
-        }
-
-        .progress-bar {
-            width: 100%;
-            background-color: #e9ecef;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .progress {
-            height: 10px;
-            background-color: #007bff;
-            width: 100%;
-            transition: width 1s linear;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            text-align: left;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            align-items: center;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            background-color: #f9f9f9;
-        }
-
-        .row input {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .row.correct {
-            background-color: #d4edda;
-            animation: correctAnswer 1s forwards;
-        }
-
-        .row.incorrect {
-            background-color: #f8d7da;
-            animation: incorrectAnswer 1s forwards;
-        }
-
-        @keyframes correctAnswer {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes incorrectAnswer {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.9); }
-            100% { transform: scale(1); }
-        }
-
-        /* Responsive Styles */
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8rem;
             }
 
-            .input-row {
-                flex-direction: column;
+            button {
+                font-size: 1rem;
             }
 
-            button {
-                width: 100%;
+            input {
+                max-width: 100%;
             }
 
             .word-item {
                 flex-direction: column;
+                align-items: center;
                 text-align: center;
-            }
-
-            .row input {
-                width: 100%;
             }
         }
 
@@ -183,160 +156,145 @@
 
             button {
                 font-size: 0.9rem;
-            }
-
-            #timer {
-                font-size: 1rem;
-            }
-
-            .progress-bar {
-                height: 8px;
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="settingsPage">
+    <div id="settingsPage" class="container">
         <h1>Settings</h1>
         <div class="input-row">
-            <input type="text" id="wordInput" placeholder="English word" />
-            <input type="text" id="translationInput" placeholder="Translation" />
-            <button onclick="addWord()">Add</button>
-        </div>
-        <div class="input-row">
-            <input type="number" id="timerDuration" placeholder="Timer (minutes)" min="1" />
-            <button onclick="startQuiz()">Start Quiz</button>
+            <input type="text" id="wordInput" placeholder="Enter English word" />
+            <input type="text" id="translationInput" placeholder="Type translation" />
+            <button onclick="addWord()">Add Word</button>
         </div>
         <div class="word-list" id="wordList"></div>
+        <div class="input-row">
+            <label for="timeInput">Set Timer (Minutes):</label>
+            <input type="number" id="timeInput" min="1" placeholder="Enter minutes" />
+        </div>
+        <button onclick="startQuiz()">Start Quiz</button>
     </div>
 
-    <div id="quizPage" class="hidden">
+    <div id="quizPage" class="container hidden">
         <h1>Quiz</h1>
-        <div id="timer">Time left: <span id="timeLeft">00:00</span></div>
+        <div id="timer"></div>
         <div class="progress-bar">
             <div id="progress" class="progress"></div>
         </div>
         <div class="container" id="quizContainer"></div>
-        <button class="submit-button" onclick="manualSubmit()">Submit</button>
+        <button onclick="manualSubmit()">Submit Quiz</button>
     </div>
 
     <script>
-        let timerDuration = 0;
-        let timeLeft = 0;
-        let timerInterval;
+        const settingsPage = document.getElementById('settingsPage');
+        const quizPage = document.getElementById('quizPage');
+        const wordList = document.getElementById('wordList');
+        const quizContainer = document.getElementById('quizContainer');
+        const timer = document.getElementById('timer');
+        const progressBar = document.getElementById('progress');
+        const timeInput = document.getElementById('timeInput');
 
-        function switchPage(page) {
-            const pages = ["settingsPage", "quizPage"];
-            pages.forEach(p => {
-                document.getElementById(p).classList.add("hidden");
-            });
-            document.getElementById(page).classList.remove("hidden");
-        }
+        let words = [];
+        let countdown;
+        let totalTime = 60; // Default time (1 minute)
+        let remainingTime = totalTime;
 
+        // Add word to list
         function addWord() {
-            const wordInput = document.getElementById('wordInput').value.trim();
-            const translationInput = document.getElementById('translationInput').value.trim();
+            const word = document.getElementById('wordInput').value.trim();
+            const translation = document.getElementById('translationInput').value.trim();
 
-            if (wordInput && translationInput) {
-                const wordList = document.getElementById('wordList');
-                const div = document.createElement('div');
-                div.classList.add('word-item');
-                div.innerHTML = `<span>${wordInput}</span><span>${translationInput}</span>`;
-                wordList.appendChild(div);
+            if (word && translation) {
+                words.push({ word, translation });
+                const item = document.createElement('div');
+                item.className = 'word-item';
+                item.innerHTML = `<strong>${word}</strong>: ${translation}`;
+                wordList.appendChild(item);
 
                 document.getElementById('wordInput').value = '';
                 document.getElementById('translationInput').value = '';
-            } else {
-                alert('Please fill in both fields!');
             }
         }
 
+        // Switch to quiz page
         function startQuiz() {
-            const durationInput = document.getElementById('timerDuration').value;
-            if (!durationInput || durationInput <= 0) {
-                alert('Please set a valid timer duration in minutes!');
+            if (words.length === 0) {
+                alert('Add at least one word before starting the quiz.');
                 return;
             }
 
-            timerDuration = parseInt(durationInput);
-            timeLeft = timerDuration * 60;
-            document.getElementById('timeLeft').textContent = formatTime(timeLeft);
-
-            const progress = document.getElementById('progress');
-            progress.style.width = "100%";
-
-            loadQuiz();
-            startTimer();
-            switchPage("quizPage");
-        }
-
-        function loadQuiz() {
-            const wordList = document.getElementById('wordList').children;
-            const quizContainer = document.getElementById('quizContainer');
-            quizContainer.innerHTML = "";
-
-            for (let word of wordList) {
-                const english = word.children[0].textContent;
-                const translation = word.children[1].textContent;
-
-                const div = document.createElement('div');
-                div.classList.add('row');
-                div.innerHTML = `
-                    <div>${english}</div>
-                    <input type="text" placeholder="Your answer" />
-                `;
-                div.dataset.correctAnswer = translation;
-                quizContainer.appendChild(div);
+            const customTime = parseInt(timeInput.value);
+            if (!isNaN(customTime) && customTime > 0) {
+                totalTime = customTime * 60; // Convert minutes to seconds
+            } else {
+                totalTime = 60; // Default to 1 minute if no valid input
             }
+
+            remainingTime = totalTime;
+
+            settingsPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
+            renderQuiz();
+            startCountdown();
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timeLeft').textContent = formatTime(timeLeft);
+        // Render quiz inputs
+        function renderQuiz() {
+            quizContainer.innerHTML = '';
+            words.forEach(pair => {
+                const row = document.createElement('div');
+                row.className = 'row';
+                row.innerHTML = `
+                    <div>${pair.word}</div>
+                    <input type="text" placeholder="Type your answer" />
+                `;
+                quizContainer.appendChild(row);
+            });
+        }
 
-                const progress = document.getElementById('progress');
-                const percentage = (timeLeft / (timerDuration * 60)) * 100;
-                progress.style.width = `${percentage}%`;
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
+        // Start countdown for timer
+        function startCountdown() {
+            updateTimer();
+            countdown = setInterval(() => {
+                remainingTime--;
+                updateTimer();
+                if (remainingTime <= 0) {
+                    clearInterval(countdown);
                     autoSubmit();
                 }
             }, 1000);
         }
 
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        // Update timer and progress bar
+        function updateTimer() {
+            timer.textContent = `Time Remaining: ${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s`;
+            progressBar.style.width = `${(remainingTime / totalTime) * 100}%`;
         }
 
+        // Automatically submit quiz when time is up
         function autoSubmit() {
             evaluateAnswers();
-            alert('Time is up! Your answers have been submitted.');
         }
 
+        // Manually submit quiz
         function manualSubmit() {
-            clearInterval(timerInterval);
+            clearInterval(countdown);
             evaluateAnswers();
-            alert('Your answers have been submitted manually.');
         }
 
+        // Evaluate answers
         function evaluateAnswers() {
-            const rows = document.getElementById('quizContainer').children;
-
-            for (let row of rows) {
-                const input = row.querySelector('input').value.trim().toLowerCase();
-                const correctAnswer = row.dataset.correctAnswer.toLowerCase();
-
-                if (input === correctAnswer) {
-                    row.classList.add('correct');
+            const rows = quizContainer.querySelectorAll('.row');
+            rows.forEach((row, index) => {
+                const input = row.querySelector('input');
+                if (input.value.trim().toLowerCase() === words[index].translation.toLowerCase()) {
+                    row.style.backgroundColor = '#d4edda';
                 } else {
-                    row.classList.add('incorrect');
+                    row.style.backgroundColor = '#f8d7da';
                 }
-            }
+            });
         }
     </script>
 </body>
