@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hafalan Kosakata</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        h1 {
+            color: #333;
+        }
+        .word {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .meaning {
+            font-size: 20px;
+            color: #555;
+            margin-top: 10px;
+            display: none;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .show-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .next-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .input-container {
+            margin-top: 20px;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Hafalan Kosakata</h1>
+        <p class="word">Klik "Selanjutnya" untuk memulai!</p>
+        <p class="meaning"></p>
+        <button class="show-btn" onclick="showMeaning()">Tampilkan Arti</button>
+        <button class="next-btn" onclick="nextWord()">Selanjutnya</button>
+        <button class="reset-btn" onclick="resetWords()">Reset</button>
+        
+        <div class="input-container">
+            <h2>Tambahkan Kosakata</h2>
+            <input type="text" id="newWord" placeholder="Masukkan kata">
+            <input type="text" id="newMeaning" placeholder="Masukkan arti">
+            <button onclick="addWord()">Tambah</button>
+        </div>
+    </div>
+
+    <script>
+        let words = [
+            { word: "apple", meaning: "apel" },
+            { word: "banana", meaning: "pisang" },
+            { word: "cat", meaning: "kucing" },
+            { word: "dog", meaning: "anjing" },
+            { word: "elephant", meaning: "gajah" },
+            { word: "flower", meaning: "bunga" },
+            { word: "guitar", meaning: "gitar" }
+        ];
+
+        let currentIndex = -1;
+
+        function nextWord() {
+            if (words.length === 0) {
+                document.querySelector(".word").textContent = "Kosakata kosong! Tambahkan kata baru.";
+                document.querySelector(".meaning").textContent = "";
+                return;
+            }
+            currentIndex = Math.floor(Math.random() * words.length);
+            document.querySelector(".word").textContent = words[currentIndex].word;
+            document.querySelector(".meaning").textContent = words[currentIndex].meaning;
+            document.querySelector(".meaning").style.display = "none";
+        }
+
+        function showMeaning() {
+            document.querySelector(".meaning").style.display = "block";
+        }
+
+        function addWord() {
+            const newWord = document.getElementById("newWord").value.trim();
+            const newMeaning = document.getElementById("newMeaning").value.trim();
+            
+            if (newWord !== "" && newMeaning !== "") {
+                words.push({ word: newWord, meaning: newMeaning });
+                document.getElementById("newWord").value = "";
+                document.getElementById("newMeaning").value = "";
+                alert("Kata berhasil ditambahkan!");
+            } else {
+                alert("Mohon masukkan kata dan artinya.");
+            }
+        }
+
+        function resetWords() {
+            words = [];
+            nextWord();
+            alert("Semua kosakata telah dihapus.");
+        }
+
+        // Memulai dengan kata pertama
+        nextWord();
+    </script>
+
+</body>
+</html>
