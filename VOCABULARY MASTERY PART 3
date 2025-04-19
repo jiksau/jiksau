@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flashcard Kosakata</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #00bcd4;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .input-row input {
+      background-color: #1e1e1e;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 8px;
+      border-radius: 6px;
+      width: 160px;
+    }
+
+    .control-panel {
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    button {
+      background-color: #00bcd4;
+      color: #121212;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+    }
+
+    .card {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 30px;
+      margin-top: 20px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 0 15px #00bcd4;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .green { color: #4caf50; }
+    .red { color: #f44336; }
+
+    #countdown {
+      font-size: 1.2em;
+      margin-top: 10px;
+      color: #ff9800;
+    }
+
+    #summary-stats {
+      font-size: 1.1em;
+      line-height: 1.6em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Flashcard Kosakata</h1>
+
+  <div id="input-area">
+    <div id="vocab-inputs">
+      <div class="input-row">
+        <input type="text" placeholder="Bahasa Inggris">
+        <input type="text" placeholder="Bahasa Indonesia">
+      </div>
+    </div>
+
+    <div class="control-panel">
+      <button onclick="addRow()">Tambah Baris</button><br>
+      <label>
+        Acak? 
+        <input type="checkbox" id="shuffle-checkbox">
+      </label><br>
+      <label>Durasi latihan (menit): 
+        <input type="number" id="duration-input" value="3" min="1" style="width: 50px;">
+      </label><br>
+      <button onclick="addNewWords()">Tambah Kosakata</button>
+      <button onclick="startFlashcards()">Mulai Latihan</button>
+    </div>
+  </div>
+
+  <div id="flashcard-area" class="hidden">
+    <div id="countdown"></div>
+    <div class="card">
+      <h2 id="word-display"></h2>
+      <input type="text" id="answer" placeholder="Tulis arti di sini">
+      <button onclick="checkAnswer()">Cek Jawaban</button>
+      <div id="result"></div>
+    </div>
+    <button onclick="nextWord()">Berikutnya</button>
+  </div>
+
+  <div id="result-summary" class="hidden">
+    <h2>Rekap Hasil</h2>
+    <p id="summary-stats"></p>
+    <button onclick="retry()">Coba Lagi</button>
+    <button onclick="showInputArea()">Tambah Kata Baru</button>
+  </div>
+
+  <script>
+    let vocabList = [];
+    let currentIndex = 0;
+    let attemptsLeft = 3;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let timer;
+    let durationInSeconds = 0;
+
+    function addRow() {
+      const container = document.getElementById("vocab-inputs");
+      const row = document.createElement("div");
+      row.className = "input-row";
+      row.innerHTML = `
+        <input type="text" placeholder="Bahasa Inggris">
+        <input type="text" placeholder="Bahasa Indonesia">
+      `;
+      container.appendChild(row);
+    }
+
+    function getInputData() {
+      const rows = document.querySelectorAll("#vocab-inputs .input-row");
+      const data = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const en = inputs[0].value.trim().toLowerCase();
+        const id = inputs[1].value.trim().toLowerCase();
+        if (en && id) {
+          data.push({ en, id });
+        }
+      });
+      return data;
+    }
+
+    function addNewWords() {
+      const newWords = getInputData();
+      if (newWords.length === 0) {
+        alert("Masukkan kosakata sebelum menambah.");
+        return;
+      }
+      vocabList = vocabList.concat(newWords);
+      document.getElementById("vocab-inputs").innerHTML = '';
+      addRow();
+      alert("Kosakata berhasil ditambahkan.");
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function startFlashcards() {
+      const newWords = getInputData();
+      if (newWords.length === 0 && vocabList.length === 0) {
+        alert("Masukkan minimal satu kosakata!");
+        return;
+      }
+
+      if (newWords.length > 0) {
+        vocabList = vocabList.concat(newWords);
+        document.getElementById("vocab-inputs").innerHTML = '';
+        addRow();
+      }
+
+      const shouldShuffle = document.getElementById("shuffle-checkbox").checked;
+      if (shouldShuffle) shuffleArray(vocabList);
+
+      durationInSeconds = parseInt(document.getElementById("duration-input").value) * 60;
+      startCountdown();
+
+      document.getElementById('input-area').classList.add('hidden');
+      document.getElementById('result-summary').classList.add('hidden');
+      document.getElementById('flashcard-area').classList.remove('hidden');
+      currentIndex = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      showWord();
+    }
+
+    function showWord() {
+      document.getElementById('word-display').textContent = vocabList[currentIndex].en;
+      document.getElementById('answer').value = '';
+      document.getElementById('answer').disabled = false;
+      document.getElementById('result').textContent = '';
+      attemptsLeft = 3;
+    }
+
+    function checkAnswer() {
+      const answerInput = document.getElementById('answer');
+      if (answerInput.disabled) return;
+
+      const userAnswer = answerInput.value.trim().toLowerCase();
+      const correct = vocabList[currentIndex].id;
+      const resultDiv = document.getElementById('result');
+
+      if (userAnswer === correct) {
+        resultDiv.textContent = "Benar!";
+        resultDiv.className = 'green';
+        correctCount++;
+        answerInput.disabled = true;
+      } else {
+        attemptsLeft--;
+        wrongCount++;
+        if (attemptsLeft > 0) {
+          resultDiv.textContent = `Salah! Sisa percobaan: ${attemptsLeft}`;
+          resultDiv.className = 'red';
+        } else {
+          resultDiv.textContent = `Kesempatan habis! Jawaban: ${correct}`;
+          resultDiv.className = 'red';
+          answerInput.disabled = true;
+        }
+      }
+    }
+
+    function nextWord() {
+      currentIndex++;
+      if (currentIndex >= vocabList.length) {
+        clearInterval(timer);
+        showSummary();
+      } else {
+        showWord();
+      }
+    }
+
+    function startCountdown() {
+      const countdownEl = document.getElementById("countdown");
+      function updateTimer() {
+        const minutes = Math.floor(durationInSeconds / 60);
+        const seconds = durationInSeconds % 60;
+        countdownEl.textContent = `Waktu tersisa: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        if (durationInSeconds <= 0) {
+          clearInterval(timer);
+          showSummary();
+        }
+        durationInSeconds--;
+      }
+      updateTimer();
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    function showSummary() {
+      document.getElementById('flashcard-area').classList.add('hidden');
+      const total = correctCount + wrongCount;
+      const summaryText = `
+        Total Percobaan: ${total}<br>
+        Benar: <span class="green">${correctCount}</span><br>
+        Salah: <span class="red">${wrongCount}</span>
+      `;
+      document.getElementById('summary-stats').innerHTML = summaryText;
+      document.getElementById('result-summary').classList.remove('hidden');
+    }
+
+    function retry() {
+      document.getElementById('result-summary').classList.add('hidden');
+      document.getElementById('flashcard-area').classList.remove('hidden');
+      currentIndex = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      durationInSeconds = parseInt(document.getElementById("duration-input").value) * 60;
+      startCountdown();
+      showWord();
+    }
+
+    function showInputArea() {
+      document.getElementById('result-summary').classList.add('hidden');
+      document.getElementById('input-area').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>
