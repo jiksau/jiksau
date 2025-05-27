@@ -260,7 +260,8 @@
             getAuth,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            onAuthStateChanged // Import onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
             getFirestore,
@@ -292,7 +293,7 @@
             const signinForm = document.getElementById("signin-form");
             const forgotPasswordLink = document.getElementById("forgot-password");
             const statusDiv = document.getElementById("status");
-            const adminDashboardButton = document.getElementById("admin-dashboard-button"); // Get the new button
+            const adminDashboardButton = document.getElementById("admin-dashboard-button");
 
             // Signup form elements
             const signupNameInput = document.getElementById("signup-name");
@@ -314,15 +315,23 @@
             const signinEmailError = document.getElementById("signin-email-error");
             const signinPasswordError = document.getElementById("signin-password-error");
 
-            // Moved emailRegex declaration to the top of DOMContentLoaded
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+            // --- Initial Auth State Check (New Logic) ---
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // If user is already logged in, redirect them immediately to user dashboard
+                    console.log("User already logged in, redirecting to user-dashboard.html");
+                    window.location.href = "user-dashboard.html";
+                } else {
+                    // User is not logged in, show the forms
+                    signupForm.classList.add("active");
+                    signupTab.classList.add("active");
+                    validateSignupForm(); // Validate initially to disable button
+                }
+            });
 
-            // Set initial active tab
-            signupForm.classList.add("active");
-            signupTab.classList.add("active");
-            validateSignupForm(); // Validate initially to disable button
-
+            // --- Tab Switching Logic ---
             signupTab.addEventListener("click", () => {
                 signupForm.classList.add("active");
                 signinForm.classList.remove("active");
@@ -441,12 +450,11 @@
             signupEmailInput.addEventListener("input", validateSignupForm);
             signupPasswordInput.addEventListener("input", validateSignupForm);
             signupConfirmPasswordInput.addEventListener("input", validateSignupForm);
-            signupConfirmPasswordInput.addEventListener("blur", validateSignupForm); // Check on blur too for confirm pass
+            signupConfirmPasswordInput.addEventListener("blur", validateSignupForm);
 
             // Add event listeners for real-time validation on signin form
             signinEmailInput.addEventListener("input", validateSigninForm);
             signinPasswordInput.addEventListener("input", validateSigninForm);
-
 
             // --- Password Toggle Functionality ---
             function setupPasswordToggle(inputId, toggleId) {
@@ -457,10 +465,10 @@
                     toggleIcon.addEventListener("click", () => {
                         if (passwordInput.type === "password") {
                             passwordInput.type = "text";
-                            toggleIcon.innerText = "🚫"; // Change to slash-eye icon
+                            toggleIcon.innerText = "🚫";
                         } else {
                             passwordInput.type = "password";
-                            toggleIcon.innerText = "👁️"; // Change back to eye icon
+                            toggleIcon.innerText = "👁️";
                         }
                     });
                 }
@@ -472,7 +480,7 @@
             setupPasswordToggle("signin-password", "signin-password-toggle");
 
 
-            // --- Firebase Operations (reverted to original hardcoded setup) ---
+            // --- Firebase Operations ---
             signupButton.addEventListener("click", async () => {
                 if (!validateSignupForm()) {
                     statusDiv.innerText = "Please fix the errors in the form.";
@@ -480,7 +488,7 @@
                 }
 
                 statusDiv.innerText = "Signing up...";
-                signupButton.disabled = true; // Disable button during API call
+                signupButton.disabled = true;
                 const email = signupEmailInput.value;
                 const password = signupPasswordInput.value;
                 const name = signupNameInput.value;
@@ -488,17 +496,16 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    // Reverted Firestore path to "users" collection
                     await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
-                    // Redirect to user dashboard after signup
+                    // Redirect to pendaftaran.html after successful signup
                     setTimeout(() => window.location.href = "pendaftaran.html", 2000);
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign up error:", error);
                 } finally {
-                    signupButton.disabled = false; // Re-enable button after API call completes/fails
+                    signupButton.disabled = false;
                 }
             });
 
@@ -509,7 +516,7 @@
                 }
 
                 statusDiv.innerText = "Signing in...";
-                signinButton.disabled = true; // Disable button during API call
+                signinButton.disabled = true;
                 const email = signinEmailInput.value;
                 const password = signinPasswordInput.value;
 
@@ -518,13 +525,13 @@
                     const user = userCredential.user;
 
                     statusDiv.innerText = `Sign In Successful! Welcome back, ${user.email}`;
-                    // Redirect to user dashboard after signin
+                    // Redirect to user-dashboard.html after successful signin
                     setTimeout(() => window.location.href = "user-dashboard.html", 2000);
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign in error:", error);
                 } finally {
-                    signinButton.disabled = false; // Re-enable button after API call completes/fails
+                    signinButton.disabled = false;
                 }
             });
 
