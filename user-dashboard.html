@@ -144,7 +144,7 @@
                 <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
                 <p><strong>Nama:</strong> <span id="userName">Loading...</span></p>
                 <p><strong>Peran:</strong> <span id="userRole">Loading...</span></p>
-            </div>
+                <p><strong>Terakhir Login:</strong> <span id="lastLoginAt">Loading...</span></p> </div>
         </section>
 
         <section id="registration-status-section">
@@ -168,7 +168,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // Added updateDoc and serverTimestamp
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -193,8 +193,9 @@
         const userIdSpan = document.getElementById('userId');
         const userNameSpan = document.getElementById('userName');
         const userRoleSpan = document.getElementById('userRole');
+        const lastLoginAtSpan = document.getElementById('lastLoginAt'); // New span for last login
         const logoutButton = document.getElementById('logoutButton');
-        const gamelistButton = document.getElementById('gamelistButton'); // Get the new gamelist button
+        const gamelistButton = document.getElementById('gamelistButton');
         const registrationStatusCard = document.getElementById('registrationStatusCard');
 
         // --- Message Box Functions (reused) ---
@@ -232,14 +233,31 @@
                         const userData = userDocSnap.data();
                         userNameSpan.textContent = userData.name || 'N/A';
                         userRoleSpan.textContent = userData.role || 'N/A';
+
+                        // Display last login time
+                        if (userData.lastLoginAt) {
+                            // Firestore Timestamp objects have a toDate() method
+                            lastLoginAtSpan.textContent = userData.lastLoginAt.toDate().toLocaleString();
+                        } else {
+                            lastLoginAtSpan.textContent = 'Belum pernah login sebelumnya.';
+                        }
                     } else {
                         userNameSpan.textContent = 'Profil tidak ditemukan.';
                         userRoleSpan.textContent = 'N/A';
+                        lastLoginAtSpan.textContent = 'N/A';
                     }
+
+                    // Update lastLoginAt timestamp in Firestore
+                    await updateDoc(userDocRef, {
+                        lastLoginAt: serverTimestamp() // Use serverTimestamp for accurate time
+                    });
+                    console.log("lastLoginAt updated for user:", user.uid);
+
                 } catch (error) {
-                    console.error("Error fetching user profile:", error);
+                    console.error("Error fetching or updating user profile:", error);
                     userNameSpan.textContent = 'Gagal memuat nama.';
                     userRoleSpan.textContent = 'Gagal memuat peran.';
+                    lastLoginAtSpan.textContent = 'Gagal memuat waktu login.';
                 }
 
                 // Load user's registration data
@@ -262,7 +280,7 @@
             }
         });
 
-        // --- Gamelist Button Functionality (New) ---
+        // --- Gamelist Button Functionality ---
         gamelistButton.addEventListener('click', () => {
             window.location.href = "gamelist.html"; // Redirect to gamelist.html
         });
@@ -270,7 +288,6 @@
         // --- Load User's Registration Data ---
         function loadUserRegistration(currentUserId) {
             const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
-            // Query for registrations where the 'userId' field matches the current user's UID
             const q = query(registrationsRef, where("userId", "==", currentUserId));
 
             onSnapshot(q, (snapshot) => {
