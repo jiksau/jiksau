@@ -205,6 +205,26 @@
             color: #0056b3;
             text-decoration: underline;
         }
+        
+        /* Admin button specific style */
+        #admin-dashboard-button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #admin-dashboard-button:hover {
+            background-color: #45a049;
+        }
+
 
         /* Responsive adjustments */
         @media (max-width: 600px) {
@@ -272,6 +292,7 @@
             const signinForm = document.getElementById("signin-form");
             const forgotPasswordLink = document.getElementById("forgot-password");
             const statusDiv = document.getElementById("status");
+            const adminDashboardButton = document.getElementById("admin-dashboard-button"); // Get the new button
 
             // Signup form elements
             const signupNameInput = document.getElementById("signup-name");
@@ -523,6 +544,11 @@
                     console.error("Password reset error:", error);
                 }
             });
+
+            // Admin Dashboard Button Event Listener
+            adminDashboardButton.addEventListener("click", () => {
+                window.location.href = "admin.html"; // Redirect to admin.html
+            });
         });
     </script>
 </head>
@@ -572,6 +598,7 @@
             </p>
         </div>
         <div id="status"></div>
+        <button id="admin-dashboard-button">Go to Admin Dashboard</button>
     </div>
 </body>
 </html>
