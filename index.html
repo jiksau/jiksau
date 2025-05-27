@@ -248,10 +248,7 @@
             setDoc
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // IMPORTANT: This Firebase config is hardcoded as per your original request.
-        // If running in a Canvas environment, the recommended method is to use
-        // __firebase_config, __initial_auth_token, and __app_id global variables.
-        // Ensure the project defined here has Email/Password and Anonymous sign-in enabled.
+        // Reverted to original hardcoded Firebase config as requested
         const firebaseConfig = {
             apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
             authDomain: "extra-course-d02c2.firebaseapp.com",
@@ -454,7 +451,7 @@
             setupPasswordToggle("signin-password", "signin-password-toggle");
 
 
-            // --- Firebase Operations (unchanged logic, only now triggered after validation) ---
+            // --- Firebase Operations (reverted to original hardcoded setup) ---
             signupButton.addEventListener("click", async () => {
                 if (!validateSignupForm()) {
                     statusDiv.innerText = "Please fix the errors in the form.";
@@ -470,6 +467,7 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
+                    // Reverted Firestore path to "users" collection
                     await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
