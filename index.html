@@ -1,220 +1,385 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Special Extra Course</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #007BFF, #0056b3);
-      color: white;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .container {
-      background: white;
-      color: #0056b3;
-      width: 90%;
-      max-width: 400px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-    }
-    .tabs {
-      display: flex;
-      justify-content: space-around;
-      border-bottom: 2px solid #ddd;
-      margin-bottom: 20px;
-    }
-    .tabs button {
-      background: transparent;
-      border: none;
-      padding: 10px;
-      font-size: 18px;
-      color: #007BFF;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-    .tabs button:hover {
-      color: #0056b3;
-    }
-    .form-group {
-      display: none;
-      margin-bottom: 15px;
-    }
-    .form-group.active {
-      display: block;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .form-group button {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      background: #007BFF;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .form-group button:hover {
-      background: #0056b3;
-    }
-    #status {
-      margin-top: 20px;
-      text-align: center;
-    }
-    a {
-      color: #007BFF;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      sendPasswordResetEmail
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
-      authDomain: "extra-course-d02c2.firebaseapp.com",
-      projectId: "extra-course-d02c2",
-      storageBucket: "extra-course-d02c2.firebasestorage.app",
-      messagingSenderId: "40624772967",
-      appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
-      measurementId: "G-YNRJKV8T45",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const signupButton = document.getElementById("signup-button");
-      const signinButton = document.getElementById("signin-button");
-      const signupTab = document.getElementById("signup-tab");
-      const signinTab = document.getElementById("signin-tab");
-      const signupForm = document.getElementById("signup-form");
-      const signinForm = document.getElementById("signin-form");
-      const forgotPasswordLink = document.getElementById("forgot-password");
-
-      signupTab.addEventListener("click", () => {
-        signupForm.classList.add("active");
-        signinForm.classList.remove("active");
-        signupTab.classList.add("active");
-        signinTab.classList.remove("active");
-        document.getElementById("status").innerText = "";
-      });
-
-      signinTab.addEventListener("click", () => {
-        signinForm.classList.add("active");
-        signupForm.classList.remove("active");
-        signinTab.classList.add("active");
-        signupTab.classList.remove("active");
-        document.getElementById("status").innerText = "";
-      });
-
-      signupButton.addEventListener("click", async () => {
-        const email = document.getElementById("signup-email").value;
-        const password = document.getElementById("signup-password").value;
-        const name = document.getElementById("signup-name").value;
-
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const user = userCredential.user;
-          await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student" });
-
-          document.getElementById("status").innerText = `Sign Up Successful! Welcome, ${user.email}`;
-          setTimeout(() => window.location.href = "gamelist.html", 2000);
-        } catch (error) {
-          document.getElementById("status").innerText = `Error: ${error.message}`;
-        }
-      });
-
-      signinButton.addEventListener("click", async () => {
-        const email = document.getElementById("signin-email").value;
-        const password = document.getElementById("signin-password").value;
-
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          const user = userCredential.user;
-
-          document.getElementById("status").innerText = `Sign In Successful! Welcome back, ${user.email}`;
-          setTimeout(() => window.location.href = "gamelist.html", 2000);
-        } catch (error) {
-          document.getElementById("status").innerText = `Error: ${error.message}`;
-        }
-      });
-
-      forgotPasswordLink.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("signin-email").value;
-
-        if (!email) {
-          document.getElementById("status").innerText = "Please enter your email above first.";
-          return;
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Special Extra Course</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to override or extend Tailwind */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* More vibrant gradient */
+            color: white;
+            overflow: hidden; /* Prevent scrollbar from gradient */
         }
 
-        try {
-          await sendPasswordResetEmail(auth, email);
-          document.getElementById("status").innerText = `Password reset email sent to ${email}. Please check your inbox.`;
-        } catch (error) {
-          document.getElementById("status").innerText = `Error: ${error.message}`;
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            letter-spacing: 1.5px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            color: #fff; /* Ensure heading is white */
         }
-      });
-    });
-  </script>
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #1a202c; /* Darker color for section titles */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15); /* Semi-transparent white background */
+            backdrop-filter: blur(15px); /* Stronger frosted glass effect */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border */
+            color: #1a202c; /* Dark text for contrast on light background */
+            width: 90%;
+            max-width: 450px; /* Slightly wider container */
+            border-radius: 20px; /* More rounded corners */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); /* Deeper shadow */
+            padding: 40px; /* More padding */
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 1s ease-out; /* Add a fade-in animation */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3); /* Lighter border for tabs */
+            margin-bottom: 30px;
+        }
+
+        .tabs button {
+            background: transparent;
+            border: none;
+            padding: 12px 20px; /* More padding for tabs */
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7); /* Lighter color for inactive tabs */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tabs button.active {
+            color: #fff; /* White for active tab */
+            border-bottom: 3px solid #fff; /* Stronger active indicator */
+            transform: translateY(-2px); /* Slight lift for active tab */
+        }
+
+        .tabs button:hover:not(.active) {
+            color: #e0f2fe; /* Light blue on hover for inactive */
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .form-group.active {
+            display: block;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px; /* More padding for inputs */
+            font-size: 1rem;
+            border: 1px solid #cbd5e0; /* Light gray border */
+            border-radius: 10px; /* More rounded inputs */
+            margin-bottom: 15px; /* Space between inputs */
+            background-color: rgba(255, 255, 255, 0.8); /* Slightly opaque input background */
+            color: #2d3748; /* Dark text in inputs */
+            transition: all 0.3s ease;
+            outline: none; /* Remove default outline */
+        }
+
+        .form-group input:focus {
+            border-color: #007bff; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Soft blue shadow on focus */
+            background-color: #fff; /* White background on focus */
+        }
+
+        .form-group button {
+            width: 100%;
+            padding: 14px; /* More padding for buttons */
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00c6ff, #0072ff); /* Gradient background for button */
+            border: none;
+            border-radius: 12px; /* More rounded button */
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.4); /* Button shadow */
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .form-group button:hover {
+            background: linear-gradient(45deg, #0072ff, #00c6ff); /* Reverse gradient on hover */
+            transform: translateY(-3px); /* Slight lift on hover */
+            box-shadow: 0 8px 20px rgba(0, 114, 255, 0.6);
+        }
+
+        .form-group button:active {
+            transform: translateY(0); /* Press effect */
+            box-shadow: 0 3px 10px rgba(0, 114, 255, 0.3);
+        }
+
+        #status {
+            margin-top: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2d3748; /* Darker color for status messages */
+        }
+
+        a {
+            color: #007bff; /* Blue for links */
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #0056b3; /* Darker blue on hover */
+            text-decoration: underline;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 20px;
+            }
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+            .container {
+                padding: 30px;
+                border-radius: 15px;
+            }
+            .tabs button {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            .form-group input {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+            .form-group button {
+                padding: 12px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            sendPasswordResetEmail,
+            signInWithCustomToken,
+            signInAnonymously,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let auth;
+        let db;
+        let userId = 'anonymous'; // Default userId
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Sign in with custom token or anonymously
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } catch (error) {
+                        console.error("Error signing in with custom token:", error);
+                        // Fallback to anonymous sign-in if custom token fails
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously as fallback.");
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Auth state changed. User ID:", userId);
+                    } else {
+                        userId = crypto.randomUUID(); // Generate a random ID if not authenticated
+                        console.log("Auth state changed. No user, generated anonymous ID:", userId);
+                    }
+                });
+            } else {
+                console.error("Firebase config not available. Firebase services will not be initialized.");
+                document.getElementById("status").innerText = "Error: Firebase configuration missing.";
+            }
+
+            const signupButton = document.getElementById("signup-button");
+            const signinButton = document.getElementById("signin-button");
+            const signupTab = document.getElementById("signup-tab");
+            const signinTab = document.getElementById("signin-tab");
+            const signupForm = document.getElementById("signup-form");
+            const signinForm = document.getElementById("signin-form");
+            const forgotPasswordLink = document.getElementById("forgot-password");
+            const statusDiv = document.getElementById("status");
+
+            // Initial tab display
+            signupForm.classList.add("active");
+            signupTab.classList.add("active");
+
+            signupTab.addEventListener("click", () => {
+                signupForm.classList.add("active");
+                signinForm.classList.remove("active");
+                signupTab.classList.add("active");
+                signinTab.classList.remove("active");
+                statusDiv.innerText = "";
+            });
+
+            signinTab.addEventListener("click", () => {
+                signinForm.classList.add("active");
+                signupForm.classList.remove("active");
+                signinTab.classList.add("active");
+                signupTab.classList.remove("active");
+                statusDiv.innerText = "";
+            });
+
+            signupButton.addEventListener("click", async () => {
+                const email = document.getElementById("signup-email").value;
+                const password = document.getElementById("signup-password").value;
+                const name = document.getElementById("signup-name").value;
+
+                if (!auth) {
+                    statusDiv.innerText = "Firebase not initialized. Cannot sign up.";
+                    return;
+                }
+
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    // Store user data in Firestore under the private path
+                    await setDoc(doc(db, `artifacts/${appId}/users/${user.uid}/user_profiles`, user.uid), {
+                        name: name || "Anonymous",
+                        role: "Student",
+                        email: user.email
+                    });
+
+                    statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
+                    setTimeout(() => window.location.href = "gamelist.html", 2000);
+                } catch (error) {
+                    statusDiv.innerText = `Error: ${error.message}`;
+                    console.error("Sign up error:", error);
+                }
+            });
+
+            signinButton.addEventListener("click", async () => {
+                const email = document.getElementById("signin-email").value;
+                const password = document.getElementById("signin-password").value;
+
+                if (!auth) {
+                    statusDiv.innerText = "Firebase not initialized. Cannot sign in.";
+                    return;
+                }
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    statusDiv.innerText = `Sign In Successful! Welcome back, ${user.email}`;
+                    setTimeout(() => window.location.href = "gamelist.html", 2000);
+                } catch (error) {
+                    statusDiv.innerText = `Error: ${error.message}`;
+                    console.error("Sign in error:", error);
+                }
+            });
+
+            forgotPasswordLink.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const email = document.getElementById("signin-email").value;
+
+                if (!auth) {
+                    statusDiv.innerText = "Firebase not initialized. Cannot reset password.";
+                    return;
+                }
+
+                if (!email) {
+                    statusDiv.innerText = "Please enter your email in the Sign In tab first.";
+                    return;
+                }
+
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    statusDiv.innerText = `Password reset email sent to ${email}. Please check your inbox.`;
+                } catch (error) {
+                    statusDiv.innerText = `Error: ${error.message}`;
+                    console.error("Password reset error:", error);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
-  <div class="container">
-    <h1>Special Extra Course</h1>
-    <div class="tabs">
-      <button id="signup-tab" class="active">Sign Up</button>
-      <button id="signin-tab">Sign In</button>
+    <div class="container">
+        <h1>Special Extra Course</h1>
+        <div class="tabs">
+            <button id="signup-tab">Sign Up</button>
+            <button id="signin-tab">Sign In</button>
+        </div>
+        <div id="signup-form" class="form-group">
+            <h2>Sign Up</h2>
+            <input type="text" id="signup-name" placeholder="Name" required>
+            <input type="email" id="signup-email" placeholder="Email" required>
+            <input type="password" id="signup-password" placeholder="Password" required>
+            <button id="signup-button">Sign Up</button>
+        </div>
+        <div id="signin-form" class="form-group">
+            <h2>Sign In</h2>
+            <input type="email" id="signin-email" placeholder="Email" required>
+            <input type="password" id="signin-password" placeholder="Password" required>
+            <button id="signin-button">Sign In</button>
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="#" id="forgot-password">Forgot Password?</a>
+            </p>
+        </div>
+        <div id="status"></div>
     </div>
-    <div id="signup-form" class="form-group active">
-      <h2>Sign Up</h2>
-      <input type="text" id="signup-name" placeholder="Name" required>
-      <input type="email" id="signup-email" placeholder="Email" required>
-      <input type="password" id="signup-password" placeholder="Password" required>
-      <button id="signup-button">Sign Up</button>
-    </div>
-    <div id="signin-form" class="form-group">
-      <h2>Sign In</h2>
-      <input type="email" id="signin-email" placeholder="Email" required>
-      <input type="password" id="signin-password" placeholder="Password" required>
-      <button id="signin-button">Sign In</button>
-      <p style="text-align: center; margin-top: 10px;">
-        <a href="#" id="forgot-password">Forgot Password?</a>
-      </p>
-    </div>
-    <div id="status"></div>
-  </div>
 </body>
 </html>
