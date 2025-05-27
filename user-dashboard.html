@@ -42,9 +42,12 @@
         .info-card strong {
             color: #0056b3;
         }
-        button {
-            background-color: #ef4444; /* Red for logout */
-            color: white;
+        /* Button styles */
+        .header-buttons {
+            display: flex;
+            gap: 1rem; /* Space between buttons */
+        }
+        .header-buttons button {
             padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
@@ -52,9 +55,20 @@
             font-size: 1rem;
             font-weight: 600;
             transition: background-color 0.3s ease-in-out;
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        button:hover {
+        #gamelistButton {
+            background-color: #f472b6; /* Pink-400 */
+            color: white;
+        }
+        #gamelistButton:hover {
+            background-color: #ec4899; /* Pink-500 */
+        }
+        #logoutButton {
+            background-color: #ef4444; /* Red */
+            color: white;
+        }
+        #logoutButton:hover {
             background-color: #dc2626;
         }
         footer {
@@ -117,7 +131,10 @@
     <div class="container">
         <header class="mb-8 flex justify-between items-center">
             <h1 class="text-3xl font-extrabold flex-grow text-center">Dashboard Pengguna ExtraCourse</h1>
-            <button id="logoutButton">Logout</button>
+            <div class="header-buttons">
+                <button id="gamelistButton">Go to Gamelist</button>
+                <button id="logoutButton">Logout</button>
+            </div>
         </header>
 
         <section id="user-info-section">
@@ -177,6 +194,7 @@
         const userNameSpan = document.getElementById('userName');
         const userRoleSpan = document.getElementById('userRole');
         const logoutButton = document.getElementById('logoutButton');
+        const gamelistButton = document.getElementById('gamelistButton'); // Get the new gamelist button
         const registrationStatusCard = document.getElementById('registrationStatusCard');
 
         // --- Message Box Functions (reused) ---
@@ -242,6 +260,11 @@
                 console.error("Logout failed:", error.message);
                 showMessageBox(`Logout gagal: ${error.message}`, 'error');
             }
+        });
+
+        // --- Gamelist Button Functionality (New) ---
+        gamelistButton.addEventListener('click', () => {
+            window.location.href = "gamelist.html"; // Redirect to gamelist.html
         });
 
         // --- Load User's Registration Data ---
