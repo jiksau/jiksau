@@ -432,13 +432,23 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase config and app ID
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // Your web app's Firebase configuration - HARDCODED for static hosting like GitHub Pages
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            databaseURL: "https://extra-course-d02c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45"
+        };
+
+        // Extract appId from the config
+        const appId = firebaseConfig.appId;
 
         let app;
         let db;
@@ -469,22 +479,13 @@
         // Initialize Firebase and set up authentication listener
         window.onload = async function() {
             try {
-                // Ensure firebaseConfig has projectId
-                if (!firebaseConfig || !firebaseConfig.projectId) {
-                    throw new Error("Firebase 'projectId' is missing in the configuration. Please ensure __firebase_config is correctly set in your environment.");
-                }
-
-                // Initialize Firebase app
+                // Initialize Firebase app with the hardcoded config
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Authenticate user
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Authenticate user anonymously
+                await signInAnonymously(auth);
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, (user) => {
@@ -496,8 +497,8 @@
                     } else {
                         userId = null;
                         document.getElementById('user-id-display').textContent = 'Tidak ada pengguna yang terautentikasi.';
-                        isAuthReady = true;
-                        console.log("No user authenticated.");
+                        isAuthReady = true; // Still ready, just no user
+                        console.log("No user authenticated. Attempting anonymous sign-in again or awaiting a new one.");
                     }
                 });
 
@@ -512,8 +513,17 @@
             event.preventDefault(); // Prevent default form submission
 
             if (!isAuthReady || !userId) {
-                showMessageBox("Aplikasi belum siap. Mohon tunggu sebentar.", 'error');
-                console.error("Firebase not ready or user not authenticated.");
+                showMessageBox("Aplikasi belum siap atau pengguna belum terautentikasi. Mohon tunggu sebentar.", 'error');
+                console.error("Firebase not ready or user not authenticated. Attempting to sign in anonymously if not already.");
+                // Try to sign in anonymously again if not authenticated
+                if (!userId) {
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (authError) {
+                        console.error("Failed to re-authenticate anonymously:", authError);
+                        showMessageBox(`Gagal mengautentikasi ulang. Coba lagi. Error: ${authError.message}`, 'error');
+                    }
+                }
                 return;
             }
 
