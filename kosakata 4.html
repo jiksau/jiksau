@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belajar Verb Forms (V1, V2, V3)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-bg: #2c3e50; /* Dark blue background */
+            --secondary-bg: #34495e; /* Slightly lighter dark blue */
+            --accent-blue: #3498db; /* Bright blue for buttons */
+            --accent-blue-hover: #2980b9; /* Darker blue on hover */
+            --text-color: #ecf0f1; /* Light text color */
+            --correct-color: #27ae60; /* Green for correct */
+            --incorrect-color: #e74c3c; /* Red for incorrect */
+            --border-radius: 8px;
+            --transition-speed: 0.3s ease-in-out;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        .container {
+            background-color: var(--secondary-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+            opacity: 0; /* Initial state for transition */
+            transform: translateY(20px); /* Initial state for transition */
+            transition: opacity var(--transition-speed), transform var(--transition-speed);
+        }
+
+        .container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1, h2 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* New styles for row-based input */
+        .verb-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 300px; /* Limit height and make scrollable */
+            overflow-y: auto;
+            padding-right: 5px; /* For scrollbar space */
+            border: 1px solid var(--accent-blue); /* Add border for visual grouping */
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background-color: var(--primary-bg);
+        }
+
+        .verb-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            background-color: var(--secondary-bg); /* Slightly lighter background for each row */
+            padding: 8px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .verb-input-row input {
+            flex: 1; /* Distribute space evenly */
+            padding: 10px;
+            border: 1px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            min-width: 80px; /* Ensure inputs don't get too small */
+            transition: border-color var(--transition-speed);
+        }
+
+        .verb-input-row input:focus {
+            outline: none;
+            border-color: var(--accent-blue-hover);
+        }
+
+        .button-group, .button-group-input-management {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), transform 0.1s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            flex-grow: 1; /* Allow buttons to grow */
+            max-width: 200px; /* Limit button width */
+        }
+
+        .btn:hover {
+            background-color: var(--accent-blue-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            background-color: var(--incorrect-color); /* Red for remove button */
+            box-shadow: none;
+            flex-shrink: 0; /* Don't shrink */
+        }
+
+        .btn-small:hover {
+            background-color: #c0392b; /* Darker red */
+        }
+
+        /* Game Page Specific Styles */
+        .game-question {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        .input-group input {
+            width: calc(100% - 24px); /* Account for padding and border */
+            padding: 12px;
+            border: 2px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            transition: border-color var(--transition-speed);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue-hover);
+        }
+
+        .feedback {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 20px;
+            min-height: 30px; /* Reserve space */
+        }
+
+        .feedback.correct {
+            color: var(--correct-color);
+        }
+
+        .feedback.incorrect {
+            color: var(--incorrect-color);
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        /* Modals */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: var(--secondary-bg);
+            margin: auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform var(--transition-speed);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .close-button {
+            color: var(--text-color);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--accent-blue);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--accent-blue);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .modal-content input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            margin: 15px 0;
+            border: 2px solid var(--accent-blue);
+            border-radius: var(--border-radius);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .modal-content .btn {
+            margin-top: 10px;
+        }
+
+        .message-box {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            font-size: 1rem;
+            display: none; /* Hidden by default */
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .message-box.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        /* Page Transitions */
+        .page {
+            display: none; /* Hidden by default */
+            width: 100%;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                padding: 10px 20px;
+                flex-grow: 1;
+                max-width: none; /* Allow full width on small screens */
+            }
+
+            .button-group, .button-group-input-management {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-question {
+                font-size: 1.5rem;
+            }
+
+            .input-group input {
+                font-size: 1rem;
+                padding: 10px;
+            }
+
+            .timer-display {
+                font-size: 1.2rem;
+            }
+
+            .feedback {
+                font-size: 1rem;
+            }
+
+            .verb-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .verb-input-row input {
+                width: 100%;
+            }
+            .btn-small {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="message-box" class="message-box"></div>
+
+    <div id="front-page" class="container page active">
+        <h1>Belajar Verb Forms (V1, V2, V3)</h1>
+        <p>Masukkan daftar kata kerja dan artinya di bawah ini.</p>
+        <p>Setiap baris mewakili satu kata kerja dengan arti, V1, V2, dan V3.</p>
+
+        <div id="verb-input-container" class="verb-input-container">
+            </div>
+
+        <div class="button-group-input-management">
+            <button id="add-row-btn" class="btn"><i class="fas fa-plus"></i> Tambah Baris</button>
+            <button id="remove-last-row-btn" class="btn"><i class="fas fa-minus"></i> Hapus Baris Terakhir</button>
+        </div>
+
+        <div class="button-group">
+            <button id="shuffle-btn" class="btn"><i class="fas fa-random"></i> Acak</button>
+            <button id="set-time-btn" class="btn"><i class="fas fa-clock"></i> Tentukan Waktu</button>
+            <button id="start-quiz-btn" class="btn"><i class="fas fa-play"></i> Mulai Kuis</button>
+        </div>
+    </div>
+
+    <div id="game-page" class="container page">
+        <div class="timer-display" id="quiz-timer-display"></div>
+        <div class="game-question" id="verb-meaning"></div>
+        <div class="input-group">
+            <label for="v1-input">V1 (Base Form):</label>
+            <input type="text" id="v1-input" placeholder="Kata Kerja Dasar">
+            <label for="v2-input">V2 (Past Simple):</label>
+            <input type="text" id="v2-input" placeholder="Past Simple">
+            <label for="v3-input">V3 (Past Participle):</label>
+            <input type="text" id="v3-input" placeholder="Past Participle">
+        </div>
+        <button id="check-btn" class="btn"><i class="fas fa-check"></i> Periksa</button>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div id="set-time-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Atur Waktu Maksimal per Pertanyaan</h3>
+            <p>Masukkan waktu dalam menit (0 untuk tanpa batas):</p>
+            <input type="number" id="time-per-question-input" value="1" min="0">
+            <button id="save-time-btn" class="btn">Simpan</button>
+        </div>
+    </div>
+
+    <div id="quiz-end-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Kuis Selesai!</h3>
+            <p id="final-score"></p>
+            <button id="restart-quiz-btn" class="btn"><i class="fas fa-redo-alt"></i> Main Lagi</button>
+            <button id="back-to-home-btn" class="btn"><i class="fas fa-home"></i> Kembali ke Beranda</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const frontPage = document.getElementById('front-page');
+        const gamePage = document.getElementById('game-page');
+        const verbInputContainer = document.getElementById('verb-input-container'); // New element
+        const addRowBtn = document.getElementById('add-row-btn'); // New element
+        const removeLastRowBtn = document.getElementById('remove-last-row-btn'); // New element
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const setTimeBtn = document.getElementById('set-time-btn');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+
+        const quizTimerDisplay = document.getElementById('quiz-timer-display');
+        const verbMeaningDisplay = document.getElementById('verb-meaning');
+        const v1Input = document.getElementById('v1-input');
+        const v2Input = document.getElementById('v2-input');
+        const v3Input = document.getElementById('v3-input');
+        const checkBtn = document.getElementById('check-btn');
+        const feedbackDisplay = document.getElementById('feedback');
+
+        const setTimeModal = document.getElementById('set-time-modal');
+        const timePerQuestionInput = document.getElementById('time-per-question-input');
+        const saveTimeBtn = document.getElementById('save-time-btn');
+
+        const quizEndModal = document.getElementById('quiz-end-modal');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+        const backToHomeBtn = document.getElementById('back-to-home-btn');
+
+        const messageBox = document.getElementById('message-box');
+
+        // --- Global Variables ---
+        let verbsData = []; // Stores parsed verb objects: [{meaning, v1, v2, v3}]
+        let currentQuestionIndex = 0;
+        let maxTimePerQuestionSeconds = 0; // Stored in seconds internally
+        let questionCountdownInterval;
+        let quizTotalTimeSeconds = 0; // Total time for the quiz if set, in seconds
+        let quizTimeRemainingSeconds = 0;
+        let quizOverallTimerInterval;
+        let score = 0;
+
+        // --- Helper Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success', 'error', or 'info'.
+         */
+        function showMessageBox(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = 'message-box show'; // Reset classes
+            if (type === 'success') {
+                messageBox.style.backgroundColor = 'var(--correct-color)';
+            } else if (type === 'error') {
+                messageBox.style.backgroundColor = 'var(--incorrect-color)';
+            } else {
+                messageBox.style.backgroundColor = 'var(--accent-blue)';
+            }
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+
+        /**
+         * Hides all pages and shows the specified page with a transition.
+         * @param {HTMLElement} pageToShow - The page element to show.
+         */
+        function showPage(pageToShow) {
+            const allPages = document.querySelectorAll('.page');
+            allPages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Small delay to allow transition effect
+            setTimeout(() => {
+                pageToShow.classList.add('active');
+            }, 50);
+        }
+
+        /**
+         * Opens a modal.
+         * @param {HTMLElement} modalElement - The modal element to open.
+         */
+        function openModal(modalElement) {
+            modalElement.classList.add('show');
+        }
+
+        /**
+         * Closes a modal.
+         * @param {HTMLElement} modalElement - The modal element to close.
+         */
+        function closeModal(modalElement) {
+            modalElement.classList.remove('show');
+        }
+
+        // --- Front Page Input Management ---
+
+        /**
+         * Creates and appends a new verb input row to the container.
+         * @param {Object} [data={}] - Optional initial data for the row (meaning, v1, v2, v3).
+         */
+        function addVerbInputRow(data = {}) {
+            const row = document.createElement('div');
+            row.classList.add('verb-input-row');
+
+            row.innerHTML = `
+                <input type="text" class="input-meaning" placeholder="Arti" value="${data.meaning || ''}">
+                <input type="text" class="input-v1" placeholder="V1" value="${data.v1 || ''}">
+                <input type="text" class="input-v2" placeholder="V2" value="${data.v2 || ''}">
+                <input type="text" class="input-v3" placeholder="V3" value="${data.v3 || ''}">
+                <button class="remove-row-btn btn-small"><i class="fas fa-times"></i></button>
+            `;
+
+            const removeBtn = row.querySelector('.remove-row-btn');
+            removeBtn.addEventListener('click', () => {
+                row.remove();
+                // Ensure at least one row remains if all are removed
+                if (verbInputContainer.children.length === 0) {
+                    addVerbInputRow();
+                }
+            });
+
+            verbInputContainer.appendChild(row);
+            row.querySelector('.input-meaning').focus(); // Focus on the first input of the new row
+        }
+
+        /**
+         * Removes the last verb input row.
+         */
+        function removeLastVerbInputRow() {
+            const rows = verbInputContainer.querySelectorAll('.verb-input-row');
+            if (rows.length > 1) { // Always keep at least one row
+                rows[rows.length - 1].remove();
+            } else {
+                showMessageBox('Minimal harus ada satu baris input.', 'info');
+            }
+        }
+
+        /**
+         * Parses the verb input from the dynamic rows.
+         * Stores valid verbs in the `verbsData` array.
+         */
+        function parseVerbsInput() {
+            const rows = verbInputContainer.querySelectorAll('.verb-input-row');
+            const newVerbs = [];
+            let invalidRowsCount = 0;
+
+            rows.forEach(row => {
+                const meaning = row.querySelector('.input-meaning').value.trim();
+                const v1 = row.querySelector('.input-v1').value.trim();
+                const v2 = row.querySelector('.input-v2').value.trim();
+                const v3 = row.querySelector('.input-v3').value.trim();
+
+                if (meaning && v1 && v2 && v3) {
+                    newVerbs.push({
+                        meaning: meaning.toLowerCase(),
+                        v1: v1.toLowerCase(),
+                        v2: v2.toLowerCase(),
+                        v3: v3.toLowerCase()
+                    });
+                } else if (meaning || v1 || v2 || v3) { // Partially filled row
+                    invalidRowsCount++;
+                }
+            });
+
+            verbsData = newVerbs;
+
+            if (invalidRowsCount > 0) {
+                showMessageBox(`Ada ${invalidRowsCount} baris yang tidak lengkap dan diabaikan.`, 'error');
+            }
+            if (verbsData.length === 0) {
+                showMessageBox('Tidak ada kata kerja valid yang ditemukan. Harap isi setidaknya satu baris lengkap.', 'error');
+            } else {
+                showMessageBox(`${verbsData.length} kata kerja berhasil dimuat.`, 'success');
+            }
+        }
+
+        // --- Core Quiz Logic Functions ---
+
+        /**
+         * Shuffles the `verbsData` array.
+         */
+        function shuffleVerbs() {
+            if (verbsData.length === 0) {
+                parseVerbsInput(); // Try to parse first if not already done
+                if (verbsData.length === 0) return; // If still empty, exit
+            }
+
+            for (let i = verbsData.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [verbsData[i], verbsData[j]] = [verbsData[j], verbsData[i]];
+            }
+            showMessageBox('Urutan pertanyaan diacak!', 'info');
+        }
+
+        /**
+         * Starts the quiz.
+         */
+        function startQuiz() {
+            parseVerbsInput(); // Always parse before starting quiz
+            if (verbsData.length === 0) {
+                showMessageBox('Tidak ada kata kerja untuk kuis. Harap masukkan daftar kata kerja.', 'error');
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            score = 0;
+            feedbackDisplay.textContent = '';
+            quizTimerDisplay.textContent = ''; // Clear quiz timer display initially
+
+            // If a time limit is set, calculate total quiz time and start overall timer
+            if (maxTimePerQuestionSeconds > 0) {
+                quizTotalTimeSeconds = verbsData.length * maxTimePerQuestionSeconds;
+                quizTimeRemainingSeconds = quizTotalTimeSeconds;
+                startOverallQuizTimer();
+            } else {
+                quizTimerDisplay.textContent = 'Waktu: Tanpa Batas';
+            }
+
+            showPage(gamePage);
+            showQuestion();
+        }
+
+        /**
+         * Displays the current question.
+         */
+        function showQuestion() {
+            // Clear previous feedback and inputs
+            feedbackDisplay.textContent = '';
+            feedbackDisplay.classList.remove('correct', 'incorrect');
+            v1Input.value = '';
+            v2Input.value = '';
+            v3Input.value = '';
+            v1Input.style.borderColor = 'var(--accent-blue)';
+            v2Input.style.borderColor = 'var(--accent-blue)';
+            v3Input.style.borderColor = 'var(--accent-blue)';
+            checkBtn.disabled = false; // Enable check button
+
+            if (currentQuestionIndex < verbsData.length) {
+                const currentVerb = verbsData[currentQuestionIndex];
+                verbMeaningDisplay.textContent = currentVerb.meaning.charAt(0).toUpperCase() + currentVerb.meaning.slice(1); // Capitalize first letter
+
+                // Start per-question countdown if time limit is set
+                clearInterval(questionCountdownInterval); // Clear any existing timer
+                if (maxTimePerQuestionSeconds > 0) {
+                    let timeLeft = maxTimePerQuestionSeconds;
+                    quizTimerDisplay.textContent = `Kuis Keseluruhan: ${formatTime(quizTimeRemainingSeconds)} | Sisa Soal Ini: ${timeLeft}s`;
+                    questionCountdownInterval = setInterval(() => {
+                        timeLeft--;
+                        quizTimerDisplay.textContent = `Kuis Keseluruhan: ${formatTime(quizTimeRemainingSeconds)} | Sisa Soal Ini: ${timeLeft}s`;
+                        if (timeLeft <= 0) {
+                            clearInterval(questionCountdownInterval);
+                            showMessageBox('Waktu habis untuk soal ini!', 'error');
+                            checkAnswer(true); // Automatically check as incorrect
+                        }
+                    }, 1000);
+                }
+            } else {
+                endQuiz(); // All questions answered
+            }
+        }
+
+        /**
+         * Checks the user's answer.
+         * @param {boolean} timedOut - True if the check is triggered by a timeout.
+         */
+        function checkAnswer(timedOut = false) {
+            clearInterval(questionCountdownInterval); // Stop the per-question timer
+            checkBtn.disabled = true; // Disable check button to prevent multiple checks
+
+            const currentVerb = verbsData[currentQuestionIndex];
+            const userAnswerV1 = v1Input.value.trim().toLowerCase();
+            const userAnswerV2 = v2Input.value.trim().toLowerCase();
+            const userAnswerV3 = v3Input.value.trim().toLowerCase();
+
+            const isV1Correct = userAnswerV1 === currentVerb.v1;
+            const isV2Correct = userAnswerV2 === currentVerb.v2;
+            const isV3Correct = userAnswerV3 === currentVerb.v3;
+
+            // Apply border colors based on correctness
+            v1Input.style.borderColor = isV1Correct ? 'var(--correct-color)' : 'var(--incorrect-color)';
+            v2Input.style.borderColor = isV2Correct ? 'var(--correct-color)' : 'var(--incorrect-color)';
+            v3Input.style.borderColor = isV3Correct ? 'var(--correct-color)' : 'var(--incorrect-color)';
+
+            if (isV1Correct && isV2Correct && isV3Correct && !timedOut) {
+                feedbackDisplay.textContent = 'Benar! ' + currentVerb.v1 + ', ' + currentVerb.v2 + ', ' + currentVerb.v3;
+                feedbackDisplay.classList.add('correct');
+                feedbackDisplay.classList.remove('incorrect');
+                score++;
+            } else {
+                feedbackDisplay.textContent = `Salah. Jawaban yang benar: ${currentVerb.v1}, ${currentVerb.v2}, ${currentVerb.v3}`;
+                feedbackDisplay.classList.add('incorrect');
+                feedbackDisplay.classList.remove('correct');
+            }
+
+            // Move to next question after a short delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 1500); // 1.5 seconds delay
+        }
+
+        /**
+         * Starts the overall quiz timer.
+         */
+        function startOverallQuizTimer() {
+            clearInterval(quizOverallTimerInterval); // Clear any existing timer
+            quizOverallTimerInterval = setInterval(() => {
+                quizTimeRemainingSeconds--;
+                // Only check for quiz end here. Display update is handled by showQuestion.
+                if (quizTimeRemainingSeconds <= 0) {
+                    clearInterval(quizOverallTimerInterval);
+                    clearInterval(questionCountdownInterval);
+                    showMessageBox('Waktu kuis keseluruhan habis!', 'error');
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Formats time in seconds into MM:SS format.
+         * @param {number} totalSeconds - Time in seconds.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        /**
+         * Ends the quiz and displays the score.
+         */
+        function endQuiz() {
+            clearInterval(questionCountdownInterval);
+            clearInterval(quizOverallTimerInterval);
+            finalScoreDisplay.textContent = `Anda menjawab ${score} dari ${verbsData.length} pertanyaan dengan benar.`;
+            openModal(quizEndModal);
+        }
+
+        // --- Event Listeners ---
+
+        // Front Page Input Management Buttons
+        addRowBtn.addEventListener('click', () => addVerbInputRow());
+        removeLastRowBtn.addEventListener('click', removeLastVerbInputRow);
+
+        // Front Page Quiz Control Buttons
+        shuffleBtn.addEventListener('click', shuffleVerbs);
+        setTimeBtn.addEventListener('click', () => openModal(setTimeModal));
+        startQuizBtn.addEventListener('click', startQuiz);
+
+        // Game Page Button
+        checkBtn.addEventListener('click', () => checkAnswer(false));
+
+        // Set Time Modal Buttons
+        saveTimeBtn.addEventListener('click', () => {
+            const inputVal = parseInt(timePerQuestionInput.value, 10);
+            if (!isNaN(inputVal) && inputVal >= 0) {
+                maxTimePerQuestionSeconds = inputVal * 60; // Convert minutes to seconds
+                showMessageBox(`Waktu per pertanyaan diatur ke ${inputVal === 0 ? 'tanpa batas' : inputVal + ' menit'}.`, 'success');
+                closeModal(setTimeModal);
+            } else {
+                showMessageBox('Waktu tidak valid. Harap masukkan angka positif.', 'error');
+            }
+        });
+
+        // Quiz End Modal Buttons
+        restartQuizBtn.addEventListener('click', () => {
+            closeModal(quizEndModal);
+            startQuiz(); // Restart the quiz
+        });
+        backToHomeBtn.addEventListener('click', () => {
+            closeModal(quizEndModal);
+            showPage(frontPage);
+        });
+
+        // Close buttons for modals
+        document.querySelectorAll('.close-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                closeModal(event.target.closest('.modal'));
+            });
+        });
+
+        // Close modal if clicked outside content
+        window.addEventListener('click', (event) => {
+            if (event.target === setTimeModal) {
+                closeModal(setTimeModal);
+            }
+            if (event.target === quizEndModal) {
+                closeModal(quizEndModal);
+            }
+        });
+
+        // Initial setup: Ensure front page is active on load and pre-fill example data
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage(frontPage);
+            // Pre-fill with example data
+            const exampleVerbs = [
+                { meaning: 'makan', v1: 'eat', v2: 'ate', v3: 'eaten' },
+                { meaning: 'pergi', v1: 'go', v2: 'went', v3: 'gone' },
+                { meaning: 'datang', v1: 'come', v2: 'came', v3: 'come' },
+                { meaning: 'minum', v1: 'drink', v2: 'drank', v3: 'drunk' },
+                { meaning: 'menulis', v1: 'write', v2: 'wrote', v3: 'written' }
+            ];
+            // Clear any default empty row first if it exists
+            verbInputContainer.innerHTML = '';
+            exampleVerbs.forEach(verb => addVerbInputRow(verb));
+            // Ensure at least one empty row if no examples are provided
+            if (exampleVerbs.length === 0) {
+                addVerbInputRow();
+            }
+        });
+
+    </script>
+</body>
+</html>
