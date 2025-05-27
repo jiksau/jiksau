@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExtraCourse User Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex-grow: 1;
+        }
+        h1, h2 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .info-card {
+            background-color: #e0f2fe;
+            border-left: 6px solid #007bff;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .info-card p {
+            margin-bottom: 0.5rem;
+        }
+        .info-card strong {
+            color: #0056b3;
+        }
+        button {
+            background-color: #ef4444; /* Red for logout */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+        }
+        button:hover {
+            background-color: #dc2626;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        /* Message Box styles (reused) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+            max-width: 300px;
+        }
+        .message-box.success {
+            border: 2px solid #28a745;
+            color: #28a745;
+        }
+        .message-box.error {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold flex-grow text-center">Dashboard Pengguna ExtraCourse</h1>
+            <button id="logoutButton">Logout</button>
+        </header>
+
+        <section id="user-info-section">
+            <h2 class="text-2xl font-bold mb-4">Informasi Akun Anda</h2>
+            <div class="info-card">
+                <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+                <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
+                <p><strong>Nama:</strong> <span id="userName">Loading...</span></p>
+                <p><strong>Peran:</strong> <span id="userRole">Loading...</span></p>
+            </div>
+        </section>
+
+        <section id="registration-status-section">
+            <h2 class="text-2xl font-bold mb-4">Status Pendaftaran Anda</h2>
+            <div class="info-card" id="registrationStatusCard">
+                <p>Mencari data pendaftaran Anda...</p>
+            </div>
+        </section>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <footer>
+        <p>2024 Property of ExtraCourse</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration (hardcoded for static hosting)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Extract appId from the config for collection path
+        const appId = firebaseConfig.appId;
+
+        // DOM Elements
+        const userEmailSpan = document.getElementById('userEmail');
+        const userIdSpan = document.getElementById('userId');
+        const userNameSpan = document.getElementById('userName');
+        const userRoleSpan = document.getElementById('userRole');
+        const logoutButton = document.getElementById('logoutButton');
+        const registrationStatusCard = document.getElementById('registrationStatusCard');
+
+        // --- Message Box Functions (reused) ---
+        function showMessageBox(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+
+            messageText.textContent = message;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        window.hideMessageBox = function() {
+            const messageBox = document.getElementById('messageBox');
+            const overlay = document.getElementById('overlay');
+            messageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // --- Authentication Check and Data Loading ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in
+                userEmailSpan.textContent = user.email;
+                userIdSpan.textContent = user.uid;
+
+                // Load user profile data from Firestore (from 'users' collection)
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        userNameSpan.textContent = userData.name || 'N/A';
+                        userRoleSpan.textContent = userData.role || 'N/A';
+                    } else {
+                        userNameSpan.textContent = 'Profil tidak ditemukan.';
+                        userRoleSpan.textContent = 'N/A';
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                    userNameSpan.textContent = 'Gagal memuat nama.';
+                    userRoleSpan.textContent = 'Gagal memuat peran.';
+                }
+
+                // Load user's registration data
+                loadUserRegistration(user.uid);
+
+            } else {
+                // User is signed out, redirect to login page
+                window.location.href = "index.html"; // Redirect to your login/signup page
+            }
+        });
+
+        // --- Logout Functionality ---
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // Redirect will happen via onAuthStateChanged
+            } catch (error) {
+                console.error("Logout failed:", error.message);
+                showMessageBox(`Logout gagal: ${error.message}`, 'error');
+            }
+        });
+
+        // --- Load User's Registration Data ---
+        function loadUserRegistration(currentUserId) {
+            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
+            // Query for registrations where the 'userId' field matches the current user's UID
+            const q = query(registrationsRef, where("userId", "==", currentUserId));
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    registrationStatusCard.innerHTML = '<p>Anda belum memiliki pendaftaran aktif.</p><p class="text-sm text-gray-600 mt-2">Silakan isi formulir pendaftaran untuk memulai.</p>';
+                    return;
+                }
+
+                let registrationHtml = '';
+                snapshot.forEach((doc) => {
+                    const reg = doc.data();
+                    const timestamp = reg.timestamp ? new Date(reg.timestamp.toDate()).toLocaleString() : 'N/A';
+                    const jenisKelas = Array.isArray(reg.jenis_kelas) ? reg.jenis_kelas.join(', ') : (reg.jenis_kelas || 'N/A');
+
+                    registrationHtml += `
+                        <div class="mb-4 p-4 border rounded-lg bg-white shadow-sm">
+                            <p><strong>Tanggal Daftar:</strong> ${timestamp}</p>
+                            <p><strong>Jenis Kelas:</strong> ${jenisKelas}</p>
+                            <p><strong>Metode:</strong> ${reg.metode || 'N/A'}</p>
+                            <p><strong>Jadwal Diinginkan:</strong> ${reg.jadwal_diinginkan || 'N/A'}</p>
+                            <p><strong>Target Belajar:</strong> ${reg.target_tujuan || 'N/A'}</p>
+                            <p class="text-sm text-gray-600 mt-2"><i>ID Pendaftaran: ${doc.id}</i></p>
+                        </div>
+                    `;
+                });
+                registrationStatusCard.innerHTML = registrationHtml;
+            }, (error) => {
+                console.error("Error fetching user registrations:", error);
+                registrationStatusCard.innerHTML = `<p class="text-red-500">Gagal memuat status pendaftaran: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
