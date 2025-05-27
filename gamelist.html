@@ -20,6 +20,24 @@
             padding: 20px; /* Add some padding for smaller screens */
         }
 
+        .welcome-section {
+            margin-bottom: 30px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-section h2 {
+            font-size: 2.8rem; /* Larger welcome message */
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .welcome-section p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+
         h1 {
             font-size: 2.5rem; /* Slightly larger heading */
             margin-bottom: 40px;
@@ -52,7 +70,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            min-height: 180px; /* Ensure consistent card height */
+            min-height: 220px; /* Ensure consistent card height */
         }
 
         .game-card::before {
@@ -78,12 +96,26 @@
             opacity: 1;
         }
 
+        .game-icon {
+            font-size: 3rem; /* Larger icon size */
+            margin-bottom: 15px;
+            color: #fff; /* White icon color */
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
         .game-title {
             font-size: 1.4rem; /* Larger title */
             font-weight: 700; /* Bolder font */
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* Reduced margin */
             color: #fff; /* White text for titles */
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-description {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px; /* Space before button */
+            flex-grow: 1; /* Allow description to take available space */
         }
 
         .play-button {
@@ -115,6 +147,12 @@
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            .welcome-section h2 {
+                font-size: 2rem;
+            }
+            .welcome-section p {
+                font-size: 1rem;
+            }
             h1 {
                 font-size: 2rem;
                 margin-bottom: 30px;
@@ -125,10 +163,16 @@
             }
             .game-card {
                 padding: 25px;
-                min-height: 160px;
+                min-height: 200px;
+            }
+            .game-icon {
+                font-size: 2.5rem;
             }
             .game-title {
                 font-size: 1.3rem;
+            }
+            .game-description {
+                font-size: 0.9rem;
             }
             .play-button {
                 font-size: 1rem;
@@ -138,47 +182,61 @@
     </style>
 </head>
 <body>
+    <div class="welcome-section">
+        <h2>Welcome to the ExtraCourse!</h2>
+        <p>Choose a module to start your journey.</p>
+    </div>
+
     <h1>Game Dashboard</h1>
     <div class="dashboard">
         <div class="game-card" onclick="window.location.href='question.html'">
-            <div class="game-title">Question Generator</div>
+            <div class="game-icon">💡</div> <div class="game-title">Question Generator</div>
+            <div class="game-description">Craft engaging questions on any topic.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='dashboard.html'">
-            <div class="game-title">Discussion</div>
+            <div class="game-icon">💬</div> <div class="game-title">Discussion</div>
+            <div class="game-description">Connect and discuss with other learners.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='kosakata 2.html'">
-            <div class="game-title">Vocabulary Memorize</div>
+            <div class="game-icon">📚</div> <div class="game-title">Vocabulary Memorize</div>
+            <div class="game-description">Expand your vocabulary with interactive exercises.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='chat real 1.html'">
-            <div class="game-title">Chat Realtime</div>
+            <div class="game-icon">🗣️</div> <div class="game-title">Chat Realtime</div>
+            <div class="game-description">Practice speaking and writing in real-time.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='scramble.html'">
-            <div class="game-title">Scramble Sentences</div>
+            <div class="game-icon">🧩</div> <div class="game-title">Scramble Sentences</div>
+            <div class="game-description">Rearrange words to form correct sentences.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='kosakatapart2.html'">
-            <div class="game-title">Vocabulary Memorize Part 2</div>
+            <div class="game-icon">📖</div> <div class="game-title">Vocabulary Memorize Part 2</div>
+            <div class="game-description">Continue building your vocabulary with new sets.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='kosakata 3.html'">
-            <div class="game-title">Vocabulary Memorize part 3</div>
+            <div class="game-icon">📘</div> <div class="game-title">Vocabulary Memorize part 3</div>
+            <div class="game-description">Advanced vocabulary for fluent speakers.</div>
             <button class="play-button">Play</button>
         </div>
 
         <div class="game-card" onclick="window.location.href='kosakata 4.html'">
-            <div class="game-title">Vocabulary Memorize part 4</div>
+            <div class="game-icon">🎓</div> <div class="game-title">Vocabulary Memorize part 4</div>
+            <div class="game-description">Master complex words and phrases.</div>
             <button class="play-button">Play</button>
         </div>
+
     </div>
 </body>
 </html>
