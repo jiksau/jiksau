@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catat Absensi & Evaluasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex-grow: 1;
+        }
+        h1, h2 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .form-section:last-of-type {
+            border-bottom: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Slider specific styles */
+        .slider-group {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .slider-group label {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2d3748;
+        }
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 2rem; /* Give space for labels */
+        }
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #cbd5e0;
+            outline: none;
+            border-radius: 5px;
+            opacity: 0.7;
+            transition: opacity .2s;
+            margin: 0; /* Remove default margin */
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .slider-container input[type="range"]:hover {
+            opacity: 1;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3182ce;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3182ce;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem; /* Space below the slider track */
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        .slider-labels span {
+            flex: 1;
+            text-align: center;
+        }
+        .slider-labels span:first-child { text-align: left; }
+        .slider-labels span:last-child { text-align: right; }
+
+
+        /* Message box styles (reused) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            text-align: center;
+            display: none;
+            max-width: 300px;
+        }
+        .message-box.success {
+            border: 2px solid #28a745;
+            color: #28a745;
+        }
+        .message-box.error {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold mb-2">Catat Absensi & Evaluasi Diri</h1>
+            <p class="text-gray-600 text-center mb-4">Isi formulir ini untuk mencatat absensi dan memberikan evaluasi Anda.</p>
+            <p class="text-sm text-gray-500 text-center">Login sebagai: <strong><span id="loggedInUserEmail">Loading...</span></strong> (ID: <span id="loggedInUserId">Loading...</span>)</p>
+        </header>
+
+        <form id="attendanceEvaluationForm">
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">Informasi Sesi</h2>
+                <label for="attendanceDate">Tanggal:</label>
+                <input type="date" id="attendanceDate" name="date" required>
+
+                <label for="meetingNumber">Pertemuan ke-:</label>
+                <input type="number" id="meetingNumber" name="meeting" required placeholder="Contoh: 1, 2, 3...">
+
+                <label for="todayMaterial">Materi Hari Ini:</label>
+                <textarea id="todayMaterial" name="material" rows="3" placeholder="Contoh: Grammar - Simple Past Tense"></textarea>
+
+                <label for="homework">Tugas Rumah:</label>
+                <textarea id="homework" name="homework" rows="3" placeholder="Contoh: Mengerjakan latihan halaman 10-12"></textarea>
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">Evaluasi Diri Siswa</h2>
+
+                <div class="slider-group">
+                    <label for="moodScale">1. Saya dalam suasana hati yang baik hari ini:</label>
+                    <div class="slider-container">
+                        <input type="range" id="moodScale" name="mood" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Tidak Mood</span>
+                        <span></span>
+                        <span>Biasa Saja</span>
+                        <span></span>
+                        <span>Mood Paling Baik</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <label for="understoodScale">2. Saya memahami materi yang disampaikan:</label>
+                    <div class="slider-container">
+                        <input type="range" id="understoodScale" name="understood" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Tidak Paham</span>
+                        <span></span>
+                        <span>Cukup Paham</span>
+                        <span></span>
+                        <span>Sangat Paham</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <label for="easyScale">3. Materi yang disampaikan mudah dipahami:</label>
+                    <div class="slider-container">
+                        <input type="range" id="easyScale" name="easy" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Sangat Sulit</span>
+                        <span></span>
+                        <span>Cukup Mudah</span>
+                        <span></span>
+                        <span>Sangat Mudah</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <label for="creativityScale">4. Saya dapat menggunakan kreativitas saya:</label>
+                    <div class="slider-container">
+                        <input type="range" id="creativityScale" name="creativity" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Tidak Sama Sekali</span>
+                        <span></span>
+                        <span>Cukup</span>
+                        <span></span>
+                        <span>Sangat Baik</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <label for="tiredScale">5. Saya tidak merasa lelah atau kewalahan:</label>
+                    <div class="slider-container">
+                        <input type="range" id="tiredScale" name="tired" min="1" max="5" value="3" required>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Sangat Lelah</span>
+                        <span></span>
+                        <span>Cukup Baik</span>
+                        <span></span>
+                        <span>Sangat Segar</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Kirim Absensi & Evaluasi</button>
+        </form>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <footer>
+        <p>2024 Property of ExtraCourse</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration (hardcoded for static hosting)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const attendanceEvaluationForm = document.getElementById('attendanceEvaluationForm');
+        const loggedInUserEmailSpan = document.getElementById('loggedInUserEmail');
+        const loggedInUserIdSpan = document.getElementById('loggedInUserId');
+
+        let currentUserId = null;
+        let currentUserEmail = null;
+
+        // --- Message Box Functions (reused) ---
+        function showMessageBox(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+
+            messageText.textContent = message;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        window.hideMessageBox = function() {
+            const messageBox = document.getElementById('messageBox');
+            const overlay = document.getElementById('overlay');
+            messageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // --- Authentication Check ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                currentUserEmail = user.email;
+                loggedInUserEmailSpan.textContent = user.email;
+                loggedInUserIdSpan.textContent = user.uid;
+                console.log("User logged in for attendance:", user.email, user.uid);
+            } else {
+                showMessageBox("Anda harus login untuk mencatat absensi.", 'error');
+                setTimeout(() => {
+                    window.location.href = "index.html"; // Redirect to login
+                }, 2000);
+            }
+        });
+
+        // --- Form Submission Logic ---
+        attendanceEvaluationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!currentUserId) {
+                showMessageBox("Pengguna belum terautentikasi. Mohon coba lagi setelah login.", 'error');
+                return;
+            }
+
+            const formData = new FormData(attendanceEvaluationForm);
+            const data = {
+                studentId: currentUserId,
+                studentEmail: currentUserEmail,
+                date: formData.get('date'),
+                meetingNumber: parseInt(formData.get('meeting')), // Convert to number
+                material: formData.get('material'),
+                homework: formData.get('homework'),
+                evaluation: {
+                    mood: parseInt(formData.get('mood')),
+                    understood: parseInt(formData.get('understood')),
+                    easy: parseInt(formData.get('easy')),
+                    creativity: parseInt(formData.get('creativity')),
+                    tired: parseInt(formData.get('tired'))
+                },
+                timestamp: serverTimestamp() // Record submission time
+            };
+
+            try {
+                await addDoc(collection(db, "studentAttendance"), data);
+                showMessageBox("Absensi dan evaluasi berhasil dikirim!", 'success');
+                attendanceEvaluationForm.reset();
+                // Optional: Redirect back to user dashboard after submission
+                setTimeout(() => {
+                    window.location.href = "user-dashboard.html";
+                }, 2000);
+            } catch (error) {
+                console.error("Error submitting attendance and evaluation:", error);
+                showMessageBox(`Gagal mengirim absensi: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
