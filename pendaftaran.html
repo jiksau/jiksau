@@ -550,12 +550,12 @@
                     timestamp: new Date() // Add a timestamp
                 });
 
-                showMessageBox("Pendaftaran berhasil dikirim! Silakan cek dashboard Anda.", 'success');
+                showMessageBox("Pendaftaran berhasil dikirim! Mengarahkan ke dashboard Anda...", 'success');
                 this.reset(); // Reset the form after successful submission
-                // Optional: Redirect back to user dashboard after successful submission
-                // setTimeout(() => {
-                //     window.location.href = "user-dashboard.html";
-                // }, 2000);
+                // Redirect back to user dashboard after successful submission
+                setTimeout(() => {
+                    window.location.href = "user-dashboard.html"; // Redirect to user dashboard
+                }, 2000); // Give user time to read the message
 
             } catch (e) {
                 console.error("Error adding document: ", e);
