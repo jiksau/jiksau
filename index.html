@@ -191,84 +191,38 @@
         }
     </style>
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import {
             getAuth,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
-            sendPasswordResetEmail,
-            signInWithCustomToken,
-            signInAnonymously,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+            sendPasswordResetEmail
+        } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
             getFirestore,
             doc,
             setDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // IMPORTANT: This Firebase config is hardcoded as per your original request.
+        // If running in a Canvas environment, the recommended method is to use
+        // __firebase_config, __initial_auth_token, and __app_id global variables.
+        // Ensure the project defined here has Email/Password and Anonymous sign-in enabled.
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45",
+        };
 
-        let app = null;
-        let auth = null;
-        let db = null;
-        let userId = 'anonymous'; // Default userId, will be updated on auth state change
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            const statusDiv = document.getElementById("status");
-
-            // Log the firebaseConfig to the console for debugging
-            console.log("Firebase Config:", firebaseConfig);
-
-            // Check if firebaseConfig is provided and valid (e.g., has an apiKey)
-            if (firebaseConfig && Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
-                try {
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-
-                    // Sign in with custom token or anonymously
-                    if (initialAuthToken) {
-                        try {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                            console.log("Signed in with custom token.");
-                        } catch (error) {
-                            console.error("Error signing in with custom token:", error);
-                            // Fallback to anonymous sign-in if custom token fails
-                            await signInAnonymously(auth);
-                            console.log("Signed in anonymously as fallback.");
-                        }
-                    } else {
-                        await signInAnonymously(auth);
-                        console.log("Signed in anonymously.");
-                    }
-
-                    // Listen for authentication state changes to update userId
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            userId = user.uid;
-                            console.log("Auth state changed. User ID:", userId);
-                        } else {
-                            // If no user is authenticated, generate a random ID for anonymous use
-                            userId = crypto.randomUUID();
-                            console.log("Auth state changed. No user, generated anonymous ID:", userId);
-                        }
-                    });
-                } catch (initError) {
-                    console.error("Error initializing Firebase:", initError);
-                    statusDiv.innerText = "Error: Failed to initialize Firebase. Please check console for details.";
-                    // Set auth and db to null to prevent further errors
-                    auth = null;
-                    db = null;
-                }
-            } else {
-                console.error("Firebase configuration missing or invalid. Firebase services will not be initialized.");
-                statusDiv.innerText = "Error: Firebase configuration missing or invalid. Please ensure the environment provides it.";
-            }
-
+        document.addEventListener("DOMContentLoaded", () => {
             const signupButton = document.getElementById("signup-button");
             const signinButton = document.getElementById("signin-button");
             const signupTab = document.getElementById("signup-tab");
@@ -276,8 +230,9 @@
             const signupForm = document.getElementById("signup-form");
             const signinForm = document.getElementById("signin-form");
             const forgotPasswordLink = document.getElementById("forgot-password");
+            const statusDiv = document.getElementById("status"); // Reference to status div
 
-            // Initial tab display
+            // Set initial active tab
             signupForm.classList.add("active");
             signupTab.classList.add("active");
 
@@ -298,12 +253,6 @@
             });
 
             signupButton.addEventListener("click", async () => {
-                // Ensure Firebase is initialized before attempting operations
-                if (!auth || !db) {
-                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
-                    return;
-                }
-
                 const email = document.getElementById("signup-email").value;
                 const password = document.getElementById("signup-password").value;
                 const name = document.getElementById("signup-name").value;
@@ -311,12 +260,9 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    // Store user data in Firestore under the private path
-                    await setDoc(doc(db, `artifacts/${appId}/users/${user.uid}/user_profiles`, user.uid), {
-                        name: name || "Anonymous",
-                        role: "Student",
-                        email: user.email
-                    });
+                    // For hardcoded config, assuming a general users collection.
+                    // If using Canvas environment, this path needs to be artifacts/${appId}/users/${user.uid}/user_profiles
+                    await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
                     setTimeout(() => window.location.href = "gamelist.html", 2000);
@@ -327,12 +273,6 @@
             });
 
             signinButton.addEventListener("click", async () => {
-                // Ensure Firebase is initialized before attempting operations
-                if (!auth) {
-                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
-                    return;
-                }
-
                 const email = document.getElementById("signin-email").value;
                 const password = document.getElementById("signin-password").value;
 
@@ -350,16 +290,10 @@
 
             forgotPasswordLink.addEventListener("click", async (e) => {
                 e.preventDefault();
-                // Ensure Firebase is initialized before attempting operations
-                if (!auth) {
-                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
-                    return;
-                }
-
                 const email = document.getElementById("signin-email").value;
 
                 if (!email) {
-                    statusDiv.innerText = "Please enter your email in the Sign In tab first to reset password.";
+                    statusDiv.innerText = "Please enter your email in the Sign In tab first.";
                     return;
                 }
 
