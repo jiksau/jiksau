@@ -1,304 +1,724 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Flashcard Kosakata</title>
-  <style>
-    body {
-      background-color: #121212;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Kosakata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to override or extend Tailwind */
+        body {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); /* Darker, subtle gradient */
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
 
-    h1, h2 {
-      color: #00bcd4;
-    }
+        h1, h2 {
+            color: #667eea; /* A vibrant purple-blue for headings */
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+        }
 
-    .input-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+        }
 
-    .input-row input {
-      background-color: #1e1e1e;
-      color: #fff;
-      border: 1px solid #333;
-      padding: 8px;
-      border-radius: 6px;
-      width: 160px;
-    }
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
 
-    .control-panel {
-      margin: 15px 0;
-      text-align: center;
-    }
+        #input-area, #flashcard-area, #result-summary {
+            width: 90%;
+            max-width: 500px; /* Consistent max-width for main sections */
+            margin-bottom: 20px; /* Space between sections if they were stacked */
+        }
 
-    button {
-      background-color: #00bcd4;
-      color: #121212;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 5px;
-      font-weight: bold;
-    }
+        .input-row {
+            display: flex;
+            gap: 15px; /* Increased gap for better spacing */
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            justify-content: center;
+            align-items: center; /* Center items vertically */
+        }
 
-    .card {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 30px;
-      margin-top: 20px;
-      text-align: center;
-      width: 300px;
-      box-shadow: 0 0 15px #00bcd4;
-    }
+        .input-row input {
+            background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px; /* More padding */
+            border-radius: 10px; /* More rounded */
+            width: 180px; /* Consistent width for inputs */
+            max-width: calc(50% - 10px); /* Adjust for gap on wider screens */
+            flex-grow: 1; /* Allow inputs to grow */
+            transition: all 0.3s ease;
+            outline: none;
+        }
 
-    .hidden {
-      display: none;
-    }
+        .input-row input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
 
-    #result {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+        .input-row input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
 
-    .green { color: #4caf50; }
-    .red { color: #f44336; }
+        .control-panel {
+            margin: 25px auto; /* Center panel horizontally */
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05); /* Subtle panel background */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 100%; /* Take full width of its parent (#input-area) */
+            max-width: 500px; /* Max width for consistency */
+            display: flex; /* Use flexbox for button layout */
+            flex-direction: column; /* Stack items vertically */
+            align-items: center; /* Center items horizontally */
+            gap: 15px; /* Space between elements in control panel */
+        }
 
-    #countdown {
-      font-size: 1.2em;
-      margin-top: 10px;
-      color: #ff9800;
-    }
+        .control-panel .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px; /* Space between buttons in a group */
+            width: 100%;
+        }
 
-    #summary-stats {
-      font-size: 1.1em;
-      line-height: 1.6em;
-      text-align: center;
-    }
-  </style>
+        .control-panel label {
+            display: flex; /* Use flex for label and input alignment */
+            align-items: center; /* Vertically align text and checkbox */
+            justify-content: center; /* Center content */
+            font-size: 1.1rem;
+            color: #b3cde0; /* Lighter blue for labels */
+        }
+
+        .control-panel input[type="checkbox"] {
+            margin-left: 8px;
+            transform: scale(1.2); /* Slightly larger checkbox */
+            accent-color: #667eea; /* Color the checkbox */
+        }
+
+        .control-panel input[type="number"] {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 10px;
+            border-radius: 8px;
+            width: 60px; /* Adjust width */
+            text-align: center;
+            margin-left: 5px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .control-panel input[type="number"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2); /* Gradient button */
+            color: #fff;
+            border: none;
+            padding: 12px 25px; /* More padding */
+            border-radius: 10px; /* More rounded */
+            cursor: pointer;
+            margin: 0; /* Reset margin, use gap from flexbox */
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase; /* Uppercase text */
+            letter-spacing: 0.5px;
+            flex-grow: 1; /* Allow buttons to grow within their group */
+            max-width: 200px; /* Limit max width of buttons */
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea); /* Reverse gradient on hover */
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        #progress-container {
+            width: 100%; /* Take full width of its parent */
+            height: 15px; /* Height of the bar */
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 20px; /* Space from countdown */
+            overflow: hidden; /* Ensure inner bar stays within bounds */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%; /* Starts at 0% */
+            background: linear-gradient(90deg, #667eea, #764ba2); /* Gradient fill */
+            border-radius: 8px; /* Match container */
+            transition: width 0.5s ease-in-out; /* Smooth transition for width change */
+        }
+
+
+        .card {
+            background: rgba(255, 255, 255, 0.1); /* Frosted glass effect for card */
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 40px; /* More padding */
+            margin-top: 30px; /* Space from progress bar */
+            text-align: center;
+            width: 100%; /* Take full width of its parent */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Deeper shadow */
+            position: relative;
+            overflow: hidden;
+            animation: cardPopIn 0.5s ease-out;
+            display: flex; /* Use flexbox for card content */
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes cardPopIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .card h2 {
+            font-size: 2.5rem; /* Larger word display */
+            margin-bottom: 25px;
+            color: #fff; /* White text for the word */
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .card input[type="text"] {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            width: calc(100% - 30px); /* Adjust for padding */
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .card input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.4);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #result {
+            margin-top: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            min-height: 1.5em; /* Prevent layout shift */
+            margin-bottom: 20px; /* Space before next button */
+        }
+
+        .green { color: #4caf50; text-shadow: 0 0 8px rgba(76, 175, 80, 0.6); } /* Green with glow */
+        .red { color: #f44336; text-shadow: 0 0 8px rgba(244, 67, 54, 0.6); }   /* Red with glow */
+
+        #countdown {
+            font-size: 1.8em; /* Larger countdown */
+            margin-top: 10px;
+            color: #ff9800; /* Orange for countdown */
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+            margin-bottom: 15px; /* Space before progress bar */
+        }
+
+        #result-summary {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15)); /* Gradient background */
+            backdrop-filter: blur(10px); /* Stronger blur */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px; /* More rounded */
+            padding: 40px; /* More padding */
+            margin-top: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5); /* Deeper shadow */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px; /* Increased space between elements */
+            animation: fadeInScale 0.7s ease-out; /* Pop-in animation */
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.8) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        #summary-stats {
+            font-size: 1.2em;
+            line-height: 1.8em;
+            text-align: center;
+            color: #e0e0e0; /* Ensure text color is visible on gradient */
+            background: none; /* Remove background from inner stats */
+            border-radius: 0;
+            padding: 0;
+            margin-top: 0;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #summary-icon {
+            font-size: 4rem; /* Large icon */
+            margin-bottom: 15px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #summary-message {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #b3cde0;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            h2 {
+                font-size: 1.8rem;
+            }
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .input-row input {
+                width: 100%;
+                max-width: 100%; /* Ensure full width on small screens */
+            }
+            .control-panel {
+                padding: 15px;
+                gap: 10px;
+            }
+            .control-panel .button-group {
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 10px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin: 0; /* Reset margin */
+                width: 100%; /* Full width buttons */
+                max-width: 100%;
+            }
+            #progress-container {
+                width: 95%; /* Adjust for smaller screens */
+            }
+            .card {
+                padding: 30px;
+            }
+            .card h2 {
+                font-size: 2rem;
+            }
+            .card input[type="text"] {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            #countdown {
+                font-size: 1.5em;
+            }
+            #summary-stats {
+                font-size: 1em;
+                padding: 20px;
+            }
+            #result-summary {
+                padding: 30px;
+                gap: 15px;
+            }
+            #summary-icon {
+                font-size: 3rem;
+            }
+            #summary-message {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Flashcard Kosakata</h1>
+    <h1>Flashcard Kosakata</h1>
 
-  <div id="input-area">
-    <div id="vocab-inputs">
-      <div class="input-row">
-        <input type="text" placeholder="Bahasa Indonesia">
-        <input type="text" placeholder="Bahasa Inggris">
-      </div>
+    <div id="input-area">
+        <div id="vocab-inputs">
+            <div class="input-row">
+                <input type="text" placeholder="Bahasa Inggris">
+                <input type="text" placeholder="Bahasa Indonesia">
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="button-group">
+                <button onclick="addRow()">Tambah Baris</button>
+                <button onclick="addNewWords()">Tambah Kosakata</button>
+            </div>
+            <label>
+                Acak?
+                <input type="checkbox" id="shuffle-checkbox">
+            </label>
+            <label>Durasi latihan (menit):
+                <input type="number" id="duration-input" value="3" min="1">
+            </label>
+            <button onclick="startFlashcards()">Mulai Latihan</button>
+        </div>
     </div>
 
-    <div class="control-panel">
-      <button onclick="addRow()">Tambah Baris</button><br>
-      <label>
-        Acak? 
-        <input type="checkbox" id="shuffle-checkbox">
-      </label><br>
-      <label>Durasi latihan (menit): 
-        <input type="number" id="duration-input" value="3" min="1" style="width: 50px;">
-      </label><br>
-      <button onclick="addNewWords()">Tambah Kosakata</button>
-      <button onclick="startFlashcards()">Mulai Latihan</button>
+    <div id="flashcard-area" class="hidden">
+        <div id="countdown"></div>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div class="card">
+            <h2 id="word-display"></h2>
+            <input type="text" id="answer" placeholder="Tulis arti di sini">
+            <button onclick="checkAnswer()">Cek Jawaban</button>
+            <div id="result"></div>
+        </div>
+        <button onclick="nextWord()">Berikutnya</button>
     </div>
-  </div>
 
-  <div id="flashcard-area" class="hidden">
-    <div id="countdown"></div>
-    <div class="card">
-      <h2 id="word-display"></h2>
-      <input type="text" id="answer" placeholder="Tulis arti di sini">
-      <button onclick="checkAnswer()">Cek Jawaban</button>
-      <div id="result"></div>
+    <div id="result-summary" class="hidden">
+        <h2>Rekap Hasil</h2>
+        <div id="summary-icon"></div> <p id="summary-message"></p> <p id="summary-stats"></p>
+        <div class="button-group">
+            <button onclick="retry()">Coba Lagi</button>
+            <button onclick="showInputArea()">Tambah Kata Baru</button>
+        </div>
     </div>
-    <button onclick="nextWord()">Berikutnya</button>
-  </div>
 
-  <div id="result-summary" class="hidden">
-    <h2>Rekap Hasil</h2>
-    <p id="summary-stats"></p>
-    <button onclick="retry()">Coba Lagi</button>
-    <button onclick="showInputArea()">Tambah Kata Baru</button>
-  </div>
+    <script>
+        let vocabList = [];
+        let currentIndex = 0;
+        let attemptsLeft = 3;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let timer;
+        let durationInSeconds = 0;
+        let progressBar = document.getElementById("progress-bar"); // Get reference to progress bar
 
-  <script>
-    let vocabList = [];
-    let currentIndex = 0;
-    let attemptsLeft = 3;
-    let correctCount = 0;
-    let wrongCount = 0;
-    let timer;
-    let durationInSeconds = 0;
-
-    function addRow() {
-      const container = document.getElementById("vocab-inputs");
-      const row = document.createElement("div");
-      row.className = "input-row";
-      row.innerHTML = `
-        <input type="text" placeholder="Bahasa Inggris">
-        <input type="text" placeholder="Bahasa Indonesia">
-      `;
-      container.appendChild(row);
-    }
-
-    function getInputData() {
-      const rows = document.querySelectorAll("#vocab-inputs .input-row");
-      const data = [];
-      rows.forEach(row => {
-        const inputs = row.querySelectorAll("input");
-        const en = inputs[0].value.trim().toLowerCase();
-        const id = inputs[1].value.trim().toLowerCase();
-        if (en && id) {
-          data.push({ en, id });
+        function addRow() {
+            const container = document.getElementById("vocab-inputs");
+            const row = document.createElement("div");
+            row.className = "input-row";
+            row.innerHTML = `
+                <input type="text" placeholder="Bahasa Inggris">
+                <input type="text" placeholder="Bahasa Indonesia">
+            `;
+            container.appendChild(row);
         }
-      });
-      return data;
-    }
 
-    function addNewWords() {
-      const newWords = getInputData();
-      if (newWords.length === 0) {
-        alert("Masukkan kosakata sebelum menambah.");
-        return;
-      }
-      vocabList = vocabList.concat(newWords);
-      document.getElementById("vocab-inputs").innerHTML = '';
-      addRow();
-      alert("Kosakata berhasil ditambahkan.");
-    }
-
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
-
-    function startFlashcards() {
-      const newWords = getInputData();
-      if (newWords.length === 0 && vocabList.length === 0) {
-        alert("Masukkan minimal satu kosakata!");
-        return;
-      }
-
-      if (newWords.length > 0) {
-        vocabList = vocabList.concat(newWords);
-        document.getElementById("vocab-inputs").innerHTML = '';
-        addRow();
-      }
-
-      const shouldShuffle = document.getElementById("shuffle-checkbox").checked;
-      if (shouldShuffle) shuffleArray(vocabList);
-
-      durationInSeconds = parseInt(document.getElementById("duration-input").value) * 60;
-      startCountdown();
-
-      document.getElementById('input-area').classList.add('hidden');
-      document.getElementById('result-summary').classList.add('hidden');
-      document.getElementById('flashcard-area').classList.remove('hidden');
-      currentIndex = 0;
-      correctCount = 0;
-      wrongCount = 0;
-      showWord();
-    }
-
-    function showWord() {
-      document.getElementById('word-display').textContent = vocabList[currentIndex].en;
-      document.getElementById('answer').value = '';
-      document.getElementById('answer').disabled = false;
-      document.getElementById('result').textContent = '';
-      attemptsLeft = 3;
-    }
-
-    function checkAnswer() {
-      const answerInput = document.getElementById('answer');
-      if (answerInput.disabled) return;
-
-      const userAnswer = answerInput.value.trim().toLowerCase();
-      const correct = vocabList[currentIndex].id;
-      const resultDiv = document.getElementById('result');
-
-      if (userAnswer === correct) {
-        resultDiv.textContent = "Benar!";
-        resultDiv.className = 'green';
-        correctCount++;
-        answerInput.disabled = true;
-      } else {
-        attemptsLeft--;
-        wrongCount++;
-        if (attemptsLeft > 0) {
-          resultDiv.textContent = `Salah! Sisa percobaan: ${attemptsLeft}`;
-          resultDiv.className = 'red';
-        } else {
-          resultDiv.textContent = `Kesempatan habis! Jawaban: ${correct}`;
-          resultDiv.className = 'red';
-          answerInput.disabled = true;
+        function getInputData() {
+            const rows = document.querySelectorAll("#vocab-inputs .input-row");
+            const data = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll("input");
+                // Ensure correct input order based on placeholders
+                const id = inputs[0].value.trim().toLowerCase(); // Bahasa Indonesia
+                const en = inputs[1].value.trim().toLowerCase(); // Bahasa Inggris
+                if (en && id) {
+                    data.push({ en, id });
+                }
+            });
+            return data;
         }
-      }
-    }
 
-    function nextWord() {
-      currentIndex++;
-      if (currentIndex >= vocabList.length) {
-        clearInterval(timer);
-        showSummary();
-      } else {
-        showWord();
-      }
-    }
-
-    function startCountdown() {
-      const countdownEl = document.getElementById("countdown");
-      function updateTimer() {
-        const minutes = Math.floor(durationInSeconds / 60);
-        const seconds = durationInSeconds % 60;
-        countdownEl.textContent = `Waktu tersisa: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        if (durationInSeconds <= 0) {
-          clearInterval(timer);
-          showSummary();
+        function addNewWords() {
+            const newWords = getInputData();
+            if (newWords.length === 0) {
+                // Using a custom message box instead of alert()
+                showMessage("Masukkan kosakata sebelum menambah.", "warning");
+                return;
+            }
+            vocabList = vocabList.concat(newWords);
+            document.getElementById("vocab-inputs").innerHTML = ''; // Clear existing inputs
+            addRow(); // Add one fresh row
+            showMessage("Kosakata berhasil ditambahkan.", "success");
         }
-        durationInSeconds--;
-      }
-      updateTimer();
-      timer = setInterval(updateTimer, 1000);
-    }
 
-    function showSummary() {
-      document.getElementById('flashcard-area').classList.add('hidden');
-      const total = correctCount + wrongCount;
-      const summaryText = `
-        Total Percobaan: ${total}<br>
-        Benar: <span class="green">${correctCount}</span><br>
-        Salah: <span class="red">${wrongCount}</span>
-      `;
-      document.getElementById('summary-stats').innerHTML = summaryText;
-      document.getElementById('result-summary').classList.remove('hidden');
-    }
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
 
-    function retry() {
-      document.getElementById('result-summary').classList.add('hidden');
-      document.getElementById('flashcard-area').classList.remove('hidden');
-      currentIndex = 0;
-      correctCount = 0;
-      wrongCount = 0;
-      durationInSeconds = parseInt(document.getElementById("duration-input").value) * 60;
-      startCountdown();
-      showWord();
-    }
+        function startFlashcards() {
+            const currentInputWords = getInputData();
+            if (currentInputWords.length > 0) {
+                vocabList = vocabList.concat(currentInputWords);
+                document.getElementById("vocab-inputs").innerHTML = ''; // Clear existing inputs
+                addRow(); // Add one fresh row
+            }
 
-    function showInputArea() {
-      document.getElementById('result-summary').classList.add('hidden');
-      document.getElementById('input-area').classList.remove('hidden');
-    }
-  </script>
+            if (vocabList.length === 0) {
+                showMessage("Masukkan minimal satu kosakata!", "error");
+                return;
+            }
+
+            const shouldShuffle = document.getElementById("shuffle-checkbox").checked;
+            if (shouldShuffle) shuffleArray(vocabList);
+
+            const durationInputVal = parseInt(document.getElementById("duration-input").value);
+            if (isNaN(durationInputVal) || durationInputVal <= 0) {
+                showMessage("Durasi latihan harus angka positif!", "error");
+                document.getElementById("duration-input").value = 3; // Reset to default
+                return;
+            }
+            durationInSeconds = durationInputVal * 60;
+
+            // Clear any existing timer before starting a new one
+            if (timer) clearInterval(timer);
+            startCountdown();
+
+            document.getElementById('input-area').classList.add('hidden');
+            document.getElementById('result-summary').classList.add('hidden');
+            document.getElementById('flashcard-area').classList.remove('hidden');
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            progressBar.style.width = '0%'; // Reset progress bar
+            updateProgressBar(); // Initial update for the first word (0% completed)
+            showWord();
+        }
+
+        function updateProgressBar() {
+            if (vocabList.length > 0) {
+                // Progress is based on words *completed* (currentIndex represents the next word to show)
+                const progress = (currentIndex / vocabList.length) * 100;
+                progressBar.style.width = `${progress}%`;
+            } else {
+                progressBar.style.width = '0%';
+            }
+        }
+
+        function showWord() {
+            if (vocabList.length === 0) {
+                showMessage("Tidak ada kosakata untuk ditampilkan. Silakan tambahkan kata baru.", "error");
+                showInputArea();
+                return;
+            }
+            document.getElementById('word-display').textContent = vocabList[currentIndex].en;
+            document.getElementById('answer').value = '';
+            document.getElementById('answer').disabled = false;
+            document.getElementById('result').textContent = '';
+            attemptsLeft = 3;
+        }
+
+        function checkAnswer() {
+            const answerInput = document.getElementById('answer');
+            if (answerInput.disabled) return; // Prevent checking if disabled
+
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correct = vocabList[currentIndex].id.toLowerCase(); // Ensure correct answer is also lowercase
+            const resultDiv = document.getElementById('result');
+
+            if (userAnswer === correct) {
+                resultDiv.textContent = "Benar!";
+                resultDiv.className = 'green';
+                correctCount++;
+                answerInput.disabled = true; // Disable input after correct answer
+            } else {
+                attemptsLeft--;
+                wrongCount++;
+                if (attemptsLeft > 0) {
+                    resultDiv.textContent = `Salah! Sisa percobaan: ${attemptsLeft}`;
+                    resultDiv.className = 'red';
+                } else {
+                    resultDiv.textContent = `Kesempatan habis! Jawaban: ${correct}`;
+                    resultDiv.className = 'red';
+                    answerInput.disabled = true; // Disable input after all attempts
+                }
+            }
+        }
+
+        function nextWord() {
+            // Only advance if the current word has been answered or attempts are exhausted
+            const answerInput = document.getElementById('answer');
+            if (!answerInput.disabled && attemptsLeft > 0 && answerInput.value.trim() === '') {
+                showMessage("Silakan cek jawaban Anda terlebih dahulu atau lewati.", "info");
+                return;
+            }
+
+            currentIndex++;
+            updateProgressBar(); // Update progress bar after advancing to the next word's index
+
+            if (currentIndex >= vocabList.length) {
+                clearInterval(timer); // Stop timer when all words are done
+                showSummary();
+            } else {
+                showWord();
+            }
+        }
+
+        function startCountdown() {
+            const countdownEl = document.getElementById("countdown");
+            let remainingTime = durationInSeconds;
+
+            function updateTimer() {
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                countdownEl.textContent = `Waktu tersisa: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                if (remainingTime <= 0) {
+                    clearInterval(timer);
+                    showSummary();
+                }
+                remainingTime--;
+            }
+            updateTimer(); // Call immediately to show initial time
+            timer = setInterval(updateTimer, 1000);
+        }
+
+        function showSummary() {
+            document.getElementById('flashcard-area').classList.add('hidden');
+            const totalWords = vocabList.length;
+            const summaryStatsEl = document.getElementById('summary-stats');
+            const summaryIconEl = document.getElementById('summary-icon');
+            const summaryMessageEl = document.getElementById('summary-message');
+
+            const summaryText = `
+                Total Kata: ${totalWords}<br>
+                Benar: <span class="green">${correctCount}</span><br>
+                Salah: <span class="red">${wrongCount}</span>
+            `;
+            summaryStatsEl.innerHTML = summaryText;
+
+            // Determine message and icon based on performance
+            let message = "";
+            let icon = "";
+            if (correctCount === totalWords && totalWords > 0) {
+                message = "Sempurna! Kerja Bagus!";
+                icon = "🎉"; // Party popper
+            } else if (correctCount > totalWords / 2) {
+                message = "Luar Biasa! Terus tingkatkan!";
+                icon = "👍"; // Thumbs up
+            } else if (totalWords > 0) {
+                message = "Terus berlatih! Anda bisa melakukannya.";
+                icon = "💪"; // Flexed biceps
+            } else {
+                message = "Mulai latihan untuk melihat hasil!";
+                icon = "✨"; // Sparkles
+            }
+
+            summaryMessageEl.textContent = message;
+            summaryIconEl.textContent = icon;
+
+            document.getElementById('result-summary').classList.remove('hidden');
+        }
+
+        function retry() {
+            document.getElementById('result-summary').classList.add('hidden');
+            document.getElementById('flashcard-area').classList.remove('hidden');
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            // Reset duration based on input value
+            durationInSeconds = parseInt(document.getElementById("duration-input").value) * 60;
+            // Clear any existing timer before starting a new one
+            if (timer) clearInterval(timer);
+            startCountdown();
+            // Shuffle again if checkbox is checked
+            const shouldShuffle = document.getElementById("shuffle-checkbox").checked;
+            if (shouldShuffle) shuffleArray(vocabList);
+            progressBar.style.width = '0%'; // Reset progress bar on retry
+            updateProgressBar(); // Initial update for the first word (0% completed)
+            showWord();
+        }
+
+        function showInputArea() {
+            document.getElementById('result-summary').classList.add('hidden');
+            document.getElementById('flashcard-area').classList.add('hidden'); // Hide flashcard area too
+            document.getElementById('input-area').classList.remove('hidden');
+            // Ensure there's at least one input row if vocab-inputs is empty
+            if (document.getElementById("vocab-inputs").children.length === 0) {
+                addRow();
+            }
+        }
+
+        // Custom message box function (replaces alert())
+        function showMessage(message, type = "info") {
+            const messageBox = document.createElement("div");
+            messageBox.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-family: 'Inter', sans-serif;
+                font-size: 1.1rem;
+                font-weight: bold;
+                color: white;
+                z-index: 1000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                opacity: 0;
+                transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            `;
+
+            if (type === "success") {
+                messageBox.style.backgroundColor = '#4CAF50'; /* Green */
+            } else if (type === "error") {
+                messageBox.style.backgroundColor = '#F44336'; /* Red */
+            } else if (type === "warning") {
+                messageBox.style.backgroundColor = '#FFC107'; /* Amber */
+                messageBox.style.color = '#333';
+            } else { // info
+                messageBox.style.backgroundColor = '#2196F3'; /* Blue */
+            }
+
+            messageBox.textContent = message;
+            document.body.appendChild(messageBox);
+
+            // Animate in
+            setTimeout(() => {
+                messageBox.style.opacity = '1';
+                messageBox.style.transform = 'translateX(-50%) translateY(0)';
+            }, 100);
+
+            // Animate out and remove
+            setTimeout(() => {
+                messageBox.style.opacity = '0';
+                messageBox.style.transform = 'translateX(-50%) translateY(-20px)';
+                messageBox.addEventListener('transitionend', () => messageBox.remove());
+            }, 3000); // Message disappears after 3 seconds
+        }
+
+        // Initial row on load
+        document.addEventListener("DOMContentLoaded", addRow);
+    </script>
 
 </body>
 </html>
