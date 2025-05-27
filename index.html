@@ -212,45 +212,61 @@
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let app;
-        let auth;
-        let db;
-        let userId = 'anonymous'; // Default userId
+        let app = null;
+        let auth = null;
+        let db = null;
+        let userId = 'anonymous'; // Default userId, will be updated on auth state change
 
         document.addEventListener("DOMContentLoaded", async () => {
-            if (Object.keys(firebaseConfig).length > 0) {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+            const statusDiv = document.getElementById("status");
 
-                // Sign in with custom token or anonymously
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        console.log("Signed in with custom token.");
-                    } catch (error) {
-                        console.error("Error signing in with custom token:", error);
-                        // Fallback to anonymous sign-in if custom token fails
-                        await signInAnonymously(auth);
-                        console.log("Signed in anonymously as fallback.");
-                    }
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
-                }
+            // Log the firebaseConfig to the console for debugging
+            console.log("Firebase Config:", firebaseConfig);
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Auth state changed. User ID:", userId);
+            // Check if firebaseConfig is provided and valid (e.g., has an apiKey)
+            if (firebaseConfig && Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Sign in with custom token or anonymously
+                    if (initialAuthToken) {
+                        try {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            console.log("Signed in with custom token.");
+                        } catch (error) {
+                            console.error("Error signing in with custom token:", error);
+                            // Fallback to anonymous sign-in if custom token fails
+                            await signInAnonymously(auth);
+                            console.log("Signed in anonymously as fallback.");
+                        }
                     } else {
-                        userId = crypto.randomUUID(); // Generate a random ID if not authenticated
-                        console.log("Auth state changed. No user, generated anonymous ID:", userId);
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously.");
                     }
-                });
+
+                    // Listen for authentication state changes to update userId
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            console.log("Auth state changed. User ID:", userId);
+                        } else {
+                            // If no user is authenticated, generate a random ID for anonymous use
+                            userId = crypto.randomUUID();
+                            console.log("Auth state changed. No user, generated anonymous ID:", userId);
+                        }
+                    });
+                } catch (initError) {
+                    console.error("Error initializing Firebase:", initError);
+                    statusDiv.innerText = "Error: Failed to initialize Firebase. Please check console for details.";
+                    // Set auth and db to null to prevent further errors
+                    auth = null;
+                    db = null;
+                }
             } else {
-                console.error("Firebase config not available. Firebase services will not be initialized.");
-                document.getElementById("status").innerText = "Error: Firebase configuration missing.";
+                console.error("Firebase configuration missing or invalid. Firebase services will not be initialized.");
+                statusDiv.innerText = "Error: Firebase configuration missing or invalid. Please ensure the environment provides it.";
             }
 
             const signupButton = document.getElementById("signup-button");
@@ -260,7 +276,6 @@
             const signupForm = document.getElementById("signup-form");
             const signinForm = document.getElementById("signin-form");
             const forgotPasswordLink = document.getElementById("forgot-password");
-            const statusDiv = document.getElementById("status");
 
             // Initial tab display
             signupForm.classList.add("active");
@@ -283,14 +298,15 @@
             });
 
             signupButton.addEventListener("click", async () => {
+                // Ensure Firebase is initialized before attempting operations
+                if (!auth || !db) {
+                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
+                    return;
+                }
+
                 const email = document.getElementById("signup-email").value;
                 const password = document.getElementById("signup-password").value;
                 const name = document.getElementById("signup-name").value;
-
-                if (!auth) {
-                    statusDiv.innerText = "Firebase not initialized. Cannot sign up.";
-                    return;
-                }
 
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -311,13 +327,14 @@
             });
 
             signinButton.addEventListener("click", async () => {
-                const email = document.getElementById("signin-email").value;
-                const password = document.getElementById("signin-password").value;
-
+                // Ensure Firebase is initialized before attempting operations
                 if (!auth) {
-                    statusDiv.innerText = "Firebase not initialized. Cannot sign in.";
+                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
                     return;
                 }
+
+                const email = document.getElementById("signin-email").value;
+                const password = document.getElementById("signin-password").value;
 
                 try {
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -333,15 +350,16 @@
 
             forgotPasswordLink.addEventListener("click", async (e) => {
                 e.preventDefault();
-                const email = document.getElementById("signin-email").value;
-
+                // Ensure Firebase is initialized before attempting operations
                 if (!auth) {
-                    statusDiv.innerText = "Firebase not initialized. Cannot reset password.";
+                    statusDiv.innerText = "Firebase services are not available. Please try again later.";
                     return;
                 }
 
+                const email = document.getElementById("signin-email").value;
+
                 if (!email) {
-                    statusDiv.innerText = "Please enter your email in the Sign In tab first.";
+                    statusDiv.innerText = "Please enter your email in the Sign In tab first to reset password.";
                     return;
                 }
 
