@@ -32,6 +32,7 @@
         input[type="email"],
         input[type="password"],
         input[type="text"],
+        input[type="date"],
         textarea {
             width: 100%;
             padding: 0.75rem;
@@ -44,6 +45,7 @@
         input[type="email"]:focus,
         input[type="password"]:focus,
         input[type="text"]:focus,
+        input[type="date"]:focus,
         textarea:focus {
             border-color: #3182ce;
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
@@ -160,13 +162,20 @@
         .modal-detail-item {
             margin-bottom: 0.75rem;
         }
-        .modal-detail-item strong {
-            color: #2d3748;
-            display: block; /* Make label on its own line */
+        .modal-detail-item label { /* For editable fields */
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
             margin-bottom: 0.25rem;
         }
-        .modal-detail-item span {
+        .modal-detail-item .display-value { /* For non-editable fields */
             color: #4a5568;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
 
         /* Message box styles (reused from form) */
@@ -271,9 +280,15 @@
     <div id="detailsModal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close-btn" onclick="hideDetailsModal()">&times;</button>
-            <h3 class="text-2xl font-bold mb-4 text-center">Detail Pendaftaran</h3>
-            <div id="modalDetailsContent">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4 text-center">Detail Pendaftaran</h3>
+            <form id="modalEditForm">
+                <div id="modalDetailsContent">
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="hideDetailsModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" id="saveChangesButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg hidden">Save Changes</button>
                 </div>
+            </form>
         </div>
     </div>
 
@@ -290,7 +305,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -318,7 +333,12 @@
         const logoutButton = document.getElementById('logoutButton');
         const registrationsTableBody = document.getElementById('registrationsTableBody');
         const detailsModal = document.getElementById('detailsModal');
+        const modalTitle = document.getElementById('modalTitle');
         const modalDetailsContent = document.getElementById('modalDetailsContent');
+        const modalEditForm = document.getElementById('modalEditForm');
+        const saveChangesButton = document.getElementById('saveChangesButton');
+
+        let currentEditingDocId = null; // To store the ID of the document currently being edited
 
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
@@ -340,33 +360,87 @@
         }
 
         // --- Modal Functions ---
-        window.showDetailsModal = async function(docId) {
+        window.openEditModal = async function(docId, mode = 'view') { // mode can be 'view' or 'edit'
+            currentEditingDocId = docId; // Store the ID
             try {
                 const docRef = doc(db, `artifacts/${appId}/public/data/registrations`, docId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    let detailsHtml = '';
-                    // Dynamically generate details for all fields
-                    for (const key in data) {
-                        if (Object.hasOwnProperty.call(data, key)) {
-                            let value = data[key];
-                            // Format timestamp
-                            if (key === 'timestamp' && value && typeof value.toDate === 'function') {
-                                value = value.toDate().toLocaleString();
-                            } else if (Array.isArray(value)) {
-                                value = value.join(', '); // Join array values for display
-                            }
-                            detailsHtml += `
+                    let modalHtml = '';
+                    modalTitle.textContent = mode === 'edit' ? 'Edit Pendaftaran' : 'Detail Pendaftaran';
+                    saveChangesButton.classList.toggle('hidden', mode === 'view'); // Show/hide save button
+
+                    // Fields that are explicitly editable (text, date, textarea)
+                    const editableFields = [
+                        'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
+                        'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
+                        'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
+                        'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
+                        'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
+                        'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
+                        'frekuensi_belajar', 'motivasi_belajar'
+                    ];
+                    
+                    // Fields that are displayed but not easily editable in this simple modal (radio, checkbox)
+                    const displayOnlyFields = [
+                        'jenis_kelamin', 'metode', 'jumlah_pertemuan', 'penempatan_level', 'jenis_kelas',
+                        'setuju_ketentuan', 'userId', 'timestamp' // System fields
+                    ];
+
+                    for (const fieldName of editableFields) {
+                        const value = data[fieldName] || '';
+                        let inputType = 'text';
+                        let inputTag = `<input type="${inputType}" id="modal-${fieldName}" name="${fieldName}" value="${value}" class="w-full p-2 border rounded">`;
+
+                        if (fieldName === 'tanggal_lahir') {
+                            // Ensure date is formatted for input type date
+                            const dateValue = value instanceof Date ? value.toISOString().split('T')[0] : value;
+                            inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${dateValue}" class="w-full p-2 border rounded">`;
+                        } else if (fieldName.includes('alamat') || fieldName.includes('catatan') || fieldName.includes('tujuan') || fieldName.includes('motivasi') || fieldName.includes('pengetahuan') || fieldName.includes('kendala') || fieldName.includes('tantangan') || fieldName.includes('preferensi')) {
+                            // Use textarea for longer text fields
+                            inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value}</textarea>`;
+                        }
+
+                        if (mode === 'edit') {
+                            modalHtml += `
                                 <div class="modal-detail-item">
-                                    <strong>${formatFieldName(key)}:</strong>
-                                    <span>${value || '-'}</span>
+                                    <label for="modal-${fieldName}">${formatFieldName(fieldName)}:</label>
+                                    ${inputTag}
+                                </div>
+                            `;
+                        } else { // View mode
+                            modalHtml += `
+                                <div class="modal-detail-item">
+                                    <strong>${formatFieldName(fieldName)}:</strong>
+                                    <span class="display-value">${value || '-'}</span>
                                 </div>
                             `;
                         }
                     }
-                    modalDetailsContent.innerHTML = detailsHtml;
+
+                    // Display only for non-editable complex fields and system fields
+                    for (const fieldName of displayOnlyFields) {
+                        let value = data[fieldName];
+                        if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
+                            value = value.toDate().toLocaleString();
+                        } else if (Array.isArray(value)) {
+                            value = value.join(', ');
+                        } else if (typeof value === 'boolean') {
+                            value = value ? 'Ya' : 'Tidak';
+                        }
+                        
+                        modalHtml += `
+                            <div class="modal-detail-item">
+                                <strong>${formatFieldName(fieldName)}:</strong>
+                                <span class="display-value">${value || '-'}</span>
+                                ${mode === 'edit' && (fieldName === 'jenis_kelamin' || fieldName === 'metode' || fieldName === 'jumlah_pertemuan' || fieldName === 'penempatan_level' || fieldName === 'jenis_kelas') ? '<p class="text-xs text-gray-500 mt-1"><i>Edit field ini di Firebase Console jika diperlukan.</i></p>' : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    modalDetailsContent.innerHTML = modalHtml;
                     detailsModal.classList.add('show');
                 } else {
                     showMessageBox("Dokumen tidak ditemukan.", 'error');
@@ -380,6 +454,7 @@
         window.hideDetailsModal = function() {
             detailsModal.classList.remove('show');
             modalDetailsContent.innerHTML = ''; // Clear content
+            currentEditingDocId = null; // Clear editing ID
         }
 
         // Helper function to format field names for display
@@ -387,6 +462,34 @@
             // Replace underscores with spaces and capitalize first letter of each word
             return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
         }
+
+        // --- Handle Save Changes ---
+        modalEditForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentEditingDocId) {
+                showMessageBox("Tidak ada dokumen yang dipilih untuk diedit.", 'error');
+                return;
+            }
+
+            const updatedData = {};
+            const formData = new FormData(modalEditForm);
+            for (let [key, value] of formData.entries()) {
+                // Collect values from editable fields
+                if (key !== 'setuju_ketentuan') { // setuju_ketentuan is not meant to be edited directly here
+                   updatedData[key] = value;
+                }
+            }
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/registrations`, currentEditingDocId);
+                await updateDoc(docRef, updatedData);
+                showMessageBox("Perubahan berhasil disimpan!", 'success');
+                hideDetailsModal();
+            } catch (error) {
+                console.error("Error updating document:", error);
+                showMessageBox(`Gagal menyimpan perubahan: ${error.message}`, 'error');
+            }
+        });
 
         // --- Authentication Logic ---
         loginForm.addEventListener('submit', async (e) => {
@@ -415,10 +518,6 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // User is signed in. Check if they are an authorized admin.
-                // IMPORTANT: For a real production app, use Firebase Custom Claims
-                // or a dedicated 'admins' collection in Firestore to manage admin roles securely.
-                // This is a simplified check for demo purposes.
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
                 if (user.email === authorizedAdminEmail) {
                     loginSection.classList.add('hidden');
@@ -427,15 +526,13 @@
                     loadRegistrations(); // Load data when admin logs in
                     console.log("Admin logged in:", user.email, user.uid);
                 } else {
-                    // Not an authorized admin, even if logged in
-                    signOut(auth); // Force logout
+                    signOut(auth);
                     showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
                     loginSection.classList.remove('hidden');
                     dashboardSection.classList.add('hidden');
                     logoutButton.classList.add('hidden');
                 }
             } else {
-                // User is signed out or not logged in
                 loginSection.classList.remove('hidden');
                 dashboardSection.classList.add('hidden');
                 logoutButton.classList.add('hidden');
@@ -447,7 +544,7 @@
         // --- Load Registrations from Firestore ---
         function loadRegistrations() {
             const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
-            const q = query(registrationsRef, orderBy('timestamp', 'desc')); // Order by most recent
+            const q = query(registrationsRef, orderBy('timestamp', 'desc'));
 
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
@@ -469,7 +566,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.jadwal_diinginkan || 'N/A'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timestamp}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="showDetailsModal('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                                <button onclick="openEditModal('${doc.id}', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                                <button onclick="openEditModal('${doc.id}', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
                             </td>
                         </tr>
                     `;
