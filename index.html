@@ -492,7 +492,8 @@
                     await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
-                    setTimeout(() => window.location.href = "gamelist.html", 2000);
+                    // Redirect to user dashboard after signup
+                    setTimeout(() => window.location.href = "user-dashboard.html", 2000);
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign up error:", error);
@@ -517,7 +518,8 @@
                     const user = userCredential.user;
 
                     statusDiv.innerText = `Sign In Successful! Welcome back, ${user.email}`;
-                    setTimeout(() => window.location.href = "gamelist.html", 2000);
+                    // Redirect to user dashboard after signin
+                    setTimeout(() => window.location.href = "user-dashboard.html", 2000);
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign in error:", error);
