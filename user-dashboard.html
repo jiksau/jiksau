@@ -64,6 +64,13 @@
         #gamelistButton:hover {
             background-color: #ec4899; /* Pink-500 */
         }
+        #attendanceButton { /* New button style */
+            background-color: #34d399; /* Emerald-400 */
+            color: white;
+        }
+        #attendanceButton:hover {
+            background-color: #10b981; /* Emerald-500 */
+        }
         #logoutButton {
             background-color: #ef4444; /* Red */
             color: white;
@@ -91,7 +98,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             text-align: center;
-            display: none; /* Hidden by default */
+            display: none;
             max-width: 300px;
         }
         .message-box.success {
@@ -123,7 +130,7 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
-            display: none; /* Hidden by default */
+            display: none;
         }
     </style>
 </head>
@@ -133,7 +140,7 @@
             <h1 class="text-3xl font-extrabold flex-grow text-center">Dashboard Pengguna ExtraCourse</h1>
             <div class="header-buttons">
                 <button id="gamelistButton">Go to Gamelist</button>
-                <button id="logoutButton">Logout</button>
+                <button id="attendanceButton">Catat Absensi</button> <button id="logoutButton">Logout</button>
             </div>
         </header>
 
@@ -144,7 +151,8 @@
                 <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
                 <p><strong>Nama:</strong> <span id="userName">Loading...</span></p>
                 <p><strong>Peran:</strong> <span id="userRole">Loading...</span></p>
-                <p><strong>Terakhir Login:</strong> <span id="lastLoginAt">Loading...</span></p> </div>
+                <p><strong>Terakhir Login:</strong> <span id="lastLoginAt">Loading...</span></p>
+            </div>
         </section>
 
         <section id="registration-status-section">
@@ -168,7 +176,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // Added updateDoc and serverTimestamp
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -193,9 +201,10 @@
         const userIdSpan = document.getElementById('userId');
         const userNameSpan = document.getElementById('userName');
         const userRoleSpan = document.getElementById('userRole');
-        const lastLoginAtSpan = document.getElementById('lastLoginAt'); // New span for last login
+        const lastLoginAtSpan = document.getElementById('lastLoginAt');
         const logoutButton = document.getElementById('logoutButton');
         const gamelistButton = document.getElementById('gamelistButton');
+        const attendanceButton = document.getElementById('attendanceButton'); // Get the new attendance button
         const registrationStatusCard = document.getElementById('registrationStatusCard');
 
         // --- Message Box Functions (reused) ---
@@ -236,7 +245,6 @@
 
                         // Display last login time
                         if (userData.lastLoginAt) {
-                            // Firestore Timestamp objects have a toDate() method
                             lastLoginAtSpan.textContent = userData.lastLoginAt.toDate().toLocaleString();
                         } else {
                             lastLoginAtSpan.textContent = 'Belum pernah login sebelumnya.';
@@ -249,7 +257,7 @@
 
                     // Update lastLoginAt timestamp in Firestore
                     await updateDoc(userDocRef, {
-                        lastLoginAt: serverTimestamp() // Use serverTimestamp for accurate time
+                        lastLoginAt: serverTimestamp()
                     });
                     console.log("lastLoginAt updated for user:", user.uid);
 
@@ -283,6 +291,11 @@
         // --- Gamelist Button Functionality ---
         gamelistButton.addEventListener('click', () => {
             window.location.href = "gamelist.html"; // Redirect to gamelist.html
+        });
+
+        // --- Attendance Button Functionality (New) ---
+        attendanceButton.addEventListener('click', () => {
+            window.location.href = "attendance.html"; // Redirect to attendance.html
         });
 
         // --- Load User's Registration Data ---
