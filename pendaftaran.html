@@ -246,7 +246,8 @@
             <p id="user-id-display" class="text-sm text-gray-500 mt-2"></p>
         </header>
 
-        <form id="registrationForm" class="space-y-8"> <div class="form-section">
+        <form id="registrationForm" class="space-y-8"> 
+            <div class="form-section">
                 <h2 class="text-2xl font-bold mb-6">1. Data Peserta</h2>
                 <label for="nama_lengkap">Nama Lengkap:</label>
                 <input type="text" id="nama_lengkap" name="nama_lengkap" required placeholder="Masukkan nama lengkap Anda">
@@ -468,6 +469,11 @@
         // Initialize Firebase and set up authentication listener
         window.onload = async function() {
             try {
+                // Ensure firebaseConfig has projectId
+                if (!firebaseConfig || !firebaseConfig.projectId) {
+                    throw new Error("Firebase 'projectId' is missing in the configuration. Please ensure __firebase_config is correctly set in your environment.");
+                }
+
                 // Initialize Firebase app
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
