@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Pendaftaran Extra Course - Teman Belajar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better readability and spacing, complementing Tailwind */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
+            background-color: #f0f2f5; /* Light grey background */
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px; /* Rounded corners for the main container */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Soft shadow */
+        }
+        h1, h2, h3 {
+            color: #1a202c; /* Darker text for headings */
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .contact-info {
+            background-color: #e0f2fe; /* Light blue background for contact info */
+            border-left: 6px solid #007bff; /* Blue border */
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px; /* Rounded corners */
+            text-align: center;
+        }
+        .contact-info p {
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+        }
+        .form-section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0; /* Light border at the bottom of sections */
+        }
+        .form-section:last-of-type {
+            border-bottom: none; /* No border for the last section */
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600; /* Semi-bold for labels */
+            color: #4a5568; /* Darker grey for labels */
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e0; /* Light grey border */
+            border-radius: 6px; /* Slightly rounded corners for inputs */
+            box-sizing: border-box; /* Ensures padding doesn't add to the width */
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        textarea:focus {
+            border-color: #3182ce; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Soft blue shadow on focus */
+            outline: none; /* Remove default outline */
+        }
+        textarea {
+            resize: vertical; /* Allow vertical resizing */
+            min-height: 80px;
+        }
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem; /* Space between radio/checkbox options */
+            margin-bottom: 1rem;
+        }
+        .radio-group div, .checkbox-group div {
+            display: flex;
+            align-items: center;
+        }
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 0.5rem;
+            /* Custom styling for checkboxes/radios */
+            appearance: none; /* Remove default browser styling */
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #a0aec0; /* Light grey border */
+            border-radius: 4px; /* Slightly rounded for checkboxes */
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        input[type="radio"] {
+            border-radius: 50%; /* Make radios perfectly round */
+        }
+        input[type="radio"]:checked,
+        input[type="checkbox"]:checked {
+            background-color: #3182ce; /* Blue background when checked */
+            border-color: #3182ce;
+        }
+        input[type="radio"]:checked::before {
+            content: '';
+            display: block;
+            width: 0.6rem;
+            height: 0.6rem;
+            margin: 0.2rem;
+            border-radius: 50%;
+            background-color: white; /* White dot for checked radio */
+        }
+        input[type="checkbox"]:checked::before {
+            content: '✔'; /* Checkmark for checked checkbox */
+            display: block;
+            color: white;
+            font-size: 0.8rem;
+            line-height: 1;
+            text-align: center;
+            margin-top: 1px;
+        }
+        .privacy-statement {
+            background-color: #f7fafc; /* Very light grey */
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2.5rem;
+        }
+        button {
+            background-color: #007bff; /* Primary blue button */
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px; /* More rounded button */
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            display: block;
+            width: fit-content; /* Adjust width to content */
+            margin-left: auto;
+            margin-right: auto;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2); /* Soft shadow for button */
+        }
+        button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        button:active {
+            transform: translateY(0); /* Return to original position on click */
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            font-size: 0.85rem;
+            color: #718096; /* Muted grey for footer text */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            h3 {
+                font-size: 1.2rem;
+            }
+            .radio-group, .checkbox-group {
+                flex-direction: column; /* Stack options vertically on small screens */
+                gap: 0.75rem;
+            }
+        }
+
+        /* Message box styles */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+            max-width: 300px;
+        }
+        .message-box.success {
+            border: 2px solid #28a745;
+            color: #28a745;
+        }
+        .message-box.error {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-8">
+            <h1 class="text-3xl font-extrabold mb-2">EXTRA COURSE - TEMAN BELAJAR</h1>
+            <h2 class="text-xl font-semibold mb-4">BIMBINGAN BELAJAR BAHASA INGGRIS</h2>
+            <div class="contact-info">
+                <p>Telp/WA: <span class="font-medium">0813-3462-9983 (Jiksau)</span></p>
+                <p>IG: <a href="https://www.instagram.com/extracourse_temanbelajar/" target="_blank" class="text-blue-600 hover:underline">extracourse_temanbelajar</a></p>
+                <p>Website: <a href="https://sites.google.com/view/jiksaules/home" target="_blank" class="text-blue-600 hover:underline">https://sites.google.com/view/jiksaules/home</a></p>
+            </div>
+            <h3 class="text-2xl font-bold mb-2">FORM PENDAFTARAN</h3>
+            <p class="text-gray-600">Nomor: EC/06/IV/2025</p>
+            <p id="user-id-display" class="text-sm text-gray-500 mt-2"></p>
+        </header>
+
+        <form id="registrationForm" class="space-y-8"> <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">1. Data Peserta</h2>
+                <label for="nama_lengkap">Nama Lengkap:</label>
+                <input type="text" id="nama_lengkap" name="nama_lengkap" required placeholder="Masukkan nama lengkap Anda">
+
+                <label>Jenis Kelamin:</label>
+                <div class="radio-group">
+                    <div>
+                        <input type="radio" id="laki_laki" name="jenis_kelamin" value="Laki-laki" required>
+                        <label for="laki_laki">Laki-laki</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="perempuan" name="jenis_kelamin" value="Perempuan">
+                        <label for="perempuan">Perempuan</label>
+                    </div>
+                </div>
+
+                <label for="tanggal_lahir">Tanggal Lahir:</label>
+                <input type="date" id="tanggal_lahir" name="tanggal_lahir" required>
+
+                <label for="sekolah_instansi">Sekolah/Instansi:</label>
+                <input type="text" id="sekolah_instansi" name="sekolah_instansi" placeholder="Contoh: SMA Negeri 1 Yogyakarta">
+
+                <label for="kelas_jurusan">Kelas/Jurusan (jika pelajar/mahasiswa):</label>
+                <input type="text" id="kelas_jurusan" name="kelas_jurusan" placeholder="Contoh: XII IPA / Teknik Informatika">
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">2. Data Kontak</h2>
+                <label for="nama_ortu_wali">Nama Orang Tua/Wali (jika peserta di bawah 18 tahun):</label>
+                <input type="text" id="nama_ortu_wali" name="nama_ortu_wali" placeholder="Nama lengkap orang tua/wali">
+
+                <label for="nomor_whatsapp">Nomor WhatsApp Aktif:</label>
+                <input type="text" id="nomor_whatsapp" name="nomor_whatsapp" required placeholder="Contoh: 081234567890">
+
+                <label for="email">Email (opsional):</label>
+                <input type="email" id="email" name="email" placeholder="Contoh: nama@example.com">
+
+                <label for="alamat_rumah">Alamat Rumah:</label>
+                <textarea id="alamat_rumah" name="alamat_rumah" rows="3" placeholder="Alamat lengkap Anda"></textarea>
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">3. Informasi Program Les</h2>
+                <label>Jenis Kelas:</label>
+                <div class="checkbox-group">
+                    <div>
+                        <input type="checkbox" id="privat" name="jenis_kelas[]" value="Privat">
+                        <label for="privat">Privat</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="privat_2_orang" name="jenis_kelas[]" value="Privat (2 orang)">
+                        <label for="privat_2_orang">Privat (2 orang)</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="kelompok_kecil" name="jenis_kelas[]" value="Kelompok Kecil (3-5 siswa)">
+                        <label for="kelompok_kecil">Kelompok Kecil (3-5 siswa)</label>
+                    </div>
+                </div>
+
+                <label>Metode:</label>
+                <div class="radio-group">
+                    <div>
+                        <input type="radio" id="online" name="metode" value="Online" required>
+                        <label for="online">Online</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="offline" name="metode" value="Offline">
+                        <label for="offline">Offline</label>
+                    </div>
+                </div>
+
+                <label>Jumlah Pertemuan per Minggu:</label>
+                <div class="radio-group">
+                    <div>
+                        <input type="radio" id="pertemuan_1x" name="jumlah_pertemuan" value="1x" required>
+                        <label for="pertemuan_1x">1x</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="pertemuan_2x" name="jumlah_pertemuan" value="2x">
+                        <label for="pertemuan_2x">2x</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="pertemuan_3x" name="jumlah_pertemuan" value="3x">
+                        <label for="pertemuan_3x">3x</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="pertemuan_4x" name="jumlah_pertemuan" value="4x">
+                        <label for="pertemuan_4x">4x</label>
+                    </div>
+                </div>
+
+                <label for="jadwal_diinginkan">Jadwal yang Diinginkan (hari & jam):</label>
+                <input type="text" id="jadwal_diinginkan" name="jadwal_diinginkan" placeholder="Contoh: Senin & Rabu, 19.00 - 20.30 WIB">
+
+                <label for="target_tujuan">Target atau Tujuan Belajar:</label>
+                <textarea id="target_tujuan" name="target_tujuan" rows="3" placeholder="Contoh: Memperbaiki percakapan, persiapan TOEFL"></textarea>
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">4. Penempatan Level (jika diperlukan)</h2>
+                <p class="mb-4">Apakah ingin mengikuti penempatan level terlebih dahulu?</p>
+                <div class="radio-group">
+                    <div>
+                        <input type="radio" id="level_ya" name="penempatan_level" value="Ya" required>
+                        <label for="level_ya">Ya</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="level_tidak" name="penempatan_level" value="Tidak">
+                        <label for="level_tidak">Tidak</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">5. Catatan Tambahan (opsional)</h2>
+                <textarea id="catatan_tambahan" name="catatan_tambahan" rows="3" placeholder="Tambahkan catatan khusus di sini, jika ada"></textarea>
+            </div>
+
+            <div class="privacy-statement">
+                <h2 class="text-2xl font-bold mb-4">Pernyataan Persetujuan</h2>
+                <p class="mb-4 text-gray-700">Dengan ini, saya menyatakan setuju untuk mengikuti ketentuan dan kebijakan yang berlaku di ExtraCourse, termasuk jadwal, absensi, dan pembayaran sesuai ketentuan yang telah dijelaskan.</p>
+                <div class="flex items-center">
+                    <input type="checkbox" id="setuju_ketentuan" name="setuju_ketentuan" required>
+                    <label for="setuju_ketentuan" class="ml-2 font-medium text-gray-800">Saya menyetujui Pernyataan Persetujuan.</label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="text-2xl font-bold mb-6">Tambahan Informasi (untuk Penempatan Level / Pemahaman Kebutuhan)</h2>
+                <p class="mb-4 text-gray-700">Silakan isi bagian ini untuk membantu kami memahami kebutuhan belajar Anda lebih lanjut.</p>
+
+                <label for="pengetahuan_awal">1. Pengetahuan Awal: Sejauh mana kemampuan bahasa Inggris Anda? (Apakah Anda merasa lebih nyaman dengan percakapan, menulis, atau memahami teks?)</label>
+                <textarea id="pengetahuan_awal" name="pengetahuan_awal" rows="3" placeholder="Jelaskan kemampuan awal Anda"></textarea>
+
+                <label for="kursus_sebelumnya">Apakah Anda sudah pernah mengikuti kursus bahasa Inggris sebelumnya? Jika ya, materi apa saja yang sudah dipelajari?</label>
+                <textarea id="kursus_sebelumnya" name="kursus_sebelumnya" rows="3" placeholder="Sebutkan kursus dan materi yang pernah dipelajari"></textarea>
+
+                <label for="tujuan_utama">2. Tujuan Belajar: Apa tujuan utama Anda ingin belajar bahasa Inggris? Apakah Anda ingin memperbaiki percakapan, menulis, atau mungkin persiapan ujian tertentu seperti TOEFL atau IELTS?</label>
+                <textarea id="tujuan_utama" name="tujuan_utama" rows="3" placeholder="Sebutkan tujuan utama belajar Anda"></textarea>
+
+                <label for="fokus_aspek">Apakah ada aspek tertentu dalam bahasa Inggris yang ingin Anda fokuskan lebih dalam, misalnya grammar, kosakata, atau berbicara?</label>
+                <textarea id="fokus_aspek" name="fokus_aspek" rows="3" placeholder="Contoh: grammar, speaking, vocabulary"></textarea>
+
+                <label for="bagian_tersulit">3. Kendala yang Dihadapi: Apakah ada bagian tertentu dalam bahasa Inggris yang Anda rasa paling sulit? Misalnya grammar, mendengarkan, atau berbicara?</label>
+                <textarea id="bagian_tersulit" name="bagian_tersulit" rows="3" placeholder="Jelaskan bagian yang paling sulit bagi Anda"></textarea>
+
+                <label for="tantangan_lain">Adakah tantangan lain yang sering Anda hadapi saat belajar bahasa Inggris?</label>
+                <textarea id="tantangan_lain" name="tantangan_lain" rows="3" placeholder="Sebutkan tantangan lain yang Anda hadapi"></textarea>
+
+                <label for="cara_belajar_suka">4. Preferensi Pembelajaran: Apa cara belajar yang paling Anda sukai? Apakah Anda lebih suka pembelajaran berbasis video, latihan langsung, atau lebih suka materi tertulis seperti PDF atau worksheet?</label>
+                <textarea id="cara_belajar_suka" name="cara_belajar_suka" rows="3" placeholder="Contoh: video, latihan langsung, PDF"></textarea>
+
+                <label for="belajar_preferensi">Apakah Anda lebih suka belajar melalui percakapan langsung atau lebih nyaman dengan latihan tertulis?</label>
+                <textarea id="belajar_preferensi" name="belajar_preferensi" rows="3" placeholder="Pilih preferensi Anda"></textarea>
+
+                <label for="kendala_teknis">5. Kendala Pembelajaran: Apakah ada kendala teknis atau keterbatasan yang perlu kami pertimbangkan saat belajar online, seperti koneksi internet atau keterbatasan perangkat?</label>
+                <textarea id="kendala_teknis" name="kendala_teknis" rows="3" placeholder="Sebutkan kendala teknis/keterbatasan"></textarea>
+
+                <label for="waktu_cocok">Apakah ada waktu tertentu yang lebih cocok bagi Anda untuk mengikuti kursus?</label>
+                <textarea id="waktu_cocok" name="waktu_cocok" rows="3" placeholder="Contoh: Malam hari, Akhir pekan"></textarea>
+
+                <label for="frekuensi_belajar">6. Komitmen dan Motivasi: Seberapa sering Anda ingin belajar bahasa Inggris dalam seminggu? Apakah Anda lebih suka belajar satu kali per minggu, dua kali, atau lebih?</label>
+                <textarea id="frekuensi_belajar" name="frekuensi_belajar" rows="3" placeholder="Contoh: 2 kali seminggu"></textarea>
+
+                <label for="motivasi_belajar">Seberapa besar motivasi Anda untuk belajar bahasa Inggris? Apakah Anda merasa sangat tertarik untuk mempelajarinya atau hanya ingin meningkatkan kemampuan sedikit demi sedikit?</label>
+                <textarea id="motivasi_belajar" name="motivasi_belajar" rows="3" placeholder="Jelaskan tingkat motivasi Anda"></textarea>
+            </div>
+
+            <button type="submit">Daftar Sekarang</button>
+        </form>
+
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>2024 Property of ExtraCourse</p>
+        </footer>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase config and app ID
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let isAuthReady = false; // Flag to ensure auth is ready before Firestore ops
+
+        // Function to show custom message box
+        function showMessageBox(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+
+            messageText.textContent = message;
+            messageBox.className = 'message-box ' + type; // Add success or error class
+            messageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        // Function to hide custom message box
+        window.hideMessageBox = function() {
+            const messageBox = document.getElementById('messageBox');
+            const overlay = document.getElementById('overlay');
+            messageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // Initialize Firebase and set up authentication listener
+        window.onload = async function() {
+            try {
+                // Initialize Firebase app
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Authenticate user
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for authentication state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-id-display').textContent = `User ID Anda: ${userId}`;
+                        isAuthReady = true;
+                        console.log("Firebase initialized and user authenticated:", userId);
+                    } else {
+                        userId = null;
+                        document.getElementById('user-id-display').textContent = 'Tidak ada pengguna yang terautentikasi.';
+                        isAuthReady = true;
+                        console.log("No user authenticated.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or authenticating:", error);
+                showMessageBox(`Gagal menginisialisasi aplikasi. Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Handle form submission
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            if (!isAuthReady || !userId) {
+                showMessageBox("Aplikasi belum siap. Mohon tunggu sebentar.", 'error');
+                console.error("Firebase not ready or user not authenticated.");
+                return;
+            }
+
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                // Handle checkbox arrays
+                if (key.endsWith('[]')) {
+                    const fieldName = key.slice(0, -2);
+                    if (!data[fieldName]) {
+                        data[fieldName] = [];
+                    }
+                    data[fieldName].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            // Special handling for checkbox groups not selected (to ensure they are included as empty arrays)
+            const checkboxFields = ['jenis_kelas']; // Add other checkbox group names here if any
+            checkboxFields.forEach(field => {
+                if (!data[field]) {
+                    data[field] = [];
+                }
+            });
+
+            // Ensure the agreement checkbox is explicitly recorded
+            data.setuju_ketentuan = this.elements['setuju_ketentuan'].checked;
+
+            try {
+                // Reference to the Firestore collection
+                // Storing data in a public collection under artifacts/{appId}/public/data/registrations
+                const registrationsCollection = collection(db, `artifacts/${appId}/public/data/registrations`);
+
+                // Add a new document with the form data
+                await addDoc(registrationsCollection, {
+                    ...data,
+                    userId: userId, // Add the user ID to the document
+                    timestamp: new Date() // Add a timestamp
+                });
+
+                showMessageBox("Pendaftaran berhasil dikirim!", 'success');
+                this.reset(); // Reset the form after successful submission
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showMessageBox(`Gagal mengirim pendaftaran. Error: ${e.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
