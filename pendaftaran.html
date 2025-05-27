@@ -37,6 +37,9 @@
             margin: 0.5rem 0;
             font-size: 0.95rem;
         }
+        .contact-info strong {
+            color: #0056b3;
+        }
         .form-section {
             margin-bottom: 2.5rem;
             padding-bottom: 1.5rem;
@@ -135,31 +138,31 @@
             color: white;
             padding: 1rem 2rem;
             border: none;
-            border-radius: 8px; /* More rounded button */
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1.1rem;
             font-weight: 600;
             margin-top: 2.5rem;
             display: block;
-            width: fit-content; /* Adjust width to content */
+            width: fit-content;
             margin-left: auto;
             margin-right: auto;
             transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2); /* Soft shadow for button */
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
         }
         button:hover {
-            background-color: #0056b3; /* Darker blue on hover */
-            transform: translateY(-2px); /* Slight lift effect */
+            background-color: #0056b3;
+            transform: translateY(-2px);
         }
         button:active {
-            transform: translateY(0); /* Return to original position on click */
+            transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
         }
         footer {
             text-align: center;
             margin-top: 3rem;
             font-size: 0.85rem;
-            color: #718096; /* Muted grey for footer text */
+            color: #718096;
         }
 
         /* Responsive adjustments */
@@ -178,7 +181,7 @@
                 font-size: 1.2rem;
             }
             .radio-group, .checkbox-group {
-                flex-direction: column; /* Stack options vertically on small screens */
+                flex-direction: column;
                 gap: 0.75rem;
             }
         }
@@ -240,13 +243,14 @@
                 <p>Telp/WA: <span class="font-medium">0813-3462-9983 (Jiksau)</span></p>
                 <p>IG: <a href="https://www.instagram.com/extracourse_temanbelajar/" target="_blank" class="text-blue-600 hover:underline">extracourse_temanbelajar</a></p>
                 <p>Website: <a href="https://sites.google.com/view/jiksaules/home" target="_blank" class="text-blue-600 hover:underline">https://sites.google.com/view/jiksaules/home</a></p>
+                <p class="mt-4">Anda login sebagai: <strong><span id="loggedInUserEmail">Tamu</span></strong></p>
+                <p class="text-sm text-gray-500">User ID Anda: <span id="loggedInUserId">N/A</span></p>
             </div>
-            <h3 class="text-2xl font-bold mb-2">FORM PENDAFTARAN</h3>
+            <h3>FORM PENDAFTARAN</h3>
             <p class="text-gray-600">Nomor: EC/06/IV/2025</p>
-            <p id="user-id-display" class="text-sm text-gray-500 mt-2"></p>
         </header>
 
-        <form id="registrationForm" class="space-y-8"> 
+        <form id="registrationForm" class="space-y-8">
             <div class="form-section">
                 <h2 class="text-2xl font-bold mb-6">1. Data Peserta</h2>
                 <label for="nama_lengkap">Nama Lengkap:</label>
@@ -419,7 +423,7 @@
             <button type="submit">Daftar Sekarang</button>
         </form>
 
-        <footer class="text-center mt-12 text-gray-500 text-sm">
+        <footer>
             <p>2024 Property of ExtraCourse</p>
         </footer>
     </div>
@@ -432,10 +436,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Your web app's Firebase configuration - HARDCODED for static hosting like GitHub Pages
+        // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
             apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
             authDomain: "extra-course-d02c2.firebaseapp.com",
@@ -447,28 +451,32 @@
             measurementId: "G-YNRJKV8T45"
         };
 
-        // Extract appId from the config
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Extract appId from the config for collection path
         const appId = firebaseConfig.appId;
 
-        let app;
-        let db;
-        let auth;
-        let userId = null;
-        let isAuthReady = false; // Flag to ensure auth is ready before Firestore ops
+        // DOM Elements
+        const registrationForm = document.getElementById('registrationForm');
+        const loggedInUserEmailSpan = document.getElementById('loggedInUserEmail');
+        const loggedInUserIdSpan = document.getElementById('loggedInUserId');
 
-        // Function to show custom message box
+        let currentUserId = null; // Variable to store the UID of the currently logged-in user
+
+        // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
             const messageBox = document.getElementById('messageBox');
             const messageText = document.getElementById('messageText');
             const overlay = document.getElementById('overlay');
 
             messageText.textContent = message;
-            messageBox.className = 'message-box ' + type; // Add success or error class
+            messageBox.className = 'message-box ' + type;
             messageBox.style.display = 'block';
             overlay.style.display = 'block';
         }
 
-        // Function to hide custom message box
         window.hideMessageBox = function() {
             const messageBox = document.getElementById('messageBox');
             const overlay = document.getElementById('overlay');
@@ -476,54 +484,30 @@
             overlay.style.display = 'none';
         }
 
-        // Initialize Firebase and set up authentication listener
-        window.onload = async function() {
-            try {
-                // Initialize Firebase app with the hardcoded config
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Authenticate user anonymously
-                await signInAnonymously(auth);
-
-                // Listen for authentication state changes
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-id-display').textContent = `User ID Anda: ${userId}`;
-                        isAuthReady = true;
-                        console.log("Firebase initialized and user authenticated:", userId);
-                    } else {
-                        userId = null;
-                        document.getElementById('user-id-display').textContent = 'Tidak ada pengguna yang terautentikasi.';
-                        isAuthReady = true; // Still ready, just no user
-                        console.log("No user authenticated. Attempting anonymous sign-in again or awaiting a new one.");
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase or authenticating:", error);
-                showMessageBox(`Gagal menginisialisasi aplikasi. Error: ${error.message}`, 'error');
+        // --- Authentication Check and User ID Setup ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in with email/password
+                currentUserId = user.uid;
+                loggedInUserEmailSpan.textContent = user.email;
+                loggedInUserIdSpan.textContent = user.uid;
+                console.log("User logged in:", user.email, user.uid);
+            } else {
+                // No user signed in, redirect to login page
+                console.log("No user signed in. Redirecting to login page.");
+                showMessageBox("Anda harus login untuk mengisi formulir pendaftaran.", 'error');
+                setTimeout(() => {
+                    window.location.href = "index.html"; // Redirect to your login/signup page
+                }, 2000); // Give user time to read the message
             }
-        };
+        });
 
-        // Handle form submission
-        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+        // --- Handle Form Submission ---
+        registrationForm.addEventListener('submit', async function(event) {
             event.preventDefault(); // Prevent default form submission
 
-            if (!isAuthReady || !userId) {
-                showMessageBox("Aplikasi belum siap atau pengguna belum terautentikasi. Mohon tunggu sebentar.", 'error');
-                console.error("Firebase not ready or user not authenticated. Attempting to sign in anonymously if not already.");
-                // Try to sign in anonymously again if not authenticated
-                if (!userId) {
-                    try {
-                        await signInAnonymously(auth);
-                    } catch (authError) {
-                        console.error("Failed to re-authenticate anonymously:", authError);
-                        showMessageBox(`Gagal mengautentikasi ulang. Coba lagi. Error: ${authError.message}`, 'error');
-                    }
-                }
+            if (!currentUserId) {
+                showMessageBox("Pengguna belum terautentikasi. Mohon coba lagi setelah login.", 'error');
                 return;
             }
 
@@ -559,15 +543,20 @@
                 // Storing data in a public collection under artifacts/{appId}/public/data/registrations
                 const registrationsCollection = collection(db, `artifacts/${appId}/public/data/registrations`);
 
-                // Add a new document with the form data
+                // Add a new document with the form data, using the currentUserId
                 await addDoc(registrationsCollection, {
                     ...data,
-                    userId: userId, // Add the user ID to the document
+                    userId: currentUserId, // THIS IS THE KEY CHANGE: Use the UID of the logged-in user
                     timestamp: new Date() // Add a timestamp
                 });
 
-                showMessageBox("Pendaftaran berhasil dikirim!", 'success');
+                showMessageBox("Pendaftaran berhasil dikirim! Silakan cek dashboard Anda.", 'success');
                 this.reset(); // Reset the form after successful submission
+                // Optional: Redirect back to user dashboard after successful submission
+                // setTimeout(() => {
+                //     window.location.href = "user-dashboard.html";
+                // }, 2000);
+
             } catch (e) {
                 console.error("Error adding document: ", e);
                 showMessageBox(`Gagal mengirim pendaftaran. Error: ${e.message}`, 'error');
