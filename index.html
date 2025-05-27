@@ -96,69 +96,113 @@
             display: block;
         }
 
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px; /* More padding for inputs */
-            font-size: 1rem;
-            border: 1px solid #cbd5e0; /* Light gray border */
-            border-radius: 10px; /* More rounded inputs */
-            margin-bottom: 15px; /* Space between inputs */
-            background-color: rgba(255, 255, 255, 0.8); /* Slightly opaque input background */
-            color: #2d3748; /* Dark text in inputs */
-            transition: all 0.3s ease;
-            outline: none; /* Remove default outline */
+        /* Input field styling */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 15px; /* Space for error message */
         }
 
-        .form-group input:focus {
-            border-color: #007bff; /* Blue border on focus */
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Soft blue shadow on focus */
-            background-color: #fff; /* White background on focus */
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #2d3748;
+            transition: all 0.3s ease;
+            outline: none;
         }
+
+        .input-wrapper input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            background-color: #fff;
+        }
+
+        .error-message {
+            color: #ef4444; /* Tailwind red-500 */
+            font-size: 0.85rem;
+            text-align: left;
+            margin-top: 5px;
+            height: 18px; /* Reserve space to prevent layout shift */
+            display: block;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .error-message.active {
+            opacity: 1;
+        }
+
+        /* Show password toggle */
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #4a5568; /* Tailwind gray-700 */
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: #2d3748; /* Tailwind gray-900 */
+        }
+
 
         .form-group button {
             width: 100%;
-            padding: 14px; /* More padding for buttons */
+            padding: 14px;
             font-size: 1.1rem;
             font-weight: bold;
-            background: linear-gradient(45deg, #00c6ff, #0072ff); /* Gradient background for button */
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
             border: none;
-            border-radius: 12px; /* More rounded button */
+            border-radius: 12px;
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.4); /* Button shadow */
+            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.4);
             position: relative;
             overflow: hidden;
             z-index: 1;
         }
 
-        .form-group button:hover {
-            background: linear-gradient(45deg, #0072ff, #00c6ff); /* Reverse gradient on hover */
-            transform: translateY(-3px); /* Slight lift on hover */
+        .form-group button:hover:not(:disabled) { /* Only hover if not disabled */
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+            transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 114, 255, 0.6);
         }
 
-        .form-group button:active {
-            transform: translateY(0); /* Press effect */
+        .form-group button:active:not(:disabled) { /* Only active if not disabled */
+            transform: translateY(0);
             box-shadow: 0 3px 10px rgba(0, 114, 255, 0.3);
         }
+
+        .form-group button:disabled {
+            background: #a0aec0; /* Tailwind gray-400 */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
 
         #status {
             margin-top: 25px;
             font-size: 1rem;
             font-weight: 500;
-            color: #2d3748; /* Darker color for status messages */
+            color: #2d3748;
         }
 
         a {
-            color: #007bff; /* Blue for links */
+            color: #007bff;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s ease;
         }
 
         a:hover {
-            color: #0056b3; /* Darker blue on hover */
+            color: #0056b3;
             text-decoration: underline;
         }
 
@@ -180,7 +224,7 @@
                 padding: 10px 15px;
                 font-size: 1rem;
             }
-            .form-group input {
+            .input-wrapper input {
                 padding: 10px 12px;
                 font-size: 0.95rem;
             }
@@ -230,11 +274,36 @@
             const signupForm = document.getElementById("signup-form");
             const signinForm = document.getElementById("signin-form");
             const forgotPasswordLink = document.getElementById("forgot-password");
-            const statusDiv = document.getElementById("status"); // Reference to status div
+            const statusDiv = document.getElementById("status");
+
+            // Signup form elements
+            const signupNameInput = document.getElementById("signup-name");
+            const signupEmailInput = document.getElementById("signup-email");
+            const signupPasswordInput = document.getElementById("signup-password");
+            const signupConfirmPasswordInput = document.getElementById("signup-confirm-password");
+
+            // Signin form elements
+            const signinEmailInput = document.getElementById("signin-email");
+            const signinPasswordInput = document.getElementById("signin-password");
+
+            // Error message elements for signup
+            const signupNameError = document.getElementById("signup-name-error");
+            const signupEmailError = document.getElementById("signup-email-error");
+            const signupPasswordError = document.getElementById("signup-password-error");
+            const signupConfirmPasswordError = document.getElementById("signup-confirm-password-error");
+
+            // Error message elements for signin
+            const signinEmailError = document.getElementById("signin-email-error");
+            const signinPasswordError = document.getElementById("signin-password-error");
+
+            // Moved emailRegex declaration to the top of DOMContentLoaded
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
             // Set initial active tab
             signupForm.classList.add("active");
             signupTab.classList.add("active");
+            validateSignupForm(); // Validate initially to disable button
 
             signupTab.addEventListener("click", () => {
                 signupForm.classList.add("active");
@@ -242,6 +311,8 @@
                 signupTab.classList.add("active");
                 signinTab.classList.remove("active");
                 statusDiv.innerText = "";
+                resetFormValidation(signinForm); // Clear signin errors
+                validateSignupForm(); // Re-validate signup form
             });
 
             signinTab.addEventListener("click", () => {
@@ -250,18 +321,155 @@
                 signinTab.classList.add("active");
                 signupTab.classList.remove("active");
                 statusDiv.innerText = "";
+                resetFormValidation(signupForm); // Clear signup errors
+                validateSigninForm(); // Re-validate signin form
             });
 
+            // --- Validation Functions ---
+            function showError(element, message) {
+                element.innerText = message;
+                element.classList.add("active");
+            }
+
+            function hideError(element) {
+                element.innerText = "";
+                element.classList.remove("active");
+            }
+
+            function validateEmail(email) {
+                return emailRegex.test(email);
+            }
+
+            function validatePassword(password) {
+                return password.length >= 6; // Minimum 6 characters
+            }
+
+            function validateSignupForm() {
+                let isValid = true;
+
+                // Name validation
+                if (signupNameInput.value.trim() === '') {
+                    showError(signupNameError, "Name cannot be empty.");
+                    isValid = false;
+                } else {
+                    hideError(signupNameError);
+                }
+
+                // Email validation
+                if (!validateEmail(signupEmailInput.value)) {
+                    showError(signupEmailError, "Enter a valid email.");
+                    isValid = false;
+                } else {
+                    hideError(signupEmailError);
+                }
+
+                // Password validation
+                if (!validatePassword(signupPasswordInput.value)) {
+                    showError(signupPasswordError, "Min 6 characters.");
+                    isValid = false;
+                } else {
+                    hideError(signupPasswordError);
+                }
+
+                // Confirm password validation
+                if (signupConfirmPasswordInput.value !== signupPasswordInput.value) {
+                    showError(signupConfirmPasswordError, "Passwords do not match.");
+                    isValid = false;
+                } else {
+                    hideError(signupConfirmPasswordError);
+                }
+
+                signupButton.disabled = !isValid;
+                return isValid;
+            }
+
+            function validateSigninForm() {
+                let isValid = true;
+
+                // Email validation
+                if (!validateEmail(signinEmailInput.value)) {
+                    showError(signinEmailError, "Enter a valid email.");
+                    isValid = false;
+                } else {
+                    hideError(signinEmailError);
+                }
+
+                // Password validation (can be basic for sign-in)
+                if (signinPasswordInput.value.length === 0) {
+                    showError(signinPasswordError, "Password cannot be empty.");
+                    isValid = false;
+                } else {
+                    hideError(signinPasswordError);
+                }
+
+                signinButton.disabled = !isValid;
+                return isValid;
+            }
+
+            function resetFormValidation(formElement) {
+                const errorMessages = formElement.querySelectorAll('.error-message');
+                errorMessages.forEach(errorSpan => hideError(errorSpan));
+                const buttons = formElement.querySelectorAll('button');
+                // Only re-enable buttons if form is valid after reset
+                if (formElement.id === 'signup-form') {
+                    validateSignupForm();
+                } else if (formElement.id === 'signin-form') {
+                    validateSigninForm();
+                }
+            }
+
+            // Add event listeners for real-time validation on signup form
+            signupNameInput.addEventListener("input", validateSignupForm);
+            signupEmailInput.addEventListener("input", validateSignupForm);
+            signupPasswordInput.addEventListener("input", validateSignupForm);
+            signupConfirmPasswordInput.addEventListener("input", validateSignupForm);
+            signupConfirmPasswordInput.addEventListener("blur", validateSignupForm); // Check on blur too for confirm pass
+
+            // Add event listeners for real-time validation on signin form
+            signinEmailInput.addEventListener("input", validateSigninForm);
+            signinPasswordInput.addEventListener("input", validateSigninForm);
+
+
+            // --- Password Toggle Functionality ---
+            function setupPasswordToggle(inputId, toggleId) {
+                const passwordInput = document.getElementById(inputId);
+                const toggleIcon = document.getElementById(toggleId);
+
+                if (passwordInput && toggleIcon) {
+                    toggleIcon.addEventListener("click", () => {
+                        if (passwordInput.type === "password") {
+                            passwordInput.type = "text";
+                            toggleIcon.innerText = "🚫"; // Change to slash-eye icon
+                        } else {
+                            passwordInput.type = "password";
+                            toggleIcon.innerText = "👁️"; // Change back to eye icon
+                        }
+                    });
+                }
+            }
+
+            // Setup toggles for both signup and signin passwords
+            setupPasswordToggle("signup-password", "signup-password-toggle");
+            setupPasswordToggle("signup-confirm-password", "signup-confirm-password-toggle");
+            setupPasswordToggle("signin-password", "signin-password-toggle");
+
+
+            // --- Firebase Operations (unchanged logic, only now triggered after validation) ---
             signupButton.addEventListener("click", async () => {
-                const email = document.getElementById("signup-email").value;
-                const password = document.getElementById("signup-password").value;
-                const name = document.getElementById("signup-name").value;
+                if (!validateSignupForm()) {
+                    statusDiv.innerText = "Please fix the errors in the form.";
+                    return;
+                }
+
+                statusDiv.innerText = "Signing up...";
+                signupButton.disabled = true; // Disable button during API call
+                const email = signupEmailInput.value;
+                const password = signupPasswordInput.value;
+                const name = signupNameInput.value;
 
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    // For hardcoded config, assuming a general users collection.
-                    // If using Canvas environment, this path needs to be artifacts/${appId}/users/${user.uid}/user_profiles
                     await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
@@ -269,12 +477,21 @@
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign up error:", error);
+                } finally {
+                    signupButton.disabled = false; // Re-enable button after API call completes/fails
                 }
             });
 
             signinButton.addEventListener("click", async () => {
-                const email = document.getElementById("signin-email").value;
-                const password = document.getElementById("signin-password").value;
+                if (!validateSigninForm()) {
+                    statusDiv.innerText = "Please fix the errors in the form.";
+                    return;
+                }
+
+                statusDiv.innerText = "Signing in...";
+                signinButton.disabled = true; // Disable button during API call
+                const email = signinEmailInput.value;
+                const password = signinPasswordInput.value;
 
                 try {
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -285,18 +502,21 @@
                 } catch (error) {
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign in error:", error);
+                } finally {
+                    signinButton.disabled = false; // Re-enable button after API call completes/fails
                 }
             });
 
             forgotPasswordLink.addEventListener("click", async (e) => {
                 e.preventDefault();
-                const email = document.getElementById("signin-email").value;
+                const email = signinEmailInput.value;
 
-                if (!email) {
-                    statusDiv.innerText = "Please enter your email in the Sign In tab first.";
+                if (!validateEmail(email)) {
+                    statusDiv.innerText = "Please enter a valid email in the Sign In tab to reset password.";
                     return;
                 }
 
+                statusDiv.innerText = "Sending reset email...";
                 try {
                     await sendPasswordResetEmail(auth, email);
                     statusDiv.innerText = `Password reset email sent to ${email}. Please check your inbox.`;
@@ -317,15 +537,37 @@
         </div>
         <div id="signup-form" class="form-group">
             <h2>Sign Up</h2>
-            <input type="text" id="signup-name" placeholder="Name" required>
-            <input type="email" id="signup-email" placeholder="Email" required>
-            <input type="password" id="signup-password" placeholder="Password" required>
+            <div class="input-wrapper">
+                <input type="text" id="signup-name" placeholder="Name" required>
+                <span id="signup-name-error" class="error-message"></span>
+            </div>
+            <div class="input-wrapper">
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <span id="signup-email-error" class="error-message"></span>
+            </div>
+            <div class="input-wrapper">
+                <input type="password" id="signup-password" placeholder="Password" required>
+                <span id="signup-password-toggle" class="password-toggle">👁️</span>
+                <span id="signup-password-error" class="error-message"></span>
+            </div>
+            <div class="input-wrapper">
+                <input type="password" id="signup-confirm-password" placeholder="Confirm Password" required>
+                <span id="signup-confirm-password-toggle" class="password-toggle">👁️</span>
+                <span id="signup-confirm-password-error" class="error-message"></span>
+            </div>
             <button id="signup-button">Sign Up</button>
         </div>
         <div id="signin-form" class="form-group">
             <h2>Sign In</h2>
-            <input type="email" id="signin-email" placeholder="Email" required>
-            <input type="password" id="signin-password" placeholder="Password" required>
+            <div class="input-wrapper">
+                <input type="email" id="signin-email" placeholder="Email" required>
+                <span id="signin-email-error" class="error-message"></span>
+            </div>
+            <div class="input-wrapper">
+                <input type="password" id="signin-password" placeholder="Password" required>
+                <span id="signin-password-toggle" class="password-toggle">👁️</span>
+                <span id="signin-password-error" class="error-message"></span>
+            </div>
             <button id="signin-button">Sign In</button>
             <p style="text-align: center; margin-top: 15px;">
                 <a href="#" id="forgot-password">Forgot Password?</a>
