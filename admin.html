@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExtraCourse Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex-grow: 1; /* Allows container to grow and push footer down */
+        }
+        h1, h2, h3 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            outline: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Specific styles for login form */
+        #login-section {
+            max-width: 400px;
+            margin: 5rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Table styles */
+        .table-container {
+            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #edf2f7;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 600px;
+            max-height: 90vh; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for long content */
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+        .modal-close-btn:hover {
+            color: #4a5568;
+        }
+        .modal-detail-item {
+            margin-bottom: 0.75rem;
+        }
+        .modal-detail-item strong {
+            color: #2d3748;
+            display: block; /* Make label on its own line */
+            margin-bottom: 0.25rem;
+        }
+        .modal-detail-item span {
+            color: #4a5568;
+        }
+
+        /* Message box styles (reused from form) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+            max-width: 300px;
+        }
+        .message-box.success {
+            border: 2px solid #28a745;
+            color: #28a745;
+        }
+        .message-box.error {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto; /* Pushes footer to the bottom */
+            font-size: 0.85rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-8 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold flex-grow text-center">ExtraCourse Admin Dashboard</h1>
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg hidden">Logout</button>
+        </header>
+
+        <section id="login-section" class="hidden">
+            <h2 class="text-2xl font-bold mb-6">Admin Login</h2>
+            <form id="loginForm">
+                <label for="adminEmail" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                <input type="email" id="adminEmail" name="email" required placeholder="admin@extracourse.com">
+
+                <label for="adminPassword" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                <input type="password" id="adminPassword" name="password" required placeholder="password">
+
+                <button type="submit" class="w-full mt-4">Login</button>
+            </form>
+        </section>
+
+        <section id="dashboard-section" class="hidden">
+            <h2 class="text-2xl font-bold mb-6">Daftar Pendaftaran</h2>
+            <div class="table-container">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3">Nama Lengkap</th>
+                            <th class="px-6 py-3">No. WhatsApp</th>
+                            <th class="px-6 py-3">Jenis Kelas</th>
+                            <th class="px-6 py-3">Jadwal Diinginkan</th>
+                            <th class="px-6 py-3">Tanggal Daftar</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationsTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Loading registrations...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideDetailsModal()">&times;</button>
+            <h3 class="text-2xl font-bold mb-4 text-center">Detail Pendaftaran</h3>
+            <div id="modalDetailsContent">
+                </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <footer>
+        <p>2024 Property of ExtraCourse</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration (hardcoded for static hosting)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            databaseURL: "https://extra-course-d02c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Extract appId from the config for collection path
+        const appId = firebaseConfig.appId;
+
+        // DOM Elements
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const loginForm = document.getElementById('loginForm');
+        const logoutButton = document.getElementById('logoutButton');
+        const registrationsTableBody = document.getElementById('registrationsTableBody');
+        const detailsModal = document.getElementById('detailsModal');
+        const modalDetailsContent = document.getElementById('modalDetailsContent');
+
+        // --- Message Box Functions (reused) ---
+        function showMessageBox(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+
+            messageText.textContent = message;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        window.hideMessageBox = function() {
+            const messageBox = document.getElementById('messageBox');
+            const overlay = document.getElementById('overlay');
+            messageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // --- Modal Functions ---
+        window.showDetailsModal = async function(docId) {
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/registrations`, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let detailsHtml = '';
+                    // Dynamically generate details for all fields
+                    for (const key in data) {
+                        if (Object.hasOwnProperty.call(data, key)) {
+                            let value = data[key];
+                            // Format timestamp
+                            if (key === 'timestamp' && value && typeof value.toDate === 'function') {
+                                value = value.toDate().toLocaleString();
+                            } else if (Array.isArray(value)) {
+                                value = value.join(', '); // Join array values for display
+                            }
+                            detailsHtml += `
+                                <div class="modal-detail-item">
+                                    <strong>${formatFieldName(key)}:</strong>
+                                    <span>${value || '-'}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                    modalDetailsContent.innerHTML = detailsHtml;
+                    detailsModal.classList.add('show');
+                } else {
+                    showMessageBox("Dokumen tidak ditemukan.", 'error');
+                }
+            } catch (error) {
+                console.error("Error fetching document details:", error);
+                showMessageBox(`Gagal mengambil detail: ${error.message}`, 'error');
+            }
+        }
+
+        window.hideDetailsModal = function() {
+            detailsModal.classList.remove('show');
+            modalDetailsContent.innerHTML = ''; // Clear content
+        }
+
+        // Helper function to format field names for display
+        function formatFieldName(fieldName) {
+            // Replace underscores with spaces and capitalize first letter of each word
+            return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        // --- Authentication Logic ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = loginForm.adminEmail.value;
+            const password = loginForm.adminPassword.value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // UI will update via onAuthStateChanged
+            } catch (error) {
+                console.error("Login failed:", error.message);
+                showMessageBox(`Login gagal: ${error.message}`, 'error');
+            }
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // UI will update via onAuthStateChanged
+            } catch (error) {
+                console.error("Logout failed:", error.message);
+                showMessageBox(`Logout gagal: ${error.message}`, 'error');
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in. Check if they are an authorized admin.
+                // IMPORTANT: For a real production app, use Firebase Custom Claims
+                // or a dedicated 'admins' collection in Firestore to manage admin roles securely.
+                // This is a simplified check for demo purposes.
+                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
+                if (user.email === authorizedAdminEmail) {
+                    loginSection.classList.add('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    logoutButton.classList.remove('hidden');
+                    loadRegistrations(); // Load data when admin logs in
+                    console.log("Admin logged in:", user.email, user.uid);
+                } else {
+                    // Not an authorized admin, even if logged in
+                    signOut(auth); // Force logout
+                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
+                    loginSection.classList.remove('hidden');
+                    dashboardSection.classList.add('hidden');
+                    logoutButton.classList.add('hidden');
+                }
+            } else {
+                // User is signed out or not logged in
+                loginSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+                logoutButton.classList.add('hidden');
+                registrationsTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Silakan login sebagai admin.</td></tr>';
+                console.log("User signed out.");
+            }
+        });
+
+        // --- Load Registrations from Firestore ---
+        function loadRegistrations() {
+            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
+            const q = query(registrationsRef, orderBy('timestamp', 'desc')); // Order by most recent
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    registrationsTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada pendaftaran.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach((doc) => {
+                    const reg = doc.data();
+                    const timestamp = reg.timestamp ? new Date(reg.timestamp.toDate()).toLocaleString() : 'N/A';
+                    const jenisKelas = Array.isArray(reg.jenis_kelas) ? reg.jenis_kelas.join(', ') : (reg.jenis_kelas || 'N/A');
+
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${reg.nama_lengkap || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.nomor_whatsapp || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jenisKelas}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.jadwal_diinginkan || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timestamp}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="showDetailsModal('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                registrationsTableBody.innerHTML = html;
+            }, (error) => {
+                console.error("Error fetching registrations:", error);
+                registrationsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
