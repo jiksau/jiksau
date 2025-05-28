@@ -174,11 +174,11 @@
 
         // DOM Elements
         const loginSection = document.getElementById('login-section');
-        const dashboardLinksSection = document.getElementById('dashboard-links-section'); // Updated ID
+        const dashboardLinksSection = document.getElementById('dashboard-links-section');
         const loginForm = document.getElementById('loginForm');
         const logoutButton = document.getElementById('logoutButton');
-        const goToRegistrationsButton = document.getElementById('goToRegistrations'); // New button
-        const goToAttendanceButton = document.getElementById('goToAttendance'); // New button
+        const goToRegistrationsButton = document.getElementById('goToRegistrations');
+        const goToAttendanceButton = document.getElementById('goToAttendance');
 
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
@@ -217,7 +217,7 @@
         logoutButton.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // UI will update via onAuthStateChanged
+                // Redirect will happen via onAuthStateChanged
             } catch (error) {
                 console.error("Logout failed:", error.message);
                 showMessageBox(`Logout gagal: ${error.message}`, 'error');
@@ -231,13 +231,12 @@
                     // Admin is logged in, show navigation links
                     loginSection.classList.add('hidden');
                     dashboardLinksSection.classList.remove('hidden');
-                    console.log("Admin logged in:", user.email, user.uid);
+                    console.log("Admin logged in to main dashboard:", user.email, user.uid);
                 } else {
                     // Not an authorized admin, force logout
                     signOut(auth);
                     showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
-                    loginSection.classList.remove('hidden');
-                    dashboardLinksSection.classList.add('hidden');
+                    setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect back to login
                 }
             } else {
                 // User is signed out or not logged in, show login form
