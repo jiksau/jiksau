@@ -284,6 +284,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Flag to prevent onAuthStateChanged from redirecting immediately after a fresh signup
+        let isSigningUp = false; 
+
         document.addEventListener("DOMContentLoaded", () => {
             const signupButton = document.getElementById("signup-button");
             const signinButton = document.getElementById("signin-button");
@@ -318,18 +321,18 @@
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-            // --- Initial Auth State Check (New Logic) ---
+            // --- Initial Auth State Check ---
             onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // If user is already logged in, redirect them immediately to user dashboard
+                // Only redirect if it's not a fresh signup attempt from this page load
+                if (user && !isSigningUp) { 
                     console.log("User already logged in, redirecting to user-dashboard.html");
                     window.location.href = "user-dashboard.html";
-                } else {
-                    // User is not logged in, show the forms
+                } else if (!user) { // Only show forms if no user is logged in
                     signupForm.classList.add("active");
                     signupTab.classList.add("active");
                     validateSignupForm(); // Validate initially to disable button
                 }
+                // If user is logged in AND isSigningUp, then let the signup flow handle the redirect
             });
 
             // --- Tab Switching Logic ---
@@ -493,6 +496,7 @@
                 const email = signupEmailInput.value;
                 const password = signupPasswordInput.value;
                 const name = signupNameInput.value;
+                isSigningUp = true; // Set flag when signup process starts
 
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -501,8 +505,12 @@
 
                     statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
                     // Redirect to pendaftaran.html after successful signup
-                    setTimeout(() => window.location.href = "pendaftaran.html", 2000);
+                    setTimeout(() => {
+                        isSigningUp = false; // Reset flag after redirect is initiated
+                        window.location.href = "pendaftaran.html";
+                    }, 2000);
                 } catch (error) {
+                    isSigningUp = false; // Reset flag on error
                     statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign up error:", error);
                 } finally {
@@ -560,7 +568,7 @@
                 window.location.href = "admin.html"; // Redirect to admin.html
             });
 
-            // Gamelist Button Event Listener - REMOVED
+            // Gamelist Button Event Listener
             // gamelistButton.addEventListener("click", () => {
             //     window.location.href = "gamelist.html"; // Redirect to gamelist.html
             // });
