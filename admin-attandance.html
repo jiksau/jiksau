@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Daftar Pendaftaran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex-grow: 1;
+        }
+        h1, h2 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #backToAdminDashboard {
+            background-color: #6b7280; /* Gray-500 */
+            margin-bottom: 1.5rem;
+        }
+        #backToAdminDashboard:hover {
+            background-color: #4b5563; /* Gray-700 */
+        }
+
+        /* Table styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #edf2f7;
+        }
+
+        /* Modal styles (reused) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+        .modal-close-btn:hover {
+            color: #4a5568;
+        }
+        .modal-detail-item {
+            margin-bottom: 0.75rem;
+        }
+        .modal-detail-item label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.25rem;
+        }
+        .modal-detail-item .display-value {
+            color: #4a5568;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        textarea,
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            outline: none;
+        }
+
+
+        /* Message Box styles (reused) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            text-align: center;
+            display: none;
+            max-width: 300px;
+        }
+        .message-box.success {
+            border: 2px solid #28a745;
+            color: #28a745;
+        }
+        .message-box.error {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: auto;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="mb-8 flex justify-between items-center">
+            <button id="backToAdminDashboard" class="px-4 py-2 rounded-lg">← Back to Dashboard</button>
+            <h1 class="text-3xl font-extrabold flex-grow text-center">Daftar Pendaftaran</h1>
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Logout</button>
+        </header>
+
+        <section id="registrations-list-section">
+            <h2 class="text-2xl font-bold mb-6">Semua Pendaftaran Siswa</h2>
+            <div class="table-container">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3">Nama Lengkap</th>
+                            <th class="px-6 py-3">No. WhatsApp</th>
+                            <th class="px-6 py-3">Jenis Kelas</th>
+                            <th class="px-6 py-3">Jadwal Diinginkan</th>
+                            <th class="px-6 py-3">Tanggal Daftar</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationsTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Loading registrations...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="hideDetailsModal()">&times;</button>
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4 text-center">Detail Pendaftaran</h3>
+            <form id="modalEditForm">
+                <div id="modalDetailsContent">
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="hideDetailsModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancel</button>
+                    <button type="submit" id="saveChangesButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg hidden">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <footer>
+        <p>2024 Property of ExtraCourse</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration (hardcoded for static hosting)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
+            authDomain: "extra-course-d02c2.firebaseapp.com",
+            databaseURL: "https://extra-course-d02c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "extra-course-d02c2",
+            storageBucket: "extra-course-d02c2.firebasestorage.app",
+            messagingSenderId: "40624772967",
+            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
+            measurementId: "G-YNRJKV8T45"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const appId = firebaseConfig.appId;
+
+        // DOM Elements
+        const registrationsTableBody = document.getElementById('registrationsTableBody');
+        const detailsModal = document.getElementById('detailsModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDetailsContent = document.getElementById('modalDetailsContent');
+        const modalEditForm = document.getElementById('modalEditForm');
+        const saveChangesButton = document.getElementById('saveChangesButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const backToAdminDashboardButton = document.getElementById('backToAdminDashboard');
+
+
+        let currentEditingDocId = null;
+        let currentEditingCollection = null; // Will always be registrations collection for this page
+
+        // --- Message Box Functions (reused) ---
+        function showMessageBox(message, type) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+
+            messageText.textContent = message;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        window.hideMessageBox = function() {
+            const messageBox = document.getElementById('messageBox');
+            const overlay = document.getElementById('overlay');
+            messageBox.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        // --- Modal Functions (Adapted for Registrations only) ---
+        window.openEditModal = async function(docId, mode = 'view') {
+            currentEditingDocId = docId;
+            currentEditingCollection = `artifacts/${appId}/public/data/registrations`; // Fixed for this page
+            try {
+                const docRef = doc(db, currentEditingCollection, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let modalHtml = '';
+                    modalTitle.textContent = mode === 'edit' ? 'Edit Pendaftaran' : 'Detail Pendaftaran';
+                    saveChangesButton.classList.toggle('hidden', mode === 'view');
+
+                    const editableFields = [
+                        'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
+                        'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
+                        'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
+                        'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
+                        'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
+                        'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
+                        'frekuensi_belajar', 'motivasi_belajar'
+                    ];
+                    
+                    const displayOnlyFields = [
+                        'jenis_kelamin', 'metode', 'jumlah_pertemuan', 'penempatan_level', 'jenis_kelas',
+                        'setuju_ketentuan', 'userId', 'timestamp' // System fields
+                    ];
+
+                    // Process all fields, handling display/edit dynamically
+                    for (const fieldName of [...editableFields, ...displayOnlyFields]) {
+                        const value = data[fieldName];
+                        let displayValue = value;
+                        let inputTag = '';
+                        let isEditable = editableFields.includes(fieldName);
+
+                        if (isEditable) {
+                            if (fieldName === 'tanggal_lahir') {
+                                const dateValue = value instanceof Date ? value.toISOString().split('T')[0] : value;
+                                inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${dateValue || ''}" class="w-full p-2 border rounded">`;
+                            } else if (fieldName.includes('alamat') || fieldName.includes('catatan') || fieldName.includes('tujuan') || fieldName.includes('motivasi') || fieldName.includes('pengetahuan') || fieldName.includes('kendala') || fieldName.includes('tantangan') || fieldName.includes('preferensi')) {
+                                inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
+                            } else {
+                                inputTag = `<input type="text" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            }
+                        } else { // Not editable, just display
+                            if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
+                                displayValue = value.toDate().toLocaleString();
+                            } else if (Array.isArray(value)) {
+                                displayValue = value.join(', ');
+                            } else if (typeof value === 'boolean') {
+                                displayValue = value ? 'Ya' : 'Tidak';
+                            }
+                        }
+                        
+                        if (mode === 'edit' && isEditable) {
+                            modalHtml += `
+                                <div class="modal-detail-item">
+                                    <label for="modal-${fieldName}">${formatFieldName(fieldName)}:</label>
+                                    ${inputTag}
+                                </div>
+                            `;
+                        } else { // View mode or non-editable field
+                            modalHtml += `
+                                <div class="modal-detail-item">
+                                    <strong>${formatFieldName(fieldName)}:</strong>
+                                    <span class="display-value">${displayValue || '-'}</span>
+                                    ${mode === 'edit' && !isEditable && (fieldName === 'jenis_kelamin' || fieldName === 'metode' || fieldName === 'jumlah_pertemuan' || fieldName === 'penempatan_level' || fieldName === 'jenis_kelas') ? '<p class="text-xs text-gray-500 mt-1"><i>Edit field ini di Firebase Console jika diperlukan.</i></p>' : ''}
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    modalDetailsContent.innerHTML = modalHtml;
+                    detailsModal.classList.add('show');
+                } else {
+                    showMessageBox("Dokumen tidak ditemukan.", 'error');
+                }
+            } catch (error) {
+                console.error("Error fetching document details:", error);
+                showMessageBox(`Gagal mengambil detail: ${error.message}`, 'error');
+            }
+        }
+
+        window.hideDetailsModal = function() {
+            detailsModal.classList.remove('show');
+            modalDetailsContent.innerHTML = '';
+            currentEditingDocId = null;
+            currentEditingCollection = null;
+        }
+
+        // Helper function to format field names for display
+        function formatFieldName(fieldName) {
+            return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        // --- Handle Save Changes ---
+        modalEditForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentEditingDocId || !currentEditingCollection) {
+                showMessageBox("Tidak ada dokumen atau koleksi yang dipilih untuk diedit.", 'error');
+                return;
+            }
+
+            const updatedData = {};
+            const formData = new FormData(modalEditForm);
+            for (let [key, value] of formData.entries()) {
+                updatedData[key] = value;
+            }
+
+            try {
+                const docRef = doc(db, currentEditingCollection, currentEditingDocId);
+                await updateDoc(docRef, updatedData);
+                showMessageBox("Perubahan berhasil disimpan!", 'success');
+                hideDetailsModal();
+            } catch (error) {
+                console.error("Error updating document:", error);
+                showMessageBox(`Gagal menyimpan perubahan: ${error.message}`, 'error');
+            }
+        });
+
+        // --- Authentication Check and Data Loading ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
+                if (user.email === authorizedAdminEmail) {
+                    loadRegistrations(); // Load data when admin logs in
+                    console.log("Admin logged in to Registrations page:", user.email, user.uid);
+                } else {
+                    // Not an authorized admin, redirect to main admin login
+                    signOut(auth); // Ensure they are signed out
+                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
+                    setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect after message
+                }
+            } else {
+                // Not logged in, redirect to main admin login
+                console.log("Not logged in. Redirecting to admin.html");
+                showMessageBox("Silakan login sebagai admin.", 'error');
+                setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect after message
+            }
+        });
+
+        // --- Load Registrations from Firestore ---
+        function loadRegistrations() {
+            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
+            const q = query(registrationsRef, orderBy('timestamp', 'desc'));
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    registrationsTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada pendaftaran.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach((doc) => {
+                    const reg = doc.data();
+                    const timestamp = reg.timestamp ? new Date(reg.timestamp.toDate()).toLocaleString() : 'N/A';
+                    const jenisKelas = Array.isArray(reg.jenis_kelas) ? reg.jenis_kelas.join(', ') : (reg.jenis_kelas || 'N/A');
+
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${reg.nama_lengkap || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.nomor_whatsapp || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jenisKelas}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.jadwal_diinginkan || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timestamp}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openEditModal('${doc.id}', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                                <button onclick="openEditModal('${doc.id}', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                registrationsTableBody.innerHTML = html;
+            }, (error) => {
+                console.error("Error fetching registrations:", error);
+                registrationsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
+            });
+        }
+        
+        // --- Navigation from this page ---
+        backToAdminDashboardButton.addEventListener('click', () => {
+            window.location.href = "admin.html";
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                window.location.href = "admin.html"; // Redirect to main admin login after logout
+            } catch (error) {
+                console.error("Logout failed:", error.message);
+                showMessageBox(`Logout gagal: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
