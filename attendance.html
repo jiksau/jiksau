@@ -13,6 +13,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            visibility: hidden; /* Hide body content until auth state is confirmed */
         }
         .container {
             max-width: 800px;
@@ -330,7 +331,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Added setPersistence, browserLocalPersistence
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
@@ -356,9 +357,6 @@
         let currentUserId = null;
         let currentUserEmail = null;
 
-        // Flag to ensure we only redirect once after initial auth state is known
-        let initialAuthCheckDone = false; 
-
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
             const messageBox = document.getElementById('messageBox');
@@ -378,39 +376,51 @@
             overlay.style.display = 'none';
         }
 
-        // --- Set Authentication Persistence (NEW) ---
+        // --- Set Authentication Persistence and Initial Check ---
+        // This is a more robust way to handle initial auth state and persistence
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
                 console.log("Authentication persistence set to LOCAL on attendance.html.");
+                // After persistence is set, listen for auth state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // User is signed in
+                        currentUserId = user.uid;
+                        currentUserEmail = user.email;
+                        loggedInUserEmailSpan.textContent = user.email;
+                        loggedInUserIdSpan.textContent = user.uid;
+                        console.log("User logged in for attendance:", user.email, user.uid);
+                        document.body.style.visibility = 'visible'; // Show content
+                    } else {
+                        // User is signed out, redirect to login page
+                        console.log("No user signed in. Redirecting to login page from attendance.html.");
+                        showMessageBox("Anda harus login untuk mencatat absensi.", 'error');
+                        setTimeout(() => {
+                            window.location.href = "index.html"; // Redirect to login
+                        }, 2000);
+                    }
+                });
             })
             .catch((error) => {
                 console.error("Error setting persistence on attendance.html:", error);
+                showMessageBox(`Gagal menginisialisasi autentikasi: ${error.message}`, 'error');
+                // Even if persistence fails, still try to check auth state immediately
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        currentUserEmail = user.email;
+                        loggedInUserEmailSpan.textContent = user.email;
+                        loggedInUserIdSpan.textContent = user.uid;
+                        document.body.style.visibility = 'visible'; // Show content
+                    } else {
+                        console.log("No user signed in after persistence error. Redirecting.");
+                        showMessageBox("Anda harus login untuk mencatat absensi.", 'error');
+                        setTimeout(() => {
+                            window.location.href = "index.html";
+                        }, 2000);
+                    }
+                });
             });
-
-        // --- Authentication Check ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                currentUserEmail = user.email;
-                loggedInUserEmailSpan.textContent = user.email;
-                loggedInUserIdSpan.textContent = user.uid;
-                console.log("User logged in for attendance:", user.email, user.uid);
-                initialAuthCheckDone = true; // Mark initial check as complete
-            } else {
-                showMessageBox("Anda harus login untuk mencatat absensi.", 'error');
-                // Only redirect if the initial auth check has completed and found no user
-                if (initialAuthCheckDone) { 
-                    console.log("No user signed in. Redirecting to login page from attendance.html.");
-                    setTimeout(() => {
-                        window.location.href = "index.html"; // Redirect to login
-                    }, 2000);
-                } else {
-                    // This is the initial load, and user is null. Wait for persistence to load.
-                    console.log("Initial auth check on attendance.html: No user found yet. Waiting for persistence to load.");
-                    // You might want to show a loading spinner or hide the form until auth state is confirmed
-                }
-            }
-        });
 
         // --- Form Submission Logic ---
         attendanceEvaluationForm.addEventListener('submit', async (e) => {
