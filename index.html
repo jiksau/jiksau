@@ -225,25 +225,6 @@
             background-color: #45a049;
         }
 
-        /* Gamelist button specific style */
-        #gamelist-button {
-            background-color: #f472b6; /* Pink-400 from Tailwind */
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 10px; /* Space from admin button */
-            transition: background-color 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        #gamelist-button:hover {
-            background-color: #ec4899; /* Pink-500 from Tailwind */
-        }
-
 
         /* Responsive adjustments */
         @media (max-width: 600px) {
@@ -313,7 +294,7 @@
             const forgotPasswordLink = document.getElementById("forgot-password");
             const statusDiv = document.getElementById("status");
             const adminDashboardButton = document.getElementById("admin-dashboard-button");
-            const gamelistButton = document.getElementById("gamelist-button");
+            // const gamelistButton = document.getElementById("gamelist-button"); // Removed gamelistButton
 
             // Signup form elements
             const signupNameInput = document.getElementById("signup-name");
@@ -579,10 +560,10 @@
                 window.location.href = "admin.html"; // Redirect to admin.html
             });
 
-            // Gamelist Button Event Listener
-            gamelistButton.addEventListener("click", () => {
-                window.location.href = "gamelist.html"; // Redirect to gamelist.html
-            });
+            // Gamelist Button Event Listener - REMOVED
+            // gamelistButton.addEventListener("click", () => {
+            //     window.location.href = "gamelist.html"; // Redirect to gamelist.html
+            // });
         });
     </script>
 </head>
@@ -633,7 +614,6 @@
         </div>
         <div id="status"></div>
         <button id="admin-dashboard-button">Go to Admin Dashboard</button>
-        <button id="gamelist-button">Go to Gamelist</button>
-    </div>
+        </div>
 </body>
 </html>
