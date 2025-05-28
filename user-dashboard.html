@@ -215,8 +215,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // Added orderBy
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Added setPersistence, browserLocalPersistence
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -246,7 +246,7 @@
         const gamelistButton = document.getElementById('gamelistButton');
         const attendanceButton = document.getElementById('attendanceButton');
         const registrationStatusCard = document.getElementById('registrationStatusCard');
-        const attendanceHistoryList = document.getElementById('attendanceHistoryList'); // New element for history
+        const attendanceHistoryList = document.getElementById('attendanceHistoryList');
 
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
@@ -267,7 +267,22 @@
             overlay.style.display = 'none';
         }
 
+        // --- Set Authentication Persistence (NEW) ---
+        // This ensures the user stays logged in even after closing the browser/tab
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log("Authentication persistence set to LOCAL.");
+            })
+            .catch((error) => {
+                console.error("Error setting persistence:", error);
+                // Handle errors here, e.g., browser not supporting local storage
+            });
+
+
         // --- Authentication Check and Data Loading ---
+        // Flag to ensure we only redirect once after initial auth state is known
+        let initialAuthCheckDone = false; 
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // User is signed in
@@ -312,12 +327,22 @@
                 // Load user's registration data
                 loadUserRegistration(user.uid);
 
-                // Load user's attendance data (NEW)
+                // Load user's attendance data
                 loadStudentAttendance(user.uid);
+                
+                initialAuthCheckDone = true; // Mark initial check as complete
 
             } else {
                 // User is signed out, redirect to login page
-                window.location.href = "index.html"; // Redirect to your login/signup page
+                // Only redirect if the initial auth check has completed and found no user
+                if (initialAuthCheckDone) {
+                    console.log("User signed out. Redirecting to login page.");
+                    window.location.href = "index.html"; // Redirect to your login/signup page
+                } else {
+                    // This is the initial load, and user is null. Wait for persistence to load.
+                    console.log("Initial auth check: No user found yet. Waiting for persistence to load or user to sign in.");
+                    // You might want to show a loading spinner here
+                }
             }
         });
 
@@ -377,13 +402,13 @@
             });
         }
 
-        // --- Load Student Attendance History (NEW FUNCTION) ---
+        // --- Load Student Attendance History ---
         function loadStudentAttendance(currentUserId) {
-            const attendanceRef = collection(db, "studentAttendance"); // Collection for student-recorded attendance
+            const attendanceRef = collection(db, "studentAttendance");
             const q = query(attendanceRef, 
                             where("studentId", "==", currentUserId),
-                            orderBy("date", "desc"), // Order by date, newest first
-                            orderBy("timestamp", "desc") // Secondary sort by submission time
+                            orderBy("date", "desc"),
+                            orderBy("timestamp", "desc")
                            );
 
             onSnapshot(q, (snapshot) => {
@@ -401,7 +426,6 @@
                     const homework = record.homework || 'Tidak ada tugas dicatat';
                     const timestampSubmitted = record.timestamp ? new Date(record.timestamp.toDate()).toLocaleString() : 'N/A';
 
-                    // Prepare evaluation scores
                     const evaluationScores = record.evaluation || {};
                     const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][evaluationScores.mood - 1] || 'N/A';
                     const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][evaluationScores.understood - 1] || 'N/A';
