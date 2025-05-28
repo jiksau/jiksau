@@ -33,7 +33,9 @@
         input[type="password"],
         input[type="text"],
         input[type="date"],
-        textarea {
+        input[type="number"], /* Added for meeting number */
+        textarea,
+        select { /* Added select for dropdowns */
             width: 100%;
             padding: 0.75rem;
             margin-bottom: 1rem;
@@ -46,7 +48,9 @@
         input[type="password"]:focus,
         input[type="text"]:focus,
         input[type="date"]:focus,
-        textarea:focus {
+        input[type="number"]:focus, /* Added for meeting number */
+        textarea:focus,
+        select:focus { /* Added select for dropdowns */
             border-color: #3182ce;
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
             outline: none;
@@ -87,6 +91,7 @@
             overflow-x: auto; /* Allows horizontal scrolling on small screens */
             border-radius: 8px;
             border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
         }
         table {
             width: 100%;
@@ -227,17 +232,93 @@
         footer {
             text-align: center;
             padding: 2rem;
-            margin-top: auto; /* Pushes footer to the bottom */
+            margin-top: auto;
             font-size: 0.85rem;
             color: #718096;
         }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row > div {
+            flex: 1;
+        }
+
+        /* Slider specific styles (for modal) */
+        .slider-group {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .slider-group label {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2d3748;
+        }
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 2rem; /* Give space for labels */
+        }
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #cbd5e0;
+            outline: none;
+            border-radius: 5px;
+            opacity: 0.7;
+            transition: opacity .2s;
+            margin: 0; /* Remove default margin */
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .slider-container input[type="range"]:hover {
+            opacity: 1;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3182ce;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3182ce;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem; /* Space below the slider track */
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        .slider-labels span {
+            flex: 1;
+            text-align: center;
+        }
+        .slider-labels span:first-child { text-align: left; }
+        .slider-labels span:last-child { text-align: right; }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="mb-8 flex justify-between items-center">
             <h1 class="text-3xl font-extrabold flex-grow text-center">ExtraCourse Admin Dashboard</h1>
-            <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg hidden">Logout</button>
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Logout</button>
         </header>
 
         <section id="login-section" class="hidden">
@@ -274,6 +355,60 @@
                     </tbody>
                 </table>
             </div>
+
+            <h2 class="text-2xl font-bold mb-6 mt-8">Catat Absensi Siswa</h2>
+            <div class="info-card">
+                <form id="attendanceForm" class="space-y-4">
+                    <div>
+                        <label for="studentSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Siswa:</label>
+                        <select id="studentSelect" name="studentId" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="">-- Pilih Siswa --</option>
+                            </select>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="classIdInput" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas/ID Kelas:</label>
+                            <input type="text" id="classIdInput" name="classId" required placeholder="Contoh: English Level 1">
+                        </div>
+                        <div>
+                            <label for="attendanceDate" class="block text-gray-700 text-sm font-bold mb-2">Tanggal Absensi:</label>
+                            <input type="date" id="attendanceDate" name="date" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="attendanceStatus" class="block text-gray-700 text-sm font-bold mb-2">Status:</label>
+                        <select id="attendanceStatus" name="status" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="">-- Pilih Status --</option>
+                            <option value="Present">Hadir</option>
+                            <option value="Absent">Absen</option>
+                            <option value="Late">Terlambat</option>
+                            <option value="Excused">Izin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-auto px-6 py-2">Catat Absensi</button>
+                </form>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-6 mt-8">Riwayat Absensi Siswa</h2>
+            <div class="table-container">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3">Nama Siswa</th>
+                            <th class="px-6 py-3">Kelas</th>
+                            <th class="px-6 py-3">Tanggal</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Dicatat Oleh</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentAttendanceTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Loading student attendance records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
     </div>
 
@@ -303,9 +438,9 @@
     </footer>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -332,13 +467,18 @@
         const loginForm = document.getElementById('loginForm');
         const logoutButton = document.getElementById('logoutButton');
         const registrationsTableBody = document.getElementById('registrationsTableBody');
+        const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody'); // New attendance table body
         const detailsModal = document.getElementById('detailsModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalDetailsContent = document.getElementById('modalDetailsContent');
         const modalEditForm = document.getElementById('modalEditForm');
         const saveChangesButton = document.getElementById('saveChangesButton');
+        const attendanceForm = document.getElementById('attendanceForm');
+        const studentSelect = document.getElementById('studentSelect');
 
-        let currentEditingDocId = null; // To store the ID of the document currently being edited
+        let currentEditingDocId = null;
+        let currentEditingCollection = null; // New: to track which collection is being edited
+        let currentAdminUser = null;
 
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
@@ -360,20 +500,22 @@
         }
 
         // --- Modal Functions ---
-        window.openEditModal = async function(docId, mode = 'view') { // mode can be 'view' or 'edit'
-            currentEditingDocId = docId; // Store the ID
+        // Generic function to open modal for both registrations and attendance
+        window.openEditModal = async function(docId, collectionName, mode = 'view') {
+            currentEditingDocId = docId;
+            currentEditingCollection = collectionName; // Set the current collection being edited
             try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/registrations`, docId);
+                const docRef = doc(db, collectionName, docId); // Use collectionName
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     let modalHtml = '';
-                    modalTitle.textContent = mode === 'edit' ? 'Edit Pendaftaran' : 'Detail Pendaftaran';
-                    saveChangesButton.classList.toggle('hidden', mode === 'view'); // Show/hide save button
+                    modalTitle.textContent = mode === 'edit' ? `Edit ${collectionName === 'studentAttendance' ? 'Absensi' : 'Pendaftaran'}` : `Detail ${collectionName === 'studentAttendance' ? 'Absensi' : 'Pendaftaran'}`;
+                    saveChangesButton.classList.toggle('hidden', mode === 'view');
 
-                    // Fields that are explicitly editable (text, date, textarea)
-                    const editableFields = [
+                    // Define fields for registrations
+                    const registrationEditableFields = [
                         'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
                         'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
                         'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
@@ -382,62 +524,93 @@
                         'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
                         'frekuensi_belajar', 'motivasi_belajar'
                     ];
-                    
-                    // Fields that are displayed but not easily editable in this simple modal (radio, checkbox)
-                    const displayOnlyFields = [
+                    const registrationDisplayOnlyFields = [
                         'jenis_kelamin', 'metode', 'jumlah_pertemuan', 'penempatan_level', 'jenis_kelas',
-                        'setuju_ketentuan', 'userId', 'timestamp' // System fields
+                        'setuju_ketentuan', 'userId', 'timestamp'
                     ];
 
-                    for (const fieldName of editableFields) {
-                        const value = data[fieldName] || '';
-                        let inputType = 'text';
-                        let inputTag = `<input type="${inputType}" id="modal-${fieldName}" name="${fieldName}" value="${value}" class="w-full p-2 border rounded">`;
+                    // Define fields for studentAttendance
+                    const attendanceEditableFields = [
+                        'classId', 'date', 'meetingNumber', 'material', 'homework'
+                    ];
+                    const attendanceDisplayOnlyFields = [
+                        'studentId', 'studentEmail', 'studentName', 'recordedByUid', 'recordedByEmail', 'timestamp', 'evaluation' // Evaluation will be displayed, not easily editable
+                    ];
 
-                        if (fieldName === 'tanggal_lahir') {
-                            // Ensure date is formatted for input type date
-                            const dateValue = value instanceof Date ? value.toISOString().split('T')[0] : value;
-                            inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${dateValue}" class="w-full p-2 border rounded">`;
-                        } else if (fieldName.includes('alamat') || fieldName.includes('catatan') || fieldName.includes('tujuan') || fieldName.includes('motivasi') || fieldName.includes('pengetahuan') || fieldName.includes('kendala') || fieldName.includes('tantangan') || fieldName.includes('preferensi')) {
-                            // Use textarea for longer text fields
-                            inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value}</textarea>`;
+                    const fieldsToProcess = collectionName === 'studentAttendance' ? attendanceEditableFields.concat(attendanceDisplayOnlyFields) : registrationEditableFields.concat(registrationDisplayOnlyFields);
+
+                    for (const fieldName of fieldsToProcess) {
+                        const value = data[fieldName];
+                        let displayValue = value;
+                        let inputTag = '';
+                        let isEditable = false;
+
+                        // Determine if field is editable and its type
+                        if (collectionName === 'studentAttendance' && attendanceEditableFields.includes(fieldName)) {
+                            isEditable = true;
+                            if (fieldName === 'date') {
+                                inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            } else if (fieldName === 'meetingNumber') {
+                                inputTag = `<input type="number" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            } else if (fieldName === 'material' || fieldName === 'homework') {
+                                inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
+                            } else {
+                                inputTag = `<input type="text" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            }
+                        } else if (collectionName !== 'studentAttendance' && registrationEditableFields.includes(fieldName)) {
+                            isEditable = true;
+                            if (fieldName === 'tanggal_lahir') {
+                                const dateValue = value instanceof Date ? value.toISOString().split('T')[0] : value;
+                                inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${dateValue || ''}" class="w-full p-2 border rounded">`;
+                            } else if (fieldName.includes('alamat') || fieldName.includes('catatan') || fieldName.includes('tujuan') || fieldName.includes('motivasi') || fieldName.includes('pengetahuan') || fieldName.includes('kendala') || fieldName.includes('tantangan') || fieldName.includes('preferensi')) {
+                                inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
+                            } else {
+                                inputTag = `<input type="text" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            }
+                        } else {
+                            // Not editable, just display
+                            if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
+                                displayValue = value.toDate().toLocaleString();
+                            } else if (Array.isArray(value)) {
+                                displayValue = value.join(', ');
+                            } else if (typeof value === 'boolean') {
+                                displayValue = value ? 'Ya' : 'Tidak';
+                            } else if (fieldName === 'evaluation' && typeof value === 'object' && value !== null) {
+                                // Special handling for evaluation scores
+                                const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][value.mood - 1] || 'N/A';
+                                const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][value.understood - 1] || 'N/A';
+                                const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][value.easy - 1] || 'N/A';
+                                const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][value.creativity - 1] || 'N/A';
+                                const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][value.tired - 1] || 'N/A';
+
+                                displayValue = `
+                                    <div class="evaluation-scores">
+                                        <p>Mood: ${moodLabel} (${value.mood || 'N/A'})</p>
+                                        <p>Pemahaman Materi: ${understoodLabel} (${value.understood || 'N/A'})</p>
+                                        <p>Materi Mudah: ${easyLabel} (${value.easy || 'N/A'})</p>
+                                        <p>Kreativitas: ${creativityLabel} (${value.creativity || 'N/A'})</p>
+                                        <p>Tingkat Kelelahan: ${tiredLabel} (${value.tired || 'N/A'})</p>
+                                    </div>
+                                `;
+                            }
                         }
-
-                        if (mode === 'edit') {
+                        
+                        if (mode === 'edit' && isEditable) {
                             modalHtml += `
                                 <div class="modal-detail-item">
                                     <label for="modal-${fieldName}">${formatFieldName(fieldName)}:</label>
                                     ${inputTag}
                                 </div>
                             `;
-                        } else { // View mode
+                        } else { // View mode or non-editable field
                             modalHtml += `
                                 <div class="modal-detail-item">
                                     <strong>${formatFieldName(fieldName)}:</strong>
-                                    <span class="display-value">${value || '-'}</span>
+                                    <span class="display-value">${displayValue || '-'}</span>
+                                    ${mode === 'edit' && !isEditable && (fieldName === 'jenis_kelamin' || fieldName === 'metode' || fieldName === 'jumlah_pertemuan' || fieldName === 'penempatan_level' || fieldName === 'jenis_kelas' || fieldName === 'evaluation') ? '<p class="text-xs text-gray-500 mt-1"><i>Edit field ini di Firebase Console jika diperlukan.</i></p>' : ''}
                                 </div>
                             `;
                         }
-                    }
-
-                    // Display only for non-editable complex fields and system fields
-                    for (const fieldName of displayOnlyFields) {
-                        let value = data[fieldName];
-                        if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
-                            value = value.toDate().toLocaleString();
-                        } else if (Array.isArray(value)) {
-                            value = value.join(', ');
-                        } else if (typeof value === 'boolean') {
-                            value = value ? 'Ya' : 'Tidak';
-                        }
-                        
-                        modalHtml += `
-                            <div class="modal-detail-item">
-                                <strong>${formatFieldName(fieldName)}:</strong>
-                                <span class="display-value">${value || '-'}</span>
-                                ${mode === 'edit' && (fieldName === 'jenis_kelamin' || fieldName === 'metode' || fieldName === 'jumlah_pertemuan' || fieldName === 'penempatan_level' || fieldName === 'jenis_kelas') ? '<p class="text-xs text-gray-500 mt-1"><i>Edit field ini di Firebase Console jika diperlukan.</i></p>' : ''}
-                            </div>
-                        `;
                     }
                     
                     modalDetailsContent.innerHTML = modalHtml;
@@ -454,34 +627,36 @@
         window.hideDetailsModal = function() {
             detailsModal.classList.remove('show');
             modalDetailsContent.innerHTML = ''; // Clear content
-            currentEditingDocId = null; // Clear editing ID
+            currentEditingDocId = null;
+            currentEditingCollection = null; // Clear the collection name
         }
 
         // Helper function to format field names for display
         function formatFieldName(fieldName) {
-            // Replace underscores with spaces and capitalize first letter of each word
             return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
         }
 
         // --- Handle Save Changes ---
         modalEditForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentEditingDocId) {
-                showMessageBox("Tidak ada dokumen yang dipilih untuk diedit.", 'error');
+            if (!currentEditingDocId || !currentEditingCollection) {
+                showMessageBox("Tidak ada dokumen atau koleksi yang dipilih untuk diedit.", 'error');
                 return;
             }
 
             const updatedData = {};
             const formData = new FormData(modalEditForm);
             for (let [key, value] of formData.entries()) {
-                // Collect values from editable fields
-                if (key !== 'setuju_ketentuan') { // setuju_ketentuan is not meant to be edited directly here
-                   updatedData[key] = value;
+                // Convert meetingNumber to integer if it's for attendance
+                if (currentEditingCollection === 'studentAttendance' && key === 'meetingNumber') {
+                    updatedData[key] = parseInt(value);
+                } else {
+                    updatedData[key] = value;
                 }
             }
 
             try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/registrations`, currentEditingDocId);
+                const docRef = doc(db, currentEditingCollection, currentEditingDocId); // Use currentEditingCollection
                 await updateDoc(docRef, updatedData);
                 showMessageBox("Perubahan berhasil disimpan!", 'success');
                 hideDetailsModal();
@@ -509,21 +684,24 @@
         logoutButton.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // UI will update via onAuthStateChanged
+                // Redirect will happen via onAuthStateChanged
             } catch (error) {
                 console.error("Logout failed:", error.message);
                 showMessageBox(`Logout gagal: ${error.message}`, 'error');
             }
         });
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
                 if (user.email === authorizedAdminEmail) {
+                    currentAdminUser = { uid: user.uid, email: user.email };
                     loginSection.classList.add('hidden');
                     dashboardSection.classList.remove('hidden');
                     logoutButton.classList.remove('hidden');
-                    loadRegistrations(); // Load data when admin logs in
+                    loadRegistrations(); // Load registration data
+                    loadStudentsForAttendance(); // Load students for attendance dropdown
+                    loadStudentAttendanceRecordsForAdmin(); // NEW: Load student attendance records for admin
                     console.log("Admin logged in:", user.email, user.uid);
                 } else {
                     signOut(auth);
@@ -537,6 +715,7 @@
                 dashboardSection.classList.add('hidden');
                 logoutButton.classList.add('hidden');
                 registrationsTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Silakan login sebagai admin.</td></tr>';
+                studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Silakan login sebagai admin untuk melihat absensi.</td></tr>'; // Reset attendance table
                 console.log("User signed out.");
             }
         });
@@ -566,8 +745,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${reg.jadwal_diinginkan || 'N/A'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${timestamp}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="openEditModal('${doc.id}', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
-                                <button onclick="openEditModal('${doc.id}', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
+                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
                             </td>
                         </tr>
                     `;
@@ -576,6 +755,118 @@
             }, (error) => {
                 console.error("Error fetching registrations:", error);
                 registrationsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
+            });
+        }
+
+        // --- Attendance Management Logic ---
+        async function loadStudentsForAttendance() {
+            try {
+                const usersCollectionRef = collection(db, "users");
+                const q = query(usersCollectionRef, orderBy('name'));
+                const usersSnapshot = await getDocs(q); // Use getDocs with query
+
+                studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.role === "Student") {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${userData.name || userData.email} (${userData.email})`;
+                        studentSelect.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading students for attendance:", error);
+                showMessageBox(`Gagal memuat daftar siswa: ${error.message}`, 'error');
+            }
+        }
+        
+        attendanceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentAdminUser) {
+                showMessageBox("Anda belum login sebagai admin.", 'error');
+                return;
+            }
+
+            const formData = new FormData(attendanceForm);
+            const studentId = formData.get('studentId');
+            const classId = formData.get('classId');
+            const attendanceDate = formData.get('date');
+            const status = formData.get('status');
+
+            let studentEmail = '';
+            let studentName = '';
+            try {
+                const studentDocSnap = await getDoc(doc(db, "users", studentId));
+                if (studentDocSnap.exists()) {
+                    const studentData = studentDocSnap.data();
+                    studentEmail = studentData.email || 'N/A';
+                    studentName = studentData.name || 'N/A';
+                }
+            } catch (error) {
+                console.error("Error fetching student details for attendance:", error);
+                showMessageBox(`Gagal mengambil detail siswa untuk absensi: ${error.message}`, 'error');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "attendance"), { // This is admin-recorded attendance
+                    studentId: studentId,
+                    studentEmail: studentEmail,
+                    studentName: studentName,
+                    classId: classId,
+                    date: attendanceDate,
+                    status: status,
+                    recordedByUid: currentAdminUser.uid,
+                    recordedByEmail: currentAdminUser.email,
+                    timestamp: serverTimestamp()
+                });
+                showMessageBox("Absensi berhasil dicatat!", 'success');
+                attendanceForm.reset();
+            } catch (error) {
+                console.error("Error recording attendance:", error);
+                showMessageBox(`Gagal mencatat absensi: ${error.message}`, 'error');
+            }
+        });
+
+        // --- Load Student Attendance Records for Admin (NEW FUNCTION) ---
+        function loadStudentAttendanceRecordsForAdmin() {
+            const attendanceRef = collection(db, "studentAttendance"); // This is the student-submitted attendance
+            const q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada riwayat absensi siswa.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach((doc) => {
+                    const record = doc.data();
+                    const attendanceDate = record.date || 'N/A';
+                    const studentName = record.studentName || record.studentEmail || 'N/A';
+                    const classId = record.classId || 'N/A';
+                    const status = record.status || 'N/A';
+                    const recordedBy = record.recordedByEmail || record.studentEmail || 'N/A'; // Who recorded it
+
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${studentName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${classId}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${attendanceDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${status}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${recordedBy}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openEditModal('${doc.id}', 'studentAttendance', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
+                                <button onclick="openEditModal('${doc.id}', 'studentAttendance', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                studentAttendanceTableBody.innerHTML = html;
+            }, (error) => {
+                console.error("Error fetching student attendance records for admin:", error);
+                studentAttendanceTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat riwayat absensi siswa: ${error.message}</td></tr>`;
             });
         }
     </script>
