@@ -13,6 +13,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            visibility: hidden; /* Hide body content until auth state is confirmed */
         }
         .container {
             max-width: 1200px;
@@ -51,12 +52,52 @@
             background-color: #4b5563; /* Gray-700 */
         }
 
-        /* Table styles */
+        /* Form and Table styles */
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            outline: none;
+        }
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .form-row > div {
+            flex: 1;
+        }
+        .info-card { /* Kept for general styling if needed elsewhere, but form is removed */
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
         .table-container {
             overflow-x: auto;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
-            margin-bottom: 2rem;
         }
         table {
             width: 100%;
@@ -287,7 +328,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Added setPersistence, browserLocalPersistence
         import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
@@ -322,6 +363,9 @@
         let currentEditingDocId = null;
         let currentEditingCollection = null; // Will always be registrations collection for this page
 
+        // Flag to ensure we only redirect once after initial auth state is known
+        let initialAuthCheckDone = false; 
+
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
             const messageBox = document.getElementById('messageBox');
@@ -340,6 +384,15 @@
             messageBox.style.display = 'none';
             overlay.style.display = 'none';
         }
+
+        // --- Set Authentication Persistence (NEW) ---
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log("Authentication persistence set to LOCAL on admin-registrations.html.");
+            })
+            .catch((error) => {
+                console.error("Error setting persistence on admin-registrations.html:", error);
+            });
 
         // --- Modal Functions (Adapted for Registrations only) ---
         window.openEditModal = async function(docId, mode = 'view') {
@@ -469,6 +522,7 @@
                 if (user.email === authorizedAdminEmail) {
                     loadRegistrations(); // Load data when admin logs in
                     console.log("Admin logged in to Registrations page:", user.email, user.uid);
+                    document.body.style.visibility = 'visible'; // Show content
                 } else {
                     // Not an authorized admin, redirect to main admin login
                     signOut(auth); // Ensure they are signed out
@@ -477,10 +531,16 @@
                 }
             } else {
                 // Not logged in, redirect to main admin login
-                console.log("Not logged in. Redirecting to admin.html");
-                showMessageBox("Silakan login sebagai admin.", 'error');
-                setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect after message
+                // Only redirect if the initial auth check has completed and found no user
+                if (initialAuthCheckDone) { 
+                    console.log("Not logged in. Redirecting to admin.html from admin-registrations.html.");
+                    showMessageBox("Silakan login sebagai admin.", 'error');
+                    setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect after message
+                } else {
+                    console.log("Initial auth check on admin-registrations.html: No user found yet. Waiting for persistence to load.");
+                }
             }
+            initialAuthCheckDone = true; // Mark initial check as complete after first onAuthStateChanged call
         });
 
         // --- Load Registrations from Firestore ---
