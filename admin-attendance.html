@@ -333,6 +333,12 @@
 
         <section id="student-attendance-history-section">
             <h2 class="text-2xl font-bold mb-6 mt-8">Riwayat Absensi Siswa</h2>
+            <div class="mb-4">
+                <label for="studentNameFilter" class="block text-gray-700 text-sm font-bold mb-2">Filter Berdasarkan Nama Siswa:</label>
+                <select id="studentNameFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="all">Semua Siswa</option>
+                    </select>
+            </div>
             <div class="table-container">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead>
@@ -383,7 +389,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // Added deleteDoc
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -413,6 +419,8 @@
         const saveChangesButton = document.getElementById('saveChangesButton');
         const logoutButton = document.getElementById('logoutButton');
         const backToAdminDashboardButton = document.getElementById('backToAdminDashboard');
+        const studentNameFilter = document.getElementById('studentNameFilter'); // Get the new filter dropdown
+
 
         let currentEditingDocId = null;
         let currentEditingCollection = null;
@@ -475,7 +483,7 @@
                     saveChangesButton.classList.toggle('hidden', mode === 'view');
 
                     const attendanceEditableFields = [
-                        'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
+                        'date', 'meetingNumber', 'material', 'homework', 'status'
                     ];
                     const attendanceDisplayOnlyFields = [
                         'studentId', 'studentEmail', 'studentName', 'recordedByUid', 'recordedByEmail', 'timestamp', 'evaluation'
@@ -494,7 +502,7 @@
                                 inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             } else if (fieldName === 'meetingNumber') {
                                 inputTag = `<input type="number" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') {
+                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') { // classId also text
                                 inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
                             } else if (fieldName === 'status') {
                                 inputTag = `
@@ -604,7 +612,7 @@
             }
         });
 
-        // --- Handle Delete Attendance (New) ---
+        // --- Handle Delete Attendance ---
         window.deleteAttendanceRecord = function(docId) {
             showConfirmDialog("Apakah Anda yakin ingin menghapus catatan absensi ini?", async (confirmed) => {
                 if (confirmed) {
@@ -627,7 +635,8 @@
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
                 if (user.email === authorizedAdminEmail) {
                     currentAdminUser = { uid: user.uid, email: user.email };
-                    loadStudentAttendanceRecordsForAdmin();
+                    loadStudentsForFilter(); // Load students for filter dropdown
+                    loadStudentAttendanceRecordsForAdmin(); // Load student attendance records for admin
                     console.log("Admin logged in to Attendance page:", user.email, user.uid);
                 } else {
                     signOut(auth);
@@ -641,14 +650,50 @@
             }
         });
 
-        // --- Load Student Attendance Records for Admin ---
-        function loadStudentAttendanceRecordsForAdmin() {
+        // --- Load Students for Filter Dropdown (NEW) ---
+        async function loadStudentsForFilter() {
+            try {
+                const usersCollectionRef = collection(db, "users");
+                const q = query(usersCollectionRef, orderBy('name'));
+                const usersSnapshot = await getDocs(q);
+
+                studentNameFilter.innerHTML = '<option value="all">Semua Siswa</option>'; // Reset dropdown
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.role === "Student") { // Only show students
+                        const option = document.createElement('option');
+                        option.value = doc.id; // Store UID as value
+                        option.textContent = `${userData.name || userData.email} (${userData.email})`;
+                        studentNameFilter.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading students for filter:", error);
+                showMessageBox(`Gagal memuat daftar siswa untuk filter: ${error.message}`, 'error');
+            }
+        }
+
+        // --- Event Listener for Filter Change (NEW) ---
+        studentNameFilter.addEventListener('change', () => {
+            loadStudentAttendanceRecordsForAdmin(studentNameFilter.value);
+        });
+
+
+        // --- Load Student Attendance Records for Admin (MODIFIED for Filter) ---
+        function loadStudentAttendanceRecordsForAdmin(selectedStudentId = 'all') { // Added selectedStudentId parameter
             const attendanceRef = collection(db, "studentAttendance");
-            const q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
+            let q;
+
+            if (selectedStudentId === 'all') {
+                q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
+            } else {
+                // Filter by selected student's UID
+                q = query(attendanceRef, where("studentId", "==", selectedStudentId), orderBy("date", "desc"), orderBy("timestamp", "desc"));
+            }
 
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada riwayat absensi siswa.</td></tr>';
+                    studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada riwayat absensi siswa untuk filter ini.</td></tr>';
                     return;
                 }
 
