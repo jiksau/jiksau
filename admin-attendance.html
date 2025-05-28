@@ -383,7 +383,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"; // Added deleteDoc
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -405,7 +405,7 @@
         const appId = firebaseConfig.appId;
 
         // DOM Elements
-        const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody'); // New attendance table body
+        const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody');
         const detailsModal = document.getElementById('detailsModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalDetailsContent = document.getElementById('modalDetailsContent');
@@ -414,13 +414,9 @@
         const logoutButton = document.getElementById('logoutButton');
         const backToAdminDashboardButton = document.getElementById('backToAdminDashboard');
 
-        // Removed elements related to the attendance form
-        // const attendanceForm = document.getElementById('attendanceForm');
-        // const studentSelect = document.getElementById('studentSelect');
-
         let currentEditingDocId = null;
-        let currentEditingCollection = null; // New: to track which collection is being edited
-        let currentAdminUser = null; // To store logged-in admin's info
+        let currentEditingCollection = null;
+        let currentAdminUser = null;
 
 
         // --- Message Box Functions (reused) ---
@@ -442,13 +438,34 @@
             overlay.style.display = 'none';
         }
 
+        // --- Confirmation Dialog (New) ---
+        function showConfirmDialog(message, onConfirm) {
+            const confirmBox = document.getElementById('messageBox'); // Reuse messageBox for confirmation
+            const confirmText = document.getElementById('messageText');
+            const overlay = document.getElementById('overlay');
+            
+            confirmText.innerHTML = `${message}<br><br><button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg mr-2">Yes</button><button id="confirmNo" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">No</button>`;
+            confirmBox.className = 'message-box error'; // Use error style for delete confirmation
+            confirmBox.style.display = 'block';
+            overlay.style.display = 'block';
+
+            document.getElementById('confirmYes').onclick = () => {
+                hideMessageBox(); // Hide the confirmation box
+                onConfirm(true);
+            };
+            document.getElementById('confirmNo').onclick = () => {
+                hideMessageBox(); // Hide the confirmation box
+                onConfirm(false);
+            };
+        }
+
+
         // --- Modal Functions ---
-        // Generic function to open modal for both registrations and attendance
         window.openEditModal = async function(docId, collectionName, mode = 'view') {
             currentEditingDocId = docId;
-            currentEditingCollection = collectionName; // Set the current collection being edited
+            currentEditingCollection = collectionName;
             try {
-                const docRef = doc(db, collectionName, docId); // Use collectionName
+                const docRef = doc(db, collectionName, docId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -457,16 +474,13 @@
                     modalTitle.textContent = mode === 'edit' ? `Edit ${collectionName === 'studentAttendance' ? 'Absensi Siswa' : 'Pendaftaran'}` : `Detail ${collectionName === 'studentAttendance' ? 'Absensi Siswa' : 'Pendaftaran'}`;
                     saveChangesButton.classList.toggle('hidden', mode === 'view');
 
-                    // Define fields for studentAttendance
                     const attendanceEditableFields = [
-                        'classId', 'date', 'meetingNumber', 'material', 'homework', 'status' // Added status here for editability
+                        'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
                     ];
-                    // Fields that are displayed but not editable in this simple modal (evaluation, student/admin info)
                     const attendanceDisplayOnlyFields = [
                         'studentId', 'studentEmail', 'studentName', 'recordedByUid', 'recordedByEmail', 'timestamp', 'evaluation'
                     ];
 
-                    // For admin-attendance.html, we only care about studentAttendance fields
                     const fieldsToProcess = [...attendanceEditableFields, ...attendanceDisplayOnlyFields];
                    
                     for (const fieldName of fieldsToProcess) {
@@ -480,7 +494,7 @@
                                 inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             } else if (fieldName === 'meetingNumber') {
                                 inputTag = `<input type="number" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') { // classId also text
+                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') {
                                 inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
                             } else if (fieldName === 'status') {
                                 inputTag = `
@@ -491,12 +505,11 @@
                                         <option value="Excused" ${value === 'Excused' ? 'selected' : ''}>Izin</option>
                                     </select>
                                 `;
-                            } else { // Fallback for other text-like editable fields
+                            } else {
                                 inputTag = `<input type="text" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             }
                         } 
                         
-                        // Format display values for non-editable fields
                         if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
                             displayValue = value.toDate().toLocaleString();
                         } else if (fieldName === 'evaluation' && typeof value === 'object' && value !== null) {
@@ -573,8 +586,7 @@
             const updatedData = {};
             const formData = new FormData(modalEditForm);
             for (let [key, value] of formData.entries()) {
-                // Convert meetingNumber to integer if it's for studentAttendance
-                if (key === 'meetingNumber') { // Applies to studentAttendance and admin-recorded attendance
+                if (key === 'meetingNumber') {
                     updatedData[key] = parseInt(value);
                 } else {
                     updatedData[key] = value;
@@ -592,22 +604,37 @@
             }
         });
 
+        // --- Handle Delete Attendance (New) ---
+        window.deleteAttendanceRecord = function(docId) {
+            showConfirmDialog("Apakah Anda yakin ingin menghapus catatan absensi ini?", async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        const docRef = doc(db, "studentAttendance", docId);
+                        await deleteDoc(docRef);
+                        showMessageBox("Catatan absensi berhasil dihapus!", 'success');
+                    } catch (error) {
+                        console.error("Error deleting attendance record:", error);
+                        showMessageBox(`Gagal menghapus catatan absensi: ${error.message}`, 'error');
+                    }
+                }
+            });
+        };
+
+
         // --- Authentication Check and Data Loading ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
                 if (user.email === authorizedAdminEmail) {
-                    currentAdminUser = { uid: user.uid, email: user.email }; // Store admin info
-                    loadStudentAttendanceRecordsForAdmin(); // Load student attendance records for admin
+                    currentAdminUser = { uid: user.uid, email: user.email };
+                    loadStudentAttendanceRecordsForAdmin();
                     console.log("Admin logged in to Attendance page:", user.email, user.uid);
                 } else {
-                    // Not an authorized admin, redirect to main admin login
                     signOut(auth);
                     showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
                     setTimeout(() => { window.location.href = "admin.html"; }, 2000);
                 }
             } else {
-                // Not logged in, redirect to main admin login
                 console.log("Not logged in. Redirecting to admin.html");
                 showMessageBox("Silakan login sebagai admin.", 'error');
                 setTimeout(() => { window.location.href = "admin.html"; }, 2000);
@@ -616,7 +643,7 @@
 
         // --- Load Student Attendance Records for Admin ---
         function loadStudentAttendanceRecordsForAdmin() {
-            const attendanceRef = collection(db, "studentAttendance"); // This is the student-submitted attendance
+            const attendanceRef = collection(db, "studentAttendance");
             const q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
 
             onSnapshot(q, (snapshot) => {
@@ -632,8 +659,8 @@
                     const studentName = record.studentName || record.studentEmail || 'N/A';
                     const classId = record.classId || 'N/A';
                     const status = record.status || 'N/A';
-                    const recordedBy = record.recordedByEmail || record.studentEmail || 'N/A'; // Who recorded it
-                    const docId = doc.id; // Get document ID
+                    const recordedBy = record.recordedByEmail || record.studentEmail || 'N/A';
+                    const docId = doc.id;
 
                     html += `
                         <tr class="hover:bg-gray-50">
@@ -645,6 +672,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openEditModal('${docId}', 'studentAttendance', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">View</button>
                                 <button onclick="openEditModal('${docId}', 'studentAttendance', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
+                                <button onclick="deleteAttendanceRecord('${docId}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Delete</button>
                             </td>
                         </tr>
                     `;
