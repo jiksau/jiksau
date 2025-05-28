@@ -86,7 +86,7 @@
         .form-row > div {
             flex: 1;
         }
-        .info-card {
+        .info-card { /* Kept for general styling if needed elsewhere, but form is removed */
             background-color: #f7fafc;
             border: 1px solid #e2e8f0;
             padding: 1.5rem;
@@ -255,11 +255,11 @@
         .slider-labels span:first-child { text-align: left; }
         .slider-labels span:last-child { text-align: right; }
         .evaluation-scores p {
-            margin-bottom: 0.25rem; /* Adjust margin for paragraphs inside evaluation scores */
+            margin-bottom: 0.25rem;
         }
         .evaluation-scores span {
             display: inline-block;
-            margin-right: 0.75rem; /* Space between score spans */
+            margin-right: 0.75rem;
             background-color: #edf2f7;
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
@@ -330,41 +330,6 @@
             <h1 class="text-3xl font-extrabold flex-grow text-center">Kelola Absensi Siswa</h1>
             <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Logout</button>
         </header>
-
-        <section id="record-attendance-section">
-            <h2 class="text-2xl font-bold mb-6">Catat Absensi Siswa</h2>
-            <div class="info-card">
-                <form id="attendanceForm" class="space-y-4">
-                    <div>
-                        <label for="studentSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Siswa:</label>
-                        <select id="studentSelect" name="studentId" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="">-- Pilih Siswa --</option>
-                            </select>
-                    </div>
-                    <div class="form-row">
-                        <div>
-                            <label for="classIdInput" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas/ID Kelas:</label>
-                            <input type="text" id="classIdInput" name="classId" required placeholder="Contoh: English Level 1">
-                        </div>
-                        <div>
-                            <label for="attendanceDate" class="block text-gray-700 text-sm font-bold mb-2">Tanggal Absensi:</label>
-                            <input type="date" id="attendanceDate" name="date" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="attendanceStatus" class="block text-gray-700 text-sm font-bold mb-2">Status:</label>
-                        <select id="attendanceStatus" name="status" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="">-- Pilih Status --</option>
-                            <option value="Present">Hadir</option>
-                            <option value="Absent">Absen</option>
-                            <option value="Late">Terlambat</option>
-                            <option value="Excused">Izin</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="w-auto px-6 py-2">Catat Absensi</button>
-                </form>
-            </div>
-        </section>
 
         <section id="student-attendance-history-section">
             <h2 class="text-2xl font-bold mb-6 mt-8">Riwayat Absensi Siswa</h2>
@@ -446,15 +411,16 @@
         const modalDetailsContent = document.getElementById('modalDetailsContent');
         const modalEditForm = document.getElementById('modalEditForm');
         const saveChangesButton = document.getElementById('saveChangesButton');
-        const attendanceForm = document.getElementById('attendanceForm');
-        const studentSelect = document.getElementById('studentSelect');
         const logoutButton = document.getElementById('logoutButton');
         const backToAdminDashboardButton = document.getElementById('backToAdminDashboard');
 
+        // Removed elements related to the attendance form
+        // const attendanceForm = document.getElementById('attendanceForm');
+        // const studentSelect = document.getElementById('studentSelect');
 
         let currentEditingDocId = null;
         let currentEditingCollection = null; // New: to track which collection is being edited
-        let currentAdminUser = null; // To store logged-in admin's info for recording attendance
+        let currentAdminUser = null; // To store logged-in admin's info
 
 
         // --- Message Box Functions (reused) ---
@@ -491,45 +457,30 @@
                     modalTitle.textContent = mode === 'edit' ? `Edit ${collectionName === 'studentAttendance' ? 'Absensi Siswa' : 'Pendaftaran'}` : `Detail ${collectionName === 'studentAttendance' ? 'Absensi Siswa' : 'Pendaftaran'}`;
                     saveChangesButton.classList.toggle('hidden', mode === 'view');
 
-                    // Define fields for registrations (for display purposes if this modal is ever used for registrations from other page)
-                    const registrationEditableFields = [
-                        'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
-                        'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
-                        'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
-                        'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
-                        'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
-                        'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
-                        'frekuensi_belajar', 'motivasi_belajar'
-                    ];
-                    
                     // Define fields for studentAttendance
                     const attendanceEditableFields = [
-                        'date', 'meetingNumber', 'material', 'homework', 'status' // Added status here for editability
+                        'classId', 'date', 'meetingNumber', 'material', 'homework', 'status' // Added status here for editability
                     ];
                     // Fields that are displayed but not editable in this simple modal (evaluation, student/admin info)
                     const attendanceDisplayOnlyFields = [
                         'studentId', 'studentEmail', 'studentName', 'recordedByUid', 'recordedByEmail', 'timestamp', 'evaluation'
                     ];
 
-
-                    // Determine which fields to process based on collectionName
-                    const fieldsToProcess = collectionName === 'studentAttendance' 
-                        ? [...attendanceEditableFields, ...attendanceDisplayOnlyFields] 
-                        : [...registrationEditableFields, /* Add other registration display fields here if needed */]; // Should not happen on this page but for completeness
-
+                    // For admin-attendance.html, we only care about studentAttendance fields
+                    const fieldsToProcess = [...attendanceEditableFields, ...attendanceDisplayOnlyFields];
+                   
                     for (const fieldName of fieldsToProcess) {
                         const value = data[fieldName];
                         let displayValue = value;
                         let inputTag = '';
-                        let isEditable = false;
+                        let isEditable = attendanceEditableFields.includes(fieldName);
 
-                        if (collectionName === 'studentAttendance') {
-                            isEditable = attendanceEditableFields.includes(fieldName);
+                        if (isEditable) {
                             if (fieldName === 'date') {
                                 inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             } else if (fieldName === 'meetingNumber') {
                                 inputTag = `<input type="number" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (fieldName === 'material' || fieldName === 'homework') {
+                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') { // classId also text
                                 inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
                             } else if (fieldName === 'status') {
                                 inputTag = `
@@ -540,13 +491,11 @@
                                         <option value="Excused" ${value === 'Excused' ? 'selected' : ''}>Izin</option>
                                     </select>
                                 `;
-                            } else {
+                            } else { // Fallback for other text-like editable fields
                                 inputTag = `<input type="text" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             }
                         } 
-                        // Note: Registration specific fields won't be edited via this modal on this page.
-                        // Their logic would be in admin-registrations.html's openEditModal
-
+                        
                         // Format display values for non-editable fields
                         if (fieldName === 'timestamp' && value && typeof value.toDate === 'function') {
                             displayValue = value.toDate().toLocaleString();
@@ -584,6 +533,7 @@
                                     <strong>${formatFieldName(fieldName)}:</strong>
                                     <span class="display-value">${displayValue || '-'}</span>
                                     ${mode === 'edit' && !isEditable && (fieldName === 'evaluation') ? '<p class="text-xs text-gray-500 mt-1"><i>Evaluasi diri siswa hanya dapat dilihat, tidak diedit di sini.</i></p>' : ''}
+                                    ${mode === 'edit' && !isEditable && (fieldName === 'studentId' || fieldName === 'studentEmail' || fieldName === 'studentName' || fieldName === 'recordedByUid' || fieldName === 'recordedByEmail' || fieldName === 'timestamp') ? '<p class="text-xs text-gray-500 mt-1"><i>Informasi sistem ini tidak dapat diedit langsung.</i></p>' : ''}
                                 </div>
                             `;
                         }
@@ -624,7 +574,7 @@
             const formData = new FormData(modalEditForm);
             for (let [key, value] of formData.entries()) {
                 // Convert meetingNumber to integer if it's for studentAttendance
-                if (currentEditingCollection === 'studentAttendance' && key === 'meetingNumber') {
+                if (key === 'meetingNumber') { // Applies to studentAttendance and admin-recorded attendance
                     updatedData[key] = parseInt(value);
                 } else {
                     updatedData[key] = value;
@@ -648,7 +598,6 @@
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
                 if (user.email === authorizedAdminEmail) {
                     currentAdminUser = { uid: user.uid, email: user.email }; // Store admin info
-                    loadStudentsForAttendance(); // Load students for attendance dropdown
                     loadStudentAttendanceRecordsForAdmin(); // Load student attendance records for admin
                     console.log("Admin logged in to Attendance page:", user.email, user.uid);
                 } else {
@@ -662,77 +611,6 @@
                 console.log("Not logged in. Redirecting to admin.html");
                 showMessageBox("Silakan login sebagai admin.", 'error');
                 setTimeout(() => { window.location.href = "admin.html"; }, 2000);
-            }
-        });
-
-        // --- Attendance Management Logic ---
-        async function loadStudentsForAttendance() {
-            try {
-                const usersCollectionRef = collection(db, "users");
-                const q = query(usersCollectionRef, orderBy('name'));
-                const usersSnapshot = await getDocs(q);
-
-                studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-                usersSnapshot.forEach(doc => {
-                    const userData = doc.data();
-                    if (userData.role === "Student") {
-                        const option = document.createElement('option');
-                        option.value = doc.id; // User UID
-                        option.textContent = `${userData.name || userData.email} (${userData.email})`;
-                        studentSelect.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error("Error loading students for attendance:", error);
-                showMessageBox(`Gagal memuat daftar siswa: ${error.message}`, 'error');
-            }
-        }
-        
-        attendanceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentAdminUser) {
-                showMessageBox("Anda belum login sebagai admin.", 'error');
-                return;
-            }
-
-            const formData = new FormData(attendanceForm);
-            const studentId = formData.get('studentId');
-            const classId = formData.get('classId');
-            const attendanceDate = formData.get('date');
-            const status = formData.get('status');
-
-            let studentEmail = '';
-            let studentName = '';
-            try {
-                const studentDocSnap = await getDoc(doc(db, "users", studentId));
-                if (studentDocSnap.exists()) {
-                    const studentData = studentDocSnap.data();
-                    studentEmail = studentData.email || 'N/A';
-                    studentName = studentData.name || 'N/A';
-                }
-            } catch (error) {
-                console.error("Error fetching student details for attendance:", error);
-                showMessageBox(`Gagal mengambil detail siswa untuk absensi: ${error.message}`, 'error');
-                return;
-            }
-
-            try {
-                await addDoc(collection(db, "attendance"), { // This is admin-recorded attendance
-                    studentId: studentId,
-                    studentEmail: studentEmail,
-                    studentName: studentName,
-                    classId: classId,
-                    date: attendanceDate,
-                    status: status,
-                    recordedByUid: currentAdminUser.uid,
-                    recordedByEmail: currentAdminUser.email,
-                    timestamp: serverTimestamp()
-                });
-                showMessageBox("Absensi berhasil dicatat!", 'success');
-                attendanceForm.reset();
-            } catch (error) {
-                console.error("Error recording attendance:", error);
-                showMessageBox(`Gagal mencatat absensi: ${error.message}`, 'error');
             }
         });
 
