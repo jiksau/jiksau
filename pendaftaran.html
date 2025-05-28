@@ -230,7 +230,7 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
-            display: none; /* Hidden by default */
+            display: none;
         }
     </style>
 </head>
@@ -436,8 +436,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Added serverTimestamp
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
         const firebaseConfig = {
@@ -465,6 +465,9 @@
 
         let currentUserId = null; // Variable to store the UID of the currently logged-in user
 
+        // Flag to ensure we only redirect once after initial auth state is known
+        let initialAuthCheckDone = false; 
+
         // --- Message Box Functions (reused) ---
         function showMessageBox(message, type) {
             const messageBox = document.getElementById('messageBox');
@@ -484,6 +487,16 @@
             overlay.style.display = 'none';
         }
 
+        // --- Set Authentication Persistence ---
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log("Authentication persistence set to LOCAL on pendaftaran.html.");
+            })
+            .catch((error) => {
+                console.error("Error setting persistence on pendaftaran.html:", error);
+            });
+
+
         // --- Authentication Check and User ID Setup ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -491,14 +504,22 @@
                 currentUserId = user.uid;
                 loggedInUserEmailSpan.textContent = user.email;
                 loggedInUserIdSpan.textContent = user.uid;
-                console.log("User logged in:", user.email, user.uid);
+                console.log("User logged in on pendaftaran.html:", user.email, user.uid);
+                initialAuthCheckDone = true; // Mark initial check as complete
             } else {
                 // No user signed in, redirect to login page
-                console.log("No user signed in. Redirecting to login page.");
-                showMessageBox("Anda harus login untuk mengisi formulir pendaftaran.", 'error');
-                setTimeout(() => {
-                    window.location.href = "index.html"; // Redirect to your login/signup page
-                }, 2000); // Give user time to read the message
+                // Only redirect if the initial auth check has completed and found no user
+                if (initialAuthCheckDone) { 
+                    console.log("No user signed in. Redirecting to login page from pendaftaran.html.");
+                    showMessageBox("Anda harus login untuk mengisi formulir pendaftaran.", 'error');
+                    setTimeout(() => {
+                        window.location.href = "index.html"; // Redirect to your login/signup page
+                    }, 2000); // Give user time to read the message
+                } else {
+                    // This is the initial load, and user is null. Wait for persistence to load.
+                    console.log("Initial auth check on pendaftaran.html: No user found yet. Waiting for persistence to load.");
+                    // You might want to show a loading spinner or hide the form until auth state is confirmed
+                }
             }
         });
 
@@ -547,7 +568,7 @@
                 await addDoc(registrationsCollection, {
                     ...data,
                     userId: currentUserId, // THIS IS THE KEY CHANGE: Use the UID of the logged-in user
-                    timestamp: new Date() // Add a timestamp
+                    timestamp: serverTimestamp() // Use serverTimestamp for accurate time
                 });
 
                 showMessageBox("Pendaftaran berhasil dikirim! Mengarahkan ke dashboard Anda...", 'success');
