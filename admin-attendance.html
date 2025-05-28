@@ -13,6 +13,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            visibility: hidden; /* Hide body content until auth state is confirmed */
         }
         .container {
             max-width: 1200px;
@@ -388,7 +389,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Added setPersistence, browserLocalPersistence
         import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
@@ -419,7 +420,7 @@
         const saveChangesButton = document.getElementById('saveChangesButton');
         const logoutButton = document.getElementById('logoutButton');
         const backToAdminDashboardButton = document.getElementById('backToAdminDashboard');
-        const studentNameFilter = document.getElementById('studentNameFilter'); // Get the new filter dropdown
+        const studentNameFilter = document.getElementById('studentNameFilter');
 
 
         let currentEditingDocId = null;
@@ -483,7 +484,7 @@
                     saveChangesButton.classList.toggle('hidden', mode === 'view');
 
                     const attendanceEditableFields = [
-                        'date', 'meetingNumber', 'material', 'homework', 'status'
+                        'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
                     ];
                     const attendanceDisplayOnlyFields = [
                         'studentId', 'studentEmail', 'studentName', 'recordedByUid', 'recordedByEmail', 'timestamp', 'evaluation'
@@ -502,7 +503,7 @@
                                 inputTag = `<input type="date" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
                             } else if (fieldName === 'meetingNumber') {
                                 inputTag = `<input type="number" id="modal-${fieldName}" name="${fieldName}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') { // classId also text
+                            } else if (fieldName === 'material' || fieldName === 'homework' || fieldName === 'classId') {
                                 inputTag = `<textarea id="modal-${fieldName}" name="${fieldName}" rows="3" class="w-full p-2 border rounded">${value || ''}</textarea>`;
                             } else if (fieldName === 'status') {
                                 inputTag = `
@@ -630,39 +631,78 @@
 
 
         // --- Authentication Check and Data Loading ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
-                if (user.email === authorizedAdminEmail) {
-                    currentAdminUser = { uid: user.uid, email: user.email };
-                    loadStudentsForFilter(); // Load students for filter dropdown
-                    loadStudentAttendanceRecordsForAdmin(); // Load student attendance records for admin
-                    console.log("Admin logged in to Attendance page:", user.email, user.uid);
-                } else {
-                    signOut(auth);
-                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
-                    setTimeout(() => { window.location.href = "admin.html"; }, 2000);
-                }
-            } else {
-                console.log("Not logged in. Redirecting to admin.html");
-                showMessageBox("Silakan login sebagai admin.", 'error');
-                setTimeout(() => { window.location.href = "admin.html"; }, 2000);
-            }
-        });
+        // Flag to ensure we only redirect once after initial auth state is known
+        let initialAuthCheckDone = false; 
 
-        // --- Load Students for Filter Dropdown (NEW) ---
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                console.log("Authentication persistence set to LOCAL on admin-attendance.html.");
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
+                        if (user.email === authorizedAdminEmail) {
+                            currentAdminUser = { uid: user.uid, email: user.email };
+                            loadStudentsForFilter();
+                            loadStudentAttendanceRecordsForAdmin();
+                            console.log("Admin logged in to Attendance page:", user.email, user.uid);
+                            document.body.style.visibility = 'visible'; // Show content
+                        } else {
+                            signOut(auth);
+                            showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
+                            setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                        }
+                    } else {
+                        // User is signed out, redirect to login page
+                        if (initialAuthCheckDone) { // Only redirect if the initial auth check has completed and found no user
+                            console.log("Not logged in. Redirecting to admin.html from admin-attendance.html.");
+                            showMessageBox("Silakan login sebagai admin.", 'error');
+                            setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                        } else {
+                            console.log("Initial auth check on admin-attendance.html: No user found yet. Waiting for persistence to load.");
+                        }
+                    }
+                    initialAuthCheckDone = true; // Mark initial check as complete after first onAuthStateChanged call
+                });
+            })
+            .catch((error) => {
+                console.error("Error setting persistence on admin-attendance.html:", error);
+                showMessageBox(`Gagal menginisialisasi autentikasi: ${error.message}`, 'error');
+                // Even if persistence fails, still try to check auth state immediately
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        const authorizedAdminEmail = "admin@extracourse.com";
+                        if (user.email === authorizedAdminEmail) {
+                            currentAdminUser = { uid: user.uid, email: user.email };
+                            loadStudentsForFilter();
+                            loadStudentAttendanceRecordsForAdmin();
+                            document.body.style.visibility = 'visible'; // Show content
+                        } else {
+                            signOut(auth);
+                            showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
+                            setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                        }
+                    } else {
+                        console.log("No user signed in after persistence error. Redirecting.");
+                        showMessageBox("Silakan login sebagai admin.", 'error');
+                        setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                    }
+                });
+            });
+
+
+        // --- Load Students for Filter Dropdown ---
         async function loadStudentsForFilter() {
             try {
                 const usersCollectionRef = collection(db, "users");
                 const q = query(usersCollectionRef, orderBy('name'));
                 const usersSnapshot = await getDocs(q);
 
-                studentNameFilter.innerHTML = '<option value="all">Semua Siswa</option>'; // Reset dropdown
+                studentNameFilter.innerHTML = '<option value="all">Semua Siswa</option>';
                 usersSnapshot.forEach(doc => {
                     const userData = doc.data();
-                    if (userData.role === "Student") { // Only show students
+                    if (userData.role === "Student") {
                         const option = document.createElement('option');
-                        option.value = doc.id; // Store UID as value
+                        option.value = doc.id;
                         option.textContent = `${userData.name || userData.email} (${userData.email})`;
                         studentNameFilter.appendChild(option);
                     }
@@ -673,21 +713,20 @@
             }
         }
 
-        // --- Event Listener for Filter Change (NEW) ---
+        // --- Event Listener for Filter Change ---
         studentNameFilter.addEventListener('change', () => {
             loadStudentAttendanceRecordsForAdmin(studentNameFilter.value);
         });
 
 
-        // --- Load Student Attendance Records for Admin (MODIFIED for Filter) ---
-        function loadStudentAttendanceRecordsForAdmin(selectedStudentId = 'all') { // Added selectedStudentId parameter
+        // --- Load Student Attendance Records for Admin ---
+        function loadStudentAttendanceRecordsForAdmin(selectedStudentId = 'all') {
             const attendanceRef = collection(db, "studentAttendance");
             let q;
 
             if (selectedStudentId === 'all') {
                 q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
             } else {
-                // Filter by selected student's UID
                 q = query(attendanceRef, where("studentId", "==", selectedStudentId), orderBy("date", "desc"), orderBy("timestamp", "desc"));
             }
 
