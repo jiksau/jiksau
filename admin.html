@@ -1,162 +1,254 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExtraCourse Admin Dashboard</title>
+    <title>Admin Dashboard - Extra Course</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 500px;
-            padding: 2.5rem;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h1, h2 {
-            color: #1a202c;
-            margin-bottom: 1.5rem;
-        }
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-            margin-bottom: 0.75rem; /* For spacing between buttons */
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem; /* Space between action buttons */
-            margin-top: 2rem;
-        }
-        .button-group button {
-            width: 100%;
-        }
-        #logoutButton {
-            background-color: #ef4444; /* Red for logout */
-            margin-top: 1.5rem;
-        }
-        #logoutButton:hover {
-            background-color: #dc2626;
-        }
-
-        /* Message Box styles (reused) */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            text-align: center;
-            display: none;
-            max-width: 300px;
-        }
-        .message-box.success {
-            border: 2px solid #28a745;
-            color: #28a745;
-        }
-        .message-box.error {
-            border: 2px solid #dc3545;
-            color: #dc3545;
-        }
-        .message-box button {
-            margin-top: 15px;
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .message-box button:hover {
-            background-color: #0056b3;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1 class="text-3xl font-extrabold mb-4">ExtraCourse Admin Panel</h1>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-indigo-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+            <div class="flex items-center space-x-4">
+                <span id="adminEmail" class="text-lg font-medium">Memuat...</span>
+                <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <section id="login-section">
-            <h2 class="text-2xl font-bold mb-6">Admin Login</h2>
-            <form id="loginForm">
-                <label for="adminEmail" class="block text-gray-700 text-sm font-bold mb-2 text-left">Email:</label>
-                <input type="email" id="adminEmail" name="email" required placeholder="admin@extracourse.com">
+    <div class="container mx-auto mt-8 flex-grow p-4">
+        <nav class="bg-white p-4 rounded-lg shadow-md mb-8">
+            <ul class="flex space-x-6 justify-center flex-wrap">
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="registrations">Pendaftaran Siswa</button></li>
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="attendance-logging">Catat Absensi</button></li>
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="attendance-history">Riwayat Absensi</button></li>
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="class-management">Manajemen Kelas</button></li>
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="teacher-management">Manajemen Pengajar</button></li>
+            </ul>
+        </nav>
 
-                <label for="adminPassword" class="block text-gray-700 text-sm font-bold mb-2 text-left">Password:</label>
-                <input type="password" id="adminPassword" name="password" required placeholder="password">
+        <div id="messageBox" class="hidden p-4 rounded-md mb-4 text-center"></div>
 
-                <button type="submit" class="w-full mt-4">Login</button>
+        <section id="registrations-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Pendaftaran Siswa Baru</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sekolah</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas/Jurusan</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pendaftaran</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrationTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="attendance-logging-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Catat Absensi Siswa</h2>
+            <form id="attendanceForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="studentSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Siswa:</label>
+                    <select id="studentSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        <option value="">-- Pilih Siswa --</option>
+                        </select>
+                </div>
+                <div>
+                    <label for="classIdInput" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas/ID Kelas:</label>
+                    <input type="text" id="classIdInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Beginner A / Meeting 1" required>
+                </div>
+                <div>
+                    <label for="attendanceDate" class="block text-gray-700 text-sm font-bold mb-2">Tanggal Absensi:</label>
+                    <input type="date" id="attendanceDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div>
+                    <label for="attendanceStatus" class="block text-gray-700 text-sm font-bold mb-2">Status Absensi:</label>
+                    <select id="attendanceStatus" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        <option value="Hadir">Hadir</option>
+                        <option value="Absen">Absen</option>
+                        <option value="Terlambat">Terlambat</option>
+                        <option value="Izin">Izin</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+                        Catat Absensi
+                    </button>
+                </div>
             </form>
         </section>
 
-        <section id="dashboard-links-section" class="hidden">
-            <h2 class="text-2xl font-bold mb-6">Selamat Datang, Admin!</h2>
-            <div class="button-group">
-                <button id="goToRegistrations">Lihat Daftar Pendaftaran</button>
-                <button id="goToAttendance">Kelola Absensi Siswa</button>
+        <section id="attendance-history-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Riwayat Absensi Siswa</h2>
+            <div class="mb-4">
+                <label for="categoryFilter" class="block text-gray-700 text-sm font-bold mb-2">Filter Berdasarkan Kategori:</label>
+                <select id="categoryFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option value="all">Semua Kategori</option>
+                    <option value="Student">Hanya Siswa (Peran)</option>
+                    </select>
             </div>
-            <button id="logoutButton" class="w-full">Logout</button>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dicatat Oleh</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentAttendanceTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
         </section>
+
+        <section id="class-management-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Manajemen Kelas</h2>
+            <form id="classForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <input type="hidden" id="classId">
+                <div>
+                    <label for="className" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas:</label>
+                    <input type="text" id="className" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Beginner A" required>
+                </div>
+                <div>
+                    <label for="classLevel" class="block text-gray-700 text-sm font-bold mb-2">Level:</label>
+                    <input type="text" id="classLevel" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Basic, Intermediate" required>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="classDescription" class="block text-gray-700 text-sm font-bold mb-2">Deskripsi:</label>
+                    <textarea id="classDescription" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Deskripsi singkat tentang kelas ini"></textarea>
+                </div>
+                <div>
+                    <label for="classCapacity" class="block text-gray-700 text-sm font-bold mb-2">Kapasitas Siswa:</label>
+                    <input type="number" id="classCapacity" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="1" required>
+                </div>
+                <div>
+                    <label for="classPrice" class="block text-gray-700 text-sm font-bold mb-2">Harga (IDR):</label>
+                    <input type="number" id="classPrice" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="0" required>
+                </div>
+                <div class="md:col-span-2 flex items-center">
+                    <input type="checkbox" id="classIsActive" class="mr-2 leading-tight">
+                    <label for="classIsActive" class="text-sm">Kelas Aktif</label>
+                </div>
+                <div class="md:col-span-2 flex space-x-4">
+                    <button type="submit" id="submitClassBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+                        Tambah Kelas
+                    </button>
+                    <button type="button" id="cancelClassEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 hidden">
+                        Batal
+                    </button>
+                </div>
+            </form>
+
+            <h3 class="text-xl font-bold mb-4">Daftar Kelas</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Kelas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kapasitas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktif</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classesTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="teacher-management-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-6">Manajemen Pengajar</h2>
+            <form id="teacherForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <input type="hidden" id="teacherId">
+                <div>
+                    <label for="teacherName" class="block text-gray-700 text-sm font-bold mb-2">Nama Pengajar:</label>
+                    <input type="text" id="teacherName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div>
+                    <label for="teacherEmail" class="block text-gray-700 text-sm font-bold mb-2">Email Pengajar:</label>
+                    <input type="email" id="teacherEmail" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div>
+                    <label for="teacherSpecialization" class="block text-gray-700 text-sm font-bold mb-2">Spesialisasi (pisahkan dengan koma):</label>
+                    <input type="text" id="teacherSpecialization" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Conversation, Grammar">
+                </div>
+                <div>
+                    <label for="teacherPhoneNumber" class="block text-gray-700 text-sm font-bold mb-2">Nomor Telepon:</label>
+                    <input type="text" id="teacherPhoneNumber" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="md:col-span-2 flex items-center">
+                    <input type="checkbox" id="teacherIsActive" class="mr-2 leading-tight">
+                    <label for="teacherIsActive" class="text-sm">Pengajar Aktif</label>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="teacherUid" class="block text-gray-700 text-sm font-bold mb-2">Firebase UID (Jika sudah ada di Auth):</label>
+                    <input type="text" id="teacherUid" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Opsional, diisi jika sudah terdaftar di Auth">
+                </div>
+                <div class="md:col-span-2 flex space-x-4">
+                    <button type="submit" id="submitTeacherBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
+                        Tambah Pengajar
+                    </button>
+                    <button type="button" id="cancelTeacherEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 hidden">
+                        Batal
+                    </button>
+                </div>
+            </form>
+
+            <h3 class="text-xl font-bold mb-4">Daftar Pengajar</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Spesialisasi</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktif</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teachersTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
     </div>
 
-    <div id="messageBox" class="message-box">
-        <p id="messageText"></p>
-        <button onclick="hideMessageBox()">OK</button>
+    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4">Detail Data</h3>
+            <div id="modalContent" class="mb-6 space-y-2">
+                </div>
+            <div class="flex justify-end space-x-4">
+                <button id="modalCloseBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tutup</button>
+                <button id="modalSaveBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Simpan Perubahan</button>
+            </div>
+        </div>
     </div>
-    <div id="overlay" class="overlay"></div>
+
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, orderBy, onSnapshot, updateDoc, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        // Your web app's Firebase configuration (hardcoded for static hosting)
+        // Konfigurasi Firebase Anda
+        // Pastikan Anda mengganti placeholder ini dengan konfigurasi proyek Firebase Anda yang sebenarnya.
         const firebaseConfig = {
             apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
             authDomain: "extra-course-d02c2.firebaseapp.com",
@@ -168,92 +260,818 @@
             measurementId: "G-YNRJKV8T45"
         };
 
+        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DOM Elements
-        const loginSection = document.getElementById('login-section');
-        const dashboardLinksSection = document.getElementById('dashboard-links-section');
-        const loginForm = document.getElementById('loginForm');
+        // --- DOM Elements ---
+        const adminEmailSpan = document.getElementById('adminEmail');
         const logoutButton = document.getElementById('logoutButton');
-        const goToRegistrationsButton = document.getElementById('goToRegistrations');
-        const goToAttendanceButton = document.getElementById('goToAttendance');
+        const messageBox = document.getElementById('messageBox');
 
-        // --- Message Box Functions (reused) ---
-        function showMessageBox(message, type) {
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
-            const overlay = document.getElementById('overlay');
+        // Bagian Pendaftaran
+        const registrationTableBody = document.getElementById('registrationTableBody');
 
-            messageText.textContent = message;
-            messageBox.className = 'message-box ' + type;
-            messageBox.style.display = 'block';
-            overlay.style.display = 'block';
+        // Bagian Pencatatan Absensi
+        const attendanceForm = document.getElementById('attendanceForm');
+        const studentSelect = document.getElementById('studentSelect');
+        const classIdInput = document.getElementById('classIdInput');
+        const attendanceDateInput = document.getElementById('attendanceDate');
+        const attendanceStatusSelect = document.getElementById('attendanceStatus');
+
+        // Bagian Riwayat Absensi
+        const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        // Bagian Manajemen Kelas (BARU)
+        const classManagementSection = document.getElementById('class-management-section');
+        const classForm = document.getElementById('classForm');
+        const classIdInputForm = document.getElementById('classId'); // Hidden input for class ID when editing
+        const classNameInput = document.getElementById('className');
+        const classLevelInput = document.getElementById('classLevel');
+        const classDescriptionInput = document.getElementById('classDescription');
+        const classCapacityInput = document.getElementById('classCapacity');
+        const classPriceInput = document.getElementById('classPrice');
+        const classIsActiveInput = document.getElementById('classIsActive');
+        const submitClassBtn = document.getElementById('submitClassBtn');
+        const cancelClassEditBtn = document.getElementById('cancelClassEditBtn');
+        const classesTableBody = document.getElementById('classesTableBody');
+
+        // Bagian Manajemen Pengajar (BARU)
+        const teacherManagementSection = document.getElementById('teacher-management-section');
+        const teacherForm = document.getElementById('teacherForm');
+        const teacherIdInputForm = document.getElementById('teacherId'); // Hidden input for teacher ID when editing
+        const teacherNameInput = document.getElementById('teacherName');
+        const teacherEmailInput = document.getElementById('teacherEmail');
+        const teacherSpecializationInput = document.getElementById('teacherSpecialization');
+        const teacherPhoneNumberInput = document.getElementById('teacherPhoneNumber');
+        const teacherIsActiveInput = document.getElementById('teacherIsActive');
+        const teacherUidInput = document.getElementById('teacherUid');
+        const submitTeacherBtn = document.getElementById('submitTeacherBtn');
+        const cancelTeacherEditBtn = document.getElementById('cancelTeacherEditBtn');
+        const teachersTableBody = document.getElementById('teachersTableBody');
+
+
+        // Elemen Modal
+        const editModal = document.getElementById('editModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalSaveBtn = document.getElementById('modalSaveBtn');
+
+        let currentEditingDocId = null;
+        let currentEditingCollection = null;
+        let currentAdminUser = null;
+
+        // --- Fungsi Utilitas ---
+        function showMessageBox(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'bg-yellow-100', 'text-green-800', 'text-red-800', 'text-yellow-800');
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                messageBox.classList.add('bg-yellow-100', 'text-yellow-800');
+            }
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
         }
 
-        window.hideMessageBox = function() {
-            const messageBox = document.getElementById('messageBox');
-            const overlay = document.getElementById('overlay');
-            messageBox.style.display = 'none';
-            overlay.style.display = 'none';
-        }
+        // --- Fungsi Modal ---
+        async function openEditModal(docId, collectionName, mode) {
+            editModal.classList.remove('hidden');
+            modalSaveBtn.classList.add('hidden'); // Sembunyikan tombol simpan secara default
 
-        // --- Authentication Logic ---
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = loginForm.adminEmail.value;
-            const password = loginForm.adminPassword.value;
+            currentEditingDocId = docId;
+            currentEditingCollection = collectionName;
 
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                // UI will update via onAuthStateChanged
+                const docRef = doc(db, collectionName, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    modalTitle.textContent = `Detail Data ${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)}`;
+                    let htmlContent = '';
+
+                    for (const key in data) {
+                        let value = data[key];
+                        if (key === 'timestamp' || key === 'createdAt') {
+                            value = new Date(value.toDate()).toLocaleString(); // Konversi Firebase Timestamp ke tanggal yang bisa dibaca
+                        } else if (typeof value === 'boolean') {
+                            value = value ? 'Ya' : 'Tidak';
+                        } else if (Array.isArray(value)) {
+                            value = value.join(', '); // Untuk array seperti spesialisasi
+                        }
+                        htmlContent += `<p><strong class="font-semibold">${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> <span id="modal-${key}">${value}</span></p>`;
+                    }
+
+                    modalContent.innerHTML = htmlContent;
+
+                    // Jika mode adalah 'edit', izinkan menyimpan perubahan (untuk bidang yang ada di modal)
+                    if (mode === 'edit') {
+                        modalSaveBtn.classList.remove('hidden');
+                        modalSaveBtn.onclick = async () => {
+                            // Implementasikan logika penyimpanan di sini jika diperlukan untuk modal umum.
+                            // Untuk pendaftaran, biasanya melibatkan pengaturan status atau bidang sederhana.
+                            // Untuk absensi, Anda mungkin ingin mengedit status, kelas, tanggal.
+                            // Penyimpanan modal generik ini kompleks untuk semua koleksi.
+                            // Untuk saat ini, biarkan sederhana untuk bidang tertentu jika diperlukan.
+                            showMessageBox("Fitur edit dari modal ini belum diimplementasikan sepenuhnya. Silakan gunakan formulir edit di bawah tabel.", "info");
+                            closeEditModal();
+                        };
+                    }
+                } else {
+                    modalContent.innerHTML = '<p>Data tidak ditemukan.</p>';
+                }
             } catch (error) {
-                console.error("Login failed:", error.message);
-                showMessageBox(`Login gagal: ${error.message}`, 'error');
+                console.error("Error fetching document:", error);
+                modalContent.innerHTML = `<p class="text-red-500">Gagal memuat data: ${error.message}</p>`;
+            }
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('hidden');
+            currentEditingDocId = null;
+            currentEditingCollection = null;
+        }
+
+        modalCloseBtn.addEventListener('click', closeEditModal);
+
+        // --- Logika Navigasi ---
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const sections = document.querySelectorAll('section');
+
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+
+            navTabs.forEach(tab => {
+                tab.classList.remove('bg-indigo-700', 'text-white');
+                tab.classList.add('text-indigo-600', 'hover:text-indigo-800');
+                if (tab.dataset.section === sectionId) {
+                    tab.classList.add('bg-indigo-700', 'text-white');
+                    tab.classList.remove('text-indigo-600', 'hover:text-indigo-800');
+                }
+            });
+
+            // Muat data spesifik saat bagian ditampilkan
+            if (sectionId === 'registrations') {
+                loadRegistrations();
+            } else if (sectionId === 'attendance-logging') {
+                loadStudentsForAttendance();
+                // Bersihkan formulir saat beralih ke tab logging
+                attendanceForm.reset();
+                attendanceDateInput.valueAsDate = new Date(); // Atur tanggal hari ini
+            } else if (sectionId === 'attendance-history') {
+                loadStudentAttendanceRecordsForAdmin(categoryFilter.value);
+            } else if (sectionId === 'class-management') { // BARU
+                loadClasses();
+                classForm.reset();
+                classIdInputForm.value = ''; // Clear hidden ID
+                submitClassBtn.textContent = 'Tambah Kelas';
+                cancelClassEditBtn.classList.add('hidden');
+            } else if (sectionId === 'teacher-management') { // BARU
+                loadTeachers();
+                teacherForm.reset();
+                teacherIdInputForm.value = ''; // Clear hidden ID
+                submitTeacherBtn.textContent = 'Tambah Pengajar';
+                cancelTeacherEditBtn.classList.add('hidden');
+            }
+        }
+
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                showSection(tab.dataset.section);
+            });
+        });
+
+        // --- Pemeriksaan Otentikasi dan Pemuatan Data Awal ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
+                if (user.email === authorizedAdminEmail) {
+                    currentAdminUser = { uid: user.uid, email: user.email };
+                    adminEmailSpan.textContent = user.email;
+                    showSection('registrations'); // Bagian default saat login
+                    console.log("Admin login:", user.email, user.uid);
+                } else {
+                    signOut(auth);
+                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
+                    setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                }
+            } else {
+                console.log("Tidak login. Mengarahkan ke admin.html");
+                showMessageBox("Silakan login sebagai admin.", 'error');
+                setTimeout(() => { window.location.href = "admin.html"; }, 2000);
             }
         });
 
         logoutButton.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                // Redirect will happen via onAuthStateChanged
+                showMessageBox("Anda telah logout.", 'success');
+                setTimeout(() => { window.location.href = "admin.html"; }, 1500);
             } catch (error) {
-                console.error("Logout failed:", error.message);
-                showMessageBox(`Logout gagal: ${error.message}`, 'error');
+                console.error("Error saat logout:", error);
+                showMessageBox("Gagal logout: " + error.message, 'error');
             }
         });
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
-                if (user.email === authorizedAdminEmail) {
-                    // Admin is logged in, show navigation links
-                    loginSection.classList.add('hidden');
-                    dashboardLinksSection.classList.remove('hidden');
-                    console.log("Admin logged in to main dashboard:", user.email, user.uid);
-                } else {
-                    // Not an authorized admin, force logout
-                    signOut(auth);
-                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
-                    setTimeout(() => { window.location.href = "admin.html"; }, 2000); // Redirect back to login
+        // --- Pendaftaran Siswa (Logika yang Sudah Ada) ---
+        async function loadRegistrations() {
+            const usersRef = collection(db, "users");
+            // Hanya muat peran 'Student' untuk bagian pendaftaran
+            const q = query(usersRef, where("role", "==", "Student"), orderBy("createdAt", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    registrationTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada pendaftaran baru.</td></tr>';
+                    return;
                 }
-            } else {
-                // User is signed out or not logged in, show login form
-                loginSection.classList.remove('hidden');
-                dashboardLinksSection.classList.add('hidden');
-                console.log("Admin signed out or not logged in.");
+
+                let html = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const registrationDate = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    html += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${data.fullName || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.email || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.school || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.grade || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${registrationDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openEditModal('${doc.id}', 'users', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
+                                <button onclick="deleteRegistration('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                registrationTableBody.innerHTML = html;
+            }, (error) => {
+                console.error("Error mengambil pendaftaran:", error);
+                registrationTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
+            });
+        }
+
+        async function deleteRegistration(docId) {
+            // Menggunakan modal kustom sebagai pengganti confirm()
+            const userConfirmed = await new Promise(resolve => {
+                const confirmationModal = document.createElement('div');
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                confirmationModal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <p class="mb-4">Apakah Anda yakin ingin menghapus pendaftaran ini?</p>
+                        <div class="flex justify-end space-x-4">
+                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
+                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmationModal);
+
+                document.getElementById('confirmYes').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(true);
+                };
+                document.getElementById('confirmNo').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(false);
+                };
+            });
+
+            if (userConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "users", docId));
+                    showMessageBox("Pendaftaran berhasil dihapus.", "success");
+                } catch (error) {
+                    console.error("Error menghapus pendaftaran:", error);
+                    showMessageBox("Gagal menghapus pendaftaran: " + error.message, "error");
+                }
+            }
+        }
+
+        // --- Absensi Siswa (Logika yang Sudah Ada) ---
+        async function loadStudentsForAttendance() {
+            studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>'; // Reset dropdown
+            try {
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("role", "==", "Student"), orderBy("fullName"));
+                const querySnapshot = await getDocs(q);
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id; // UID Siswa
+                    option.textContent = `${data.fullName} (${data.email})`;
+                    studentSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error memuat siswa untuk absensi:", error);
+                showMessageBox("Gagal memuat daftar siswa: " + error.message, "error");
+            }
+        }
+
+        attendanceForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const studentId = studentSelect.value;
+            const classId = classIdInput.value.trim();
+            const date = attendanceDateInput.value;
+            const status = attendanceStatusSelect.value;
+
+            if (!studentId || !classId || !date || !status) {
+                showMessageBox("Semua bidang harus diisi.", "error");
+                return;
+            }
+
+            try {
+                const studentDocRef = doc(db, "users", studentId);
+                const studentDocSnap = await getDoc(studentDocRef);
+
+                if (!studentDocSnap.exists()) {
+                    showMessageBox("Siswa tidak ditemukan.", "error");
+                    return;
+                }
+
+                const studentData = studentDocSnap.data();
+
+                await addDoc(collection(db, "studentAttendance"), {
+                    studentId: studentId,
+                    studentName: studentData.fullName || studentData.email, // Gunakan nama lengkap jika tersedia
+                    studentEmail: studentData.email,
+                    classId: classId,
+                    date: date,
+                    status: status,
+                    recordedByUid: currentAdminUser.uid,
+                    recordedByEmail: currentAdminUser.email,
+                    timestamp: new Date()
+                });
+
+                showMessageBox("Absensi berhasil dicatat!", "success");
+                attendanceForm.reset();
+                attendanceDateInput.valueAsDate = new Date(); // Reset ke tanggal hari ini
+            } catch (error) {
+                console.error("Error menambahkan absensi:", error);
+                showMessageBox("Gagal mencatat absensi: " + error.message, "error");
             }
         });
 
-        // --- Navigation Button Event Listeners ---
-        goToRegistrationsButton.addEventListener('click', () => {
-            window.location.href = "admin-registrations.html";
+        // --- Riwayat Absensi Siswa (Logika yang Sudah Ada) ---
+        categoryFilter.addEventListener('change', () => {
+            loadStudentAttendanceRecordsForAdmin(categoryFilter.value);
         });
 
-        goToAttendanceButton.addEventListener('click', () => {
-            window.location.href = "admin-attendance.html";
+        async function loadStudentAttendanceRecordsForAdmin(filterCategory = 'all') {
+            const attendanceRef = collection(db, "studentAttendance");
+            let q;
+
+            try {
+                if (filterCategory === 'all') {
+                    q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
+                } else if (filterCategory === 'Student') { // Asumsi 'Student' mengacu pada peran di 'users'
+                    const usersRef = collection(db, "users");
+                    const studentUsersQuery = query(usersRef, where("role", "==", "Student"));
+                    const studentUsersSnapshot = await getDocs(studentUsersQuery);
+
+                    const studentIds = [];
+                    studentUsersSnapshot.forEach(userDoc => {
+                        studentIds.push(userDoc.id);
+                    });
+
+                    if (studentIds.length > 0) {
+                        // Firebase 'in' query memiliki batas 10. Untuk lebih dari itu, Anda perlu beberapa kueri atau memikirkan ulang struktur data.
+                        // Untuk kesederhanaan, kita akan mengkueri semuanya jika lebih dari 10.
+                        // Dalam aplikasi nyata, pertimbangkan untuk membagi menjadi batch atau menyimpan 'role' langsung di absensi.
+                        if (studentIds.length > 10) {
+                             console.warn("Lebih dari 10 siswa dengan peran 'Student'. Pemfilteran dengan operator 'in' mungkin terbatas. Menampilkan semua untuk saat ini.");
+                             q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
+                        } else {
+                            q = query(attendanceRef, where("studentId", "in", studentIds), orderBy("date", "desc"), orderBy("timestamp", "desc"));
+                        }
+                    } else {
+                        studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada absensi untuk kategori ini.</td></tr>';
+                        return;
+                    }
+                } else {
+                    // Untuk kategori spesifik lainnya, Anda perlu menyesuaikan kueri
+                    // berdasarkan bagaimana data kategori tersebut disimpan dalam dokumen studentAttendance
+                    console.warn(`Kategori filter '${filterCategory}' belum sepenuhnya diimplementasikan untuk kueri langsung pada catatan absensi.`);
+                    q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
+                }
+
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada riwayat absensi siswa untuk kategori ini.</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    snapshot.forEach((doc) => {
+                        const record = doc.data();
+                        const attendanceDate = record.date || 'N/A';
+                        const studentName = record.studentName || record.studentEmail || 'N/A';
+                        const classId = record.classId || 'N/A';
+                        const status = record.status || 'N/A';
+                        const recordedBy = record.recordedByEmail || 'N/A';
+                        const docId = doc.id;
+
+                        html += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${studentName}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${classId}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${attendanceDate}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${status}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${recordedBy}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="openEditModal('${docId}', 'studentAttendance', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
+                                    <button onclick="deleteAttendanceRecord('${docId}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    studentAttendanceTableBody.innerHTML = html;
+                }, (error) => {
+                    console.error("Error mengambil catatan absensi siswa untuk admin:", error);
+                    studentAttendanceTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat riwayat absensi siswa: ${error.message}</td></tr>`;
+                });
+            } catch (error) {
+                console.error("Error di loadStudentAttendanceRecordsForAdmin (pra-kueri):", error);
+                studentAttendanceTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Terjadi kesalahan: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function deleteAttendanceRecord(docId) {
+            // Menggunakan modal kustom sebagai pengganti confirm()
+            const userConfirmed = await new Promise(resolve => {
+                const confirmationModal = document.createElement('div');
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                confirmationModal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <p class="mb-4">Apakah Anda yakin ingin menghapus catatan absensi ini?</p>
+                        <div class="flex justify-end space-x-4">
+                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
+                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmationModal);
+
+                document.getElementById('confirmYes').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(true);
+                };
+                document.getElementById('confirmNo').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(false);
+                };
+            });
+
+            if (userConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "studentAttendance", docId));
+                    showMessageBox("Catatan absensi berhasil dihapus.", "success");
+                } catch (error) {
+                    console.error("Error menghapus catatan absensi:", error);
+                    showMessageBox("Gagal menghapus catatan absensi: " + error.message, "error");
+                }
+            }
+        }
+
+        // --- Fungsi Manajemen Kelas (BARU) ---
+        let editingClassId = null;
+
+        classForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const className = classNameInput.value.trim();
+            const classLevel = classLevelInput.value.trim();
+            const classDescription = classDescriptionInput.value.trim();
+            const classCapacity = parseInt(classCapacityInput.value);
+            const classPrice = parseInt(classPriceInput.value);
+            const classIsActive = classIsActiveInput.checked;
+
+            if (!className || !classLevel || isNaN(classCapacity) || isNaN(classPrice)) {
+                showMessageBox("Pastikan Nama Kelas, Level, Kapasitas, dan Harga terisi dengan benar.", "error");
+                return;
+            }
+
+            try {
+                if (editingClassId) {
+                    // Perbarui kelas yang sudah ada
+                    const classRef = doc(db, "classes", editingClassId);
+                    await updateDoc(classRef, {
+                        className,
+                        level: classLevel,
+                        description: classDescription,
+                        capacity: classCapacity,
+                        price: classPrice,
+                        isActive: classIsActive
+                    });
+                    showMessageBox("Kelas berhasil diperbarui!", "success");
+                } else {
+                    // Tambahkan kelas baru
+                    await addDoc(collection(db, "classes"), {
+                        className,
+                        level: classLevel,
+                        description: classDescription,
+                        capacity: classCapacity,
+                        price: classPrice,
+                        isActive: classIsActive,
+                        createdAt: new Date()
+                    });
+                    showMessageBox("Kelas berhasil ditambahkan!", "success");
+                }
+                classForm.reset();
+                editingClassId = null;
+                submitClassBtn.textContent = 'Tambah Kelas';
+                cancelClassEditBtn.classList.add('hidden');
+                loadClasses(); // Muat ulang daftar
+            } catch (error) {
+                console.error("Error menyimpan kelas:", error);
+                showMessageBox("Gagal menyimpan kelas: " + error.message, "error");
+            }
         });
+
+        async function loadClasses() {
+            classesTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Memuat kelas...</td></tr>';
+            try {
+                const q = query(collection(db, "classes"), orderBy("className"));
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        classesTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Belum ada kelas yang ditambahkan.</td></tr>';
+                        return;
+                    }
+                    let html = '';
+                    snapshot.forEach((doc) => {
+                        const cls = doc.data();
+                        html += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${cls.className}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.level}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.capacity}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp ${cls.price.toLocaleString('id-ID')}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.isActive ? '<i class="fas fa-check-circle text-green-500"></i> Ya' : '<i class="fas fa-times-circle text-red-500"></i> Tidak'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="populateEditClassForm('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">Edit</button>
+                                    <button onclick="deleteClass('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    classesTableBody.innerHTML = html;
+                });
+            } catch (error) {
+                console.error("Error memuat kelas:", error);
+                classesTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat kelas: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function populateEditClassForm(classId) {
+            try {
+                const classDocRef = doc(db, "classes", classId);
+                const classDocSnap = await getDoc(classDocRef);
+                if (classDocSnap.exists()) {
+                    const cls = classDocSnap.data();
+                    editingClassId = classId;
+                    classNameInput.value = cls.className || '';
+                    classLevelInput.value = cls.level || '';
+                    classDescriptionInput.value = cls.description || '';
+                    classCapacityInput.value = cls.capacity || '';
+                    classPriceInput.value = cls.price || '';
+                    classIsActiveInput.checked = cls.isActive || false;
+
+                    submitClassBtn.textContent = 'Perbarui Kelas';
+                    cancelClassEditBtn.classList.remove('hidden');
+                    // Gulir ke formulir
+                    classManagementSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showMessageBox("Kelas tidak ditemukan.", "error");
+                }
+            } catch (error) {
+                console.error("Error mengisi formulir kelas:", error);
+                showMessageBox("Gagal memuat data kelas untuk edit: " + error.message, "error");
+            }
+        }
+
+        cancelClassEditBtn.addEventListener('click', () => {
+            classForm.reset();
+            editingClassId = null;
+            submitClassBtn.textContent = 'Tambah Kelas';
+            cancelClassEditBtn.classList.add('hidden');
+        });
+
+        async function deleteClass(classId) {
+            // Menggunakan modal kustom sebagai pengganti confirm()
+            const userConfirmed = await new Promise(resolve => {
+                const confirmationModal = document.createElement('div');
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                confirmationModal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <p class="mb-4">Apakah Anda yakin ingin menghapus kelas ini?</p>
+                        <div class="flex justify-end space-x-4">
+                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
+                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmationModal);
+
+                document.getElementById('confirmYes').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(true);
+                };
+                document.getElementById('confirmNo').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(false);
+                };
+            });
+
+            if (userConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "classes", classId));
+                    showMessageBox("Kelas berhasil dihapus.", "success");
+                    loadClasses(); // Muat ulang daftar
+                } catch (error) {
+                    console.error("Error menghapus kelas:", error);
+                    showMessageBox("Gagal menghapus kelas: " + error.message, "error");
+                }
+            }
+        }
+
+        // --- Fungsi Manajemen Pengajar (BARU) ---
+        let editingTeacherId = null;
+
+        teacherForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const teacherName = teacherNameInput.value.trim();
+            const teacherEmail = teacherEmailInput.value.trim();
+            const teacherSpecialization = teacherSpecializationInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
+            const teacherPhoneNumber = teacherPhoneNumberInput.value.trim();
+            const teacherIsActive = teacherIsActiveInput.checked;
+            const teacherUid = teacherUidInput.value.trim(); // Bidang UID opsional
+
+            if (!teacherName || !teacherEmail) {
+                showMessageBox("Nama dan Email Pengajar harus diisi.", "error");
+                return;
+            }
+
+            try {
+                if (editingTeacherId) {
+                    // Perbarui pengajar yang sudah ada
+                    const teacherRef = doc(db, "teachers", editingTeacherId);
+                    await updateDoc(teacherRef, {
+                        name: teacherName,
+                        email: teacherEmail,
+                        specialization: teacherSpecialization,
+                        phoneNumber: teacherPhoneNumber,
+                        isActive: teacherIsActive,
+                        uid: teacherUid || null // Perbarui UID atau atur ke null jika kosong
+                    });
+                    showMessageBox("Data pengajar berhasil diperbarui!", "success");
+                } else {
+                    // Tambahkan pengajar baru
+                    await addDoc(collection(db, "teachers"), {
+                        name: teacherName,
+                        email: teacherEmail,
+                        specialization: teacherSpecialization,
+                        phoneNumber: teacherPhoneNumber,
+                        isActive: teacherIsActive,
+                        uid: teacherUid || null, // Simpan UID atau null jika kosong
+                        createdAt: new Date()
+                    });
+                    showMessageBox("Pengajar berhasil ditambahkan!", "success");
+                }
+                teacherForm.reset();
+                editingTeacherId = null;
+                submitTeacherBtn.textContent = 'Tambah Pengajar';
+                cancelTeacherEditBtn.classList.add('hidden');
+                loadTeachers(); // Muat ulang daftar
+            } catch (error) {
+                console.error("Error menyimpan pengajar:", error);
+                showMessageBox("Gagal menyimpan pengajar: " + error.message, "error");
+            }
+        });
+
+        async function loadTeachers() {
+            teachersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Memuat pengajar...</td></tr>';
+            try {
+                const q = query(collection(db, "teachers"), orderBy("name"));
+                onSnapshot(q, (snapshot) => {
+                    if (snapshot.empty) {
+                        teachersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Belum ada pengajar yang ditambahkan.</td></tr>';
+                        return;
+                    }
+                    let html = '';
+                    snapshot.forEach((doc) => {
+                        const teacher = doc.data();
+                        html += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${teacher.name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.email}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.specialization.join(', ')}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.isActive ? '<i class="fas fa-check-circle text-green-500"></i> Ya' : '<i class="fas fa-times-circle text-red-500"></i> Tidak'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="populateEditTeacherForm('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">Edit</button>
+                                    <button onclick="deleteTeacher('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    teachersTableBody.innerHTML = html;
+                });
+            } catch (error) {
+                console.error("Error memuat pengajar:", error);
+                teachersTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Gagal memuat pengajar: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function populateEditTeacherForm(teacherId) {
+            try {
+                const teacherDocRef = doc(db, "teachers", teacherId);
+                const teacherDocSnap = await getDoc(teacherDocRef);
+                if (teacherDocSnap.exists()) {
+                    const teacher = teacherDocSnap.data();
+                    editingTeacherId = teacherId;
+                    teacherNameInput.value = teacher.name || '';
+                    teacherEmailInput.value = teacher.email || '';
+                    teacherSpecializationInput.value = (teacher.specialization || []).join(', ');
+                    teacherPhoneNumberInput.value = teacher.phoneNumber || '';
+                    teacherIsActiveInput.checked = teacher.isActive || false;
+                    teacherUidInput.value = teacher.uid || ''; // Populate UID field
+
+                    submitTeacherBtn.textContent = 'Perbarui Pengajar';
+                    cancelTeacherEditBtn.classList.remove('hidden');
+                    // Gulir ke formulir
+                    teacherManagementSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showMessageBox("Pengajar tidak ditemukan.", "error");
+                }
+            } catch (error) {
+                console.error("Error mengisi formulir pengajar:", error);
+                showMessageBox("Gagal memuat data pengajar untuk edit: " + error.message, "error");
+            }
+        }
+
+        cancelTeacherEditBtn.addEventListener('click', () => {
+            teacherForm.reset();
+            editingTeacherId = null;
+            submitTeacherBtn.textContent = 'Tambah Pengajar';
+            cancelTeacherEditBtn.classList.add('hidden');
+        });
+
+        async function deleteTeacher(teacherId) {
+            // Menggunakan modal kustom sebagai pengganti confirm()
+            const userConfirmed = await new Promise(resolve => {
+                const confirmationModal = document.createElement('div');
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                confirmationModal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl">
+                        <p class="mb-4">Apakah Anda yakin ingin menghapus pengajar ini?</p>
+                        <div class="flex justify-end space-x-4">
+                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
+                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmationModal);
+
+                document.getElementById('confirmYes').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(true);
+                };
+                document.getElementById('confirmNo').onclick = () => {
+                    confirmationModal.remove();
+                    resolve(false);
+                };
+            });
+
+            if (userConfirmed) {
+                try {
+                    await deleteDoc(doc(db, "teachers", teacherId));
+                    showMessageBox("Pengajar berhasil dihapus.", "success");
+                    loadTeachers(); // Muat ulang daftar
+                } catch (error) {
+                    console.error("Error menghapus pengajar:", error);
+                    showMessageBox("Gagal menghapus pengajar: " + error.message, "error");
+                }
+            }
+        }
+
+        // Expose functions to global scope for onclick attributes
+        window.openEditModal = openEditModal;
+        window.deleteRegistration = deleteRegistration;
+        window.deleteAttendanceRecord = deleteAttendanceRecord;
+        window.populateEditClassForm = populateEditClassForm;
+        window.deleteClass = deleteClass;
+        window.populateEditTeacherForm = populateEditTeacherForm;
+        window.deleteTeacher = deleteTeacher;
+
     </script>
 </body>
 </html>
