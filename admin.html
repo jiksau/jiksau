@@ -39,11 +39,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sekolah</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas/Jurusan</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pendaftaran</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lengkap</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. WhatsApp</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Kelas</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jadwal Diinginkan</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Daftar</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
@@ -203,7 +203,7 @@
                     <button type="submit" id="submitTeacherBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
                         Tambah Pengajar
                     </button>
-                    <button type="button" id="cancelTeacherEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 hidden">
+                    <button type="button" id="cancelTeacherEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2 hidden">
                         Batal
                     </button>
                 </div>
@@ -248,7 +248,6 @@
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
         // Konfigurasi Firebase Anda
-        // Pastikan Anda mengganti placeholder ini dengan konfigurasi proyek Firebase Anda yang sebenarnya.
         const firebaseConfig = {
             apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
             authDomain: "extra-course-d02c2.firebaseapp.com",
@@ -265,12 +264,14 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const appId = firebaseConfig.appId; // Ambil appId dari konfigurasi Firebase
+
         // --- DOM Elements ---
         const adminEmailSpan = document.getElementById('adminEmail');
         const logoutButton = document.getElementById('logoutButton');
         const messageBox = document.getElementById('messageBox');
 
-        // Bagian Pendaftaran
+        // Bagian Pendaftaran Siswa
         const registrationTableBody = document.getElementById('registrationTableBody');
 
         // Bagian Pencatatan Absensi
@@ -284,10 +285,10 @@
         const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody');
         const categoryFilter = document.getElementById('categoryFilter');
 
-        // Bagian Manajemen Kelas (BARU)
+        // Bagian Manajemen Kelas
         const classManagementSection = document.getElementById('class-management-section');
         const classForm = document.getElementById('classForm');
-        const classIdInputForm = document.getElementById('classId'); // Hidden input for class ID when editing
+        const classIdInputForm = document.getElementById('classId');
         const classNameInput = document.getElementById('className');
         const classLevelInput = document.getElementById('classLevel');
         const classDescriptionInput = document.getElementById('classDescription');
@@ -298,10 +299,10 @@
         const cancelClassEditBtn = document.getElementById('cancelClassEditBtn');
         const classesTableBody = document.getElementById('classesTableBody');
 
-        // Bagian Manajemen Pengajar (BARU)
+        // Bagian Manajemen Pengajar
         const teacherManagementSection = document.getElementById('teacher-management-section');
         const teacherForm = document.getElementById('teacherForm');
-        const teacherIdInputForm = document.getElementById('teacherId'); // Hidden input for teacher ID when editing
+        const teacherIdInputForm = document.getElementById('teacherId');
         const teacherNameInput = document.getElementById('teacherName');
         const teacherEmailInput = document.getElementById('teacherEmail');
         const teacherSpecializationInput = document.getElementById('teacherSpecialization');
@@ -357,49 +358,106 @@
                     modalTitle.textContent = `Detail Data ${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)}`;
                     let htmlContent = '';
 
+                    // Define editable fields for the modal (can be expanded)
+                    const editableFields = [
+                        'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
+                        'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
+                        'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
+                        'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
+                        'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
+                        'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
+                        'frekuensi_belajar', 'motivasi_belajar'
+                    ];
+
                     for (const key in data) {
                         let value = data[key];
-                        if (key === 'timestamp' || key === 'createdAt') {
-                            value = new Date(value.toDate()).toLocaleString(); // Konversi Firebase Timestamp ke tanggal yang bisa dibaca
+                        let isEditable = editableFields.includes(key);
+                        let inputTag = '';
+
+                        if (key === 'timestamp' && value && typeof value.toDate === 'function') {
+                            value = value.toDate().toLocaleString();
+                        } else if (Array.isArray(value)) {
+                            value = value.join(', ');
                         } else if (typeof value === 'boolean') {
                             value = value ? 'Ya' : 'Tidak';
-                        } else if (Array.isArray(value)) {
-                            value = value.join(', '); // Untuk array seperti spesialisasi
                         }
-                        htmlContent += `<p><strong class="font-semibold">${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> <span id="modal-${key}">${value}</span></p>`;
+
+                        if (mode === 'edit' && isEditable) {
+                            if (key === 'tanggal_lahir') {
+                                const dateValue = data[key] instanceof Date ? data[key].toISOString().split('T')[0] : data[key];
+                                inputTag = `<input type="date" id="modal-${key}" name="${key}" value="${dateValue || ''}" class="w-full p-2 border rounded">`;
+                            } else if (key.includes('alamat') || key.includes('catatan') || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
+                                inputTag = `<textarea id="modal-${key}" name="${key}" rows="3" class="w-full p-2 border rounded">${data[key] || ''}</textarea>`;
+                            } else {
+                                inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${data[key] || ''}" class="w-full p-2 border rounded">`;
+                            }
+                            htmlContent += `
+                                <div class="modal-detail-item">
+                                    <label for="modal-${key}">${formatFieldName(key)}:</label>
+                                    ${inputTag}
+                                </div>
+                            `;
+                        } else {
+                            htmlContent += `
+                                <div class="modal-detail-item">
+                                    <strong>${formatFieldName(key)}:</strong>
+                                    <span class="display-value">${value || '-'}</span>
+                                </div>
+                            `;
+                        }
                     }
 
                     modalContent.innerHTML = htmlContent;
-
-                    // Jika mode adalah 'edit', izinkan menyimpan perubahan (untuk bidang yang ada di modal)
+                    detailsModal.classList.add('show');
                     if (mode === 'edit') {
                         modalSaveBtn.classList.remove('hidden');
-                        modalSaveBtn.onclick = async () => {
-                            // Implementasikan logika penyimpanan di sini jika diperlukan untuk modal umum.
-                            // Untuk pendaftaran, biasanya melibatkan pengaturan status atau bidang sederhana.
-                            // Untuk absensi, Anda mungkin ingin mengedit status, kelas, tanggal.
-                            // Penyimpanan modal generik ini kompleks untuk semua koleksi.
-                            // Untuk saat ini, biarkan sederhana untuk bidang tertentu jika diperlukan.
-                            showMessageBox("Fitur edit dari modal ini belum diimplementasikan sepenuhnya. Silakan gunakan formulir edit di bawah tabel.", "info");
-                            closeEditModal();
-                        };
                     }
                 } else {
-                    modalContent.innerHTML = '<p>Data tidak ditemukan.</p>';
+                    showMessageBox("Dokumen tidak ditemukan.", 'error');
                 }
             } catch (error) {
-                console.error("Error fetching document:", error);
-                modalContent.innerHTML = `<p class="text-red-500">Gagal memuat data: ${error.message}</p>`;
+                console.error("Error fetching document details:", error);
+                showMessageBox(`Gagal mengambil detail: ${error.message}`, 'error');
             }
         }
 
-        function closeEditModal() {
-            editModal.classList.add('hidden');
+        window.hideDetailsModal = function() {
+            detailsModal.classList.remove('show');
+            modalContent.innerHTML = '';
             currentEditingDocId = null;
             currentEditingCollection = null;
+            modalSaveBtn.classList.add('hidden'); // Ensure save button is hidden on close
         }
 
-        modalCloseBtn.addEventListener('click', closeEditModal);
+        function formatFieldName(fieldName) {
+            return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        modalSaveBtn.addEventListener('click', async () => {
+            if (!currentEditingDocId || !currentEditingCollection) {
+                showMessageBox("Tidak ada dokumen atau koleksi yang dipilih untuk diedit.", 'error');
+                return;
+            }
+
+            const updatedData = {};
+            const formInputs = modalContent.querySelectorAll('input, textarea, select');
+            formInputs.forEach(input => {
+                // Ensure field names are correct for Firestore
+                updatedData[input.name] = input.type === 'number' ? parseFloat(input.value) : input.value;
+            });
+
+            try {
+                const docRef = doc(db, currentEditingCollection, currentEditingDocId);
+                await updateDoc(docRef, updatedData);
+                showMessageBox("Perubahan berhasil disimpan!", 'success');
+                hideDetailsModal();
+                // Optionally reload the table if needed (onSnapshot handles this automatically)
+            } catch (error) {
+                console.error("Error updating document:", error);
+                showMessageBox(`Gagal menyimpan perubahan: ${error.message}`, 'error');
+            }
+        });
+
 
         // --- Logika Navigasi ---
         const navTabs = document.querySelectorAll('.nav-tab');
@@ -430,16 +488,16 @@
                 attendanceDateInput.valueAsDate = new Date(); // Atur tanggal hari ini
             } else if (sectionId === 'attendance-history') {
                 loadStudentAttendanceRecordsForAdmin(categoryFilter.value);
-            } else if (sectionId === 'class-management') { // BARU
+            } else if (sectionId === 'class-management') {
                 loadClasses();
                 classForm.reset();
-                classIdInputForm.value = ''; // Clear hidden ID
+                classIdInputForm.value = '';
                 submitClassBtn.textContent = 'Tambah Kelas';
                 cancelClassEditBtn.classList.add('hidden');
-            } else if (sectionId === 'teacher-management') { // BARU
+            } else if (sectionId === 'teacher-management') {
                 loadTeachers();
                 teacherForm.reset();
-                teacherIdInputForm.value = ''; // Clear hidden ID
+                teacherIdInputForm.value = '';
                 submitTeacherBtn.textContent = 'Tambah Pengajar';
                 cancelTeacherEditBtn.classList.add('hidden');
             }
@@ -451,7 +509,7 @@
             });
         });
 
-        // --- Pemeriksaan Otentikasi dan Pemuatan Data Awal ---
+        // --- Authentication Check and Initial Data Loading ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
@@ -459,16 +517,17 @@
                     currentAdminUser = { uid: user.uid, email: user.email };
                     adminEmailSpan.textContent = user.email;
                     showSection('registrations'); // Bagian default saat login
+                    document.body.style.visibility = 'visible'; // Tampilkan konten setelah autentikasi
                     console.log("Admin login:", user.email, user.uid);
                 } else {
                     signOut(auth);
                     showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
-                    setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                    setTimeout(() => { window.location.href = "admin-login.html"; }, 2000); // Redirect ke halaman login admin
                 }
             } else {
-                console.log("Tidak login. Mengarahkan ke admin.html");
+                console.log("Tidak login. Mengarahkan ke admin-login.html");
                 showMessageBox("Silakan login sebagai admin.", 'error');
-                setTimeout(() => { window.location.href = "admin.html"; }, 2000);
+                setTimeout(() => { window.location.href = "admin-login.html"; }, 2000); // Redirect ke halaman login admin
             }
         });
 
@@ -476,18 +535,18 @@
             try {
                 await signOut(auth);
                 showMessageBox("Anda telah logout.", 'success');
-                setTimeout(() => { window.location.href = "admin.html"; }, 1500);
+                setTimeout(() => { window.location.href = "admin-login.html"; }, 1500); // Redirect ke halaman login admin
             } catch (error) {
                 console.error("Error saat logout:", error);
                 showMessageBox("Gagal logout: " + error.message, 'error');
             }
         });
 
-        // --- Pendaftaran Siswa (Logika yang Sudah Ada) ---
-        async function loadRegistrations() {
-            const usersRef = collection(db, "users");
-            // Hanya muat peran 'Student' untuk bagian pendaftaran
-            const q = query(usersRef, where("role", "==", "Student"), orderBy("createdAt", "desc"));
+        // --- Pendaftaran Siswa (Logika yang DIPERBARUI untuk mengambil dari koleksi yang benar) ---
+        function loadRegistrations() {
+            // Mengambil dari koleksi yang benar: artifacts/{appId}/public/data/registrations
+            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
+            const q = query(registrationsRef, orderBy('timestamp', 'desc')); // Urutkan berdasarkan timestamp pendaftaran
 
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
@@ -498,30 +557,36 @@
                 let html = '';
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    const registrationDate = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    // Pastikan nama_lengkap, nomor_whatsapp, jenis_kelas, jadwal_diinginkan ada di dokumen pendaftaran Anda
+                    const namaLengkap = data.nama_lengkap || 'N/A';
+                    const nomorWhatsapp = data.nomor_whatsapp || 'N/A';
+                    const jenisKelas = Array.isArray(data.jenis_kelas) ? data.jenis_kelas.join(', ') : (data.jenis_kelas || 'N/A');
+                    const jadwalDiinginkan = data.jadwal_diinginkan || 'N/A';
+                    const tanggalDaftar = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'N/A';
+
                     html += `
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${data.fullName || 'N/A'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.email || 'N/A'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.school || 'N/A'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.grade || 'N/A'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${registrationDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${namaLengkap}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${nomorWhatsapp}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jenisKelas}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jadwalDiinginkan}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tanggalDaftar}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="openEditModal('${doc.id}', 'users', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
-                                <button onclick="deleteRegistration('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
+                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
+                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
+                                <button onclick="deleteRegistration('${doc.id}', 'artifacts/${appId}/public/data/registrations')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
                             </td>
                         </tr>
                     `;
                 });
                 registrationTableBody.innerHTML = html;
             }, (error) => {
-                console.error("Error mengambil pendaftaran:", error);
+                console.error("Error fetching registrations:", error);
                 registrationTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
             });
         }
 
-        async function deleteRegistration(docId) {
-            // Menggunakan modal kustom sebagai pengganti confirm()
+        async function deleteRegistration(docId, collectionName) {
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
                 confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
@@ -548,7 +613,7 @@
 
             if (userConfirmed) {
                 try {
-                    await deleteDoc(doc(db, "users", docId));
+                    await deleteDoc(doc(db, collectionName, docId));
                     showMessageBox("Pendaftaran berhasil dihapus.", "success");
                 } catch (error) {
                     console.error("Error menghapus pendaftaran:", error);
@@ -646,9 +711,6 @@
                     });
 
                     if (studentIds.length > 0) {
-                        // Firebase 'in' query memiliki batas 10. Untuk lebih dari itu, Anda perlu beberapa kueri atau memikirkan ulang struktur data.
-                        // Untuk kesederhanaan, kita akan mengkueri semuanya jika lebih dari 10.
-                        // Dalam aplikasi nyata, pertimbangkan untuk membagi menjadi batch atau menyimpan 'role' langsung di absensi.
                         if (studentIds.length > 10) {
                              console.warn("Lebih dari 10 siswa dengan peran 'Student'. Pemfilteran dengan operator 'in' mungkin terbatas. Menampilkan semua untuk saat ini.");
                              q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
@@ -660,8 +722,6 @@
                         return;
                     }
                 } else {
-                    // Untuk kategori spesifik lainnya, Anda perlu menyesuaikan kueri
-                    // berdasarkan bagaimana data kategori tersebut disimpan dalam dokumen studentAttendance
                     console.warn(`Kategori filter '${filterCategory}' belum sepenuhnya diimplementasikan untuk kueri langsung pada catatan absensi.`);
                     q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
                 }
@@ -708,7 +768,6 @@
         }
 
         async function deleteAttendanceRecord(docId) {
-            // Menggunakan modal kustom sebagai pengganti confirm()
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
                 confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
@@ -744,7 +803,7 @@
             }
         }
 
-        // --- Fungsi Manajemen Kelas (BARU) ---
+        // --- Fungsi Manajemen Kelas ---
         let editingClassId = null;
 
         classForm.addEventListener('submit', async (e) => {
@@ -763,7 +822,6 @@
 
             try {
                 if (editingClassId) {
-                    // Perbarui kelas yang sudah ada
                     const classRef = doc(db, "classes", editingClassId);
                     await updateDoc(classRef, {
                         className,
@@ -775,7 +833,6 @@
                     });
                     showMessageBox("Kelas berhasil diperbarui!", "success");
                 } else {
-                    // Tambahkan kelas baru
                     await addDoc(collection(db, "classes"), {
                         className,
                         level: classLevel,
@@ -791,7 +848,7 @@
                 editingClassId = null;
                 submitClassBtn.textContent = 'Tambah Kelas';
                 cancelClassEditBtn.classList.add('hidden');
-                loadClasses(); // Muat ulang daftar
+                loadClasses();
             } catch (error) {
                 console.error("Error menyimpan kelas:", error);
                 showMessageBox("Gagal menyimpan kelas: " + error.message, "error");
@@ -848,7 +905,6 @@
 
                     submitClassBtn.textContent = 'Perbarui Kelas';
                     cancelClassEditBtn.classList.remove('hidden');
-                    // Gulir ke formulir
                     classManagementSection.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     showMessageBox("Kelas tidak ditemukan.", "error");
@@ -867,7 +923,6 @@
         });
 
         async function deleteClass(classId) {
-            // Menggunakan modal kustom sebagai pengganti confirm()
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
                 confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
@@ -896,7 +951,7 @@
                 try {
                     await deleteDoc(doc(db, "classes", classId));
                     showMessageBox("Kelas berhasil dihapus.", "success");
-                    loadClasses(); // Muat ulang daftar
+                    loadClasses();
                 } catch (error) {
                     console.error("Error menghapus kelas:", error);
                     showMessageBox("Gagal menghapus kelas: " + error.message, "error");
@@ -904,7 +959,7 @@
             }
         }
 
-        // --- Fungsi Manajemen Pengajar (BARU) ---
+        // --- Fungsi Manajemen Pengajar ---
         let editingTeacherId = null;
 
         teacherForm.addEventListener('submit', async (e) => {
@@ -914,7 +969,7 @@
             const teacherSpecialization = teacherSpecializationInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
             const teacherPhoneNumber = teacherPhoneNumberInput.value.trim();
             const teacherIsActive = teacherIsActiveInput.checked;
-            const teacherUid = teacherUidInput.value.trim(); // Bidang UID opsional
+            const teacherUid = teacherUidInput.value.trim();
 
             if (!teacherName || !teacherEmail) {
                 showMessageBox("Nama dan Email Pengajar harus diisi.", "error");
@@ -923,7 +978,6 @@
 
             try {
                 if (editingTeacherId) {
-                    // Perbarui pengajar yang sudah ada
                     const teacherRef = doc(db, "teachers", editingTeacherId);
                     await updateDoc(teacherRef, {
                         name: teacherName,
@@ -931,18 +985,17 @@
                         specialization: teacherSpecialization,
                         phoneNumber: teacherPhoneNumber,
                         isActive: teacherIsActive,
-                        uid: teacherUid || null // Perbarui UID atau atur ke null jika kosong
+                        uid: teacherUid || null
                     });
                     showMessageBox("Data pengajar berhasil diperbarui!", "success");
                 } else {
-                    // Tambahkan pengajar baru
                     await addDoc(collection(db, "teachers"), {
                         name: teacherName,
                         email: teacherEmail,
                         specialization: teacherSpecialization,
                         phoneNumber: teacherPhoneNumber,
                         isActive: teacherIsActive,
-                        uid: teacherUid || null, // Simpan UID atau null jika kosong
+                        uid: teacherUid || null,
                         createdAt: new Date()
                     });
                     showMessageBox("Pengajar berhasil ditambahkan!", "success");
@@ -951,7 +1004,7 @@
                 editingTeacherId = null;
                 submitTeacherBtn.textContent = 'Tambah Pengajar';
                 cancelTeacherEditBtn.classList.add('hidden');
-                loadTeachers(); // Muat ulang daftar
+                loadTeachers();
             } catch (error) {
                 console.error("Error menyimpan pengajar:", error);
                 showMessageBox("Gagal menyimpan pengajar: " + error.message, "error");
@@ -1003,11 +1056,10 @@
                     teacherSpecializationInput.value = (teacher.specialization || []).join(', ');
                     teacherPhoneNumberInput.value = teacher.phoneNumber || '';
                     teacherIsActiveInput.checked = teacher.isActive || false;
-                    teacherUidInput.value = teacher.uid || ''; // Populate UID field
+                    teacherUidInput.value = teacher.uid || '';
 
                     submitTeacherBtn.textContent = 'Perbarui Pengajar';
                     cancelTeacherEditBtn.classList.remove('hidden');
-                    // Gulir ke formulir
                     teacherManagementSection.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     showMessageBox("Pengajar tidak ditemukan.", "error");
@@ -1026,7 +1078,6 @@
         });
 
         async function deleteTeacher(teacherId) {
-            // Menggunakan modal kustom sebagai pengganti confirm()
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
                 confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
@@ -1055,7 +1106,7 @@
                 try {
                     await deleteDoc(doc(db, "teachers", teacherId));
                     showMessageBox("Pengajar berhasil dihapus.", "success");
-                    loadTeachers(); // Muat ulang daftar
+                    loadTeachers();
                 } catch (error) {
                     console.error("Error menghapus pengajar:", error);
                     showMessageBox("Gagal menghapus pengajar: " + error.message, "error");
@@ -1065,7 +1116,7 @@
 
         // Expose functions to global scope for onclick attributes
         window.openEditModal = openEditModal;
-        window.deleteRegistration = deleteRegistration;
+        window.deleteRegistration = deleteRegistration; // Now accepts collectionName
         window.deleteAttendanceRecord = deleteAttendanceRecord;
         window.populateEditClassForm = populateEditClassForm;
         window.deleteClass = deleteClass;
