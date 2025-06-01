@@ -930,7 +930,7 @@
         async function deleteClass(classId) {
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center z-50';
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
                 confirmationModal.innerHTML = `
                     <div class="bg-white p-6 rounded-lg shadow-xl">
                         <p class="mb-4">Apakah Anda yakin ingin menghapus kelas ini?</p>
