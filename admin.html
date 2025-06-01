@@ -394,6 +394,7 @@
                         let value = data[key];
                         let isEditable = currentEditableFields.includes(key);
                         let inputTag = '';
+                        let displayValue = value; // Initialize displayValue here
 
                         if (key === 'timestamp' && value && typeof value.toDate === 'function') {
                             value = value.toDate().toLocaleString();
@@ -1204,4 +1205,4 @@
 
     </script>
 </body>
-</html>
+</ht
