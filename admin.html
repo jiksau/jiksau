@@ -408,7 +408,7 @@
                     }
 
                     modalContent.innerHTML = htmlContent;
-                    detailsModal.classList.add('show');
+                    editModal.classList.remove('hidden'); // Use remove('hidden') instead of add('show') for consistency
                     if (mode === 'edit') {
                         modalSaveBtn.classList.remove('hidden');
                     }
@@ -421,13 +421,15 @@
             }
         }
 
-        window.hideDetailsModal = function() {
-            detailsModal.classList.remove('show');
+        function closeEditModal() {
+            editModal.classList.add('hidden');
             modalContent.innerHTML = '';
             currentEditingDocId = null;
             currentEditingCollection = null;
             modalSaveBtn.classList.add('hidden'); // Ensure save button is hidden on close
         }
+
+        modalCloseBtn.addEventListener('click', closeEditModal);
 
         function formatFieldName(fieldName) {
             return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
@@ -450,7 +452,7 @@
                 const docRef = doc(db, currentEditingCollection, currentEditingDocId);
                 await updateDoc(docRef, updatedData);
                 showMessageBox("Perubahan berhasil disimpan!", 'success');
-                hideDetailsModal();
+                closeEditModal();
                 // Optionally reload the table if needed (onSnapshot handles this automatically)
             } catch (error) {
                 console.error("Error updating document:", error);
@@ -482,7 +484,7 @@
             if (sectionId === 'registrations') {
                 loadRegistrations();
             } else if (sectionId === 'attendance-logging') {
-                loadStudentsForAttendance();
+                loadStudentsForAttendance(); // Memuat siswa untuk dropdown "Pilih Siswa"
                 // Bersihkan formulir saat beralih ke tab logging
                 attendanceForm.reset();
                 attendanceDateInput.valueAsDate = new Date(); // Atur tanggal hari ini
@@ -622,19 +624,21 @@
             }
         }
 
-        // --- Absensi Siswa (Logika yang Sudah Ada) ---
+        // --- Absensi Siswa (Logika yang DIPERBAIKI untuk menggunakan 'name' dan 'email' dari koleksi 'users') ---
         async function loadStudentsForAttendance() {
             studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>'; // Reset dropdown
             try {
                 const usersRef = collection(db, "users");
-                const q = query(usersRef, where("role", "==", "Student"), orderBy("fullName"));
+                // Mengubah orderBy("fullName") menjadi orderBy("name")
+                const q = query(usersRef, where("role", "==", "Student"), orderBy("name"));
                 const querySnapshot = await getDocs(q);
 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const option = document.createElement('option');
                     option.value = doc.id; // UID Siswa
-                    option.textContent = `${data.fullName} (${data.email})`;
+                    // Menggunakan data.name alih-alih data.fullName
+                    option.textContent = `${data.name || data.email} (${data.email})`;
                     studentSelect.appendChild(option);
                 });
             } catch (error) {
@@ -669,7 +673,7 @@
 
                 await addDoc(collection(db, "studentAttendance"), {
                     studentId: studentId,
-                    studentName: studentData.fullName || studentData.email, // Gunakan nama lengkap jika tersedia
+                    studentName: studentData.name || studentData.email, // Menggunakan studentData.name
                     studentEmail: studentData.email,
                     classId: classId,
                     date: date,
@@ -751,6 +755,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${recordedBy}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onclick="openEditModal('${docId}', 'studentAttendance', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
+                                    <button onclick="openEditModal('${docId}', 'studentAttendance', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
                                     <button onclick="deleteAttendanceRecord('${docId}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
                                 </td>
                             </tr>
@@ -925,7 +930,7 @@
         async function deleteClass(classId) {
             const userConfirmed = await new Promise(resolve => {
                 const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center z-50';
                 confirmationModal.innerHTML = `
                     <div class="bg-white p-6 rounded-lg shadow-xl">
                         <p class="mb-4">Apakah Anda yakin ingin menghapus kelas ini?</p>
