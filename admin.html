@@ -6,6 +6,13 @@
     <title>Admin Dashboard - Extra Course</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for modal scrollability */
+        .modal-content {
+            max-height: 80vh; /* Set maximum height for modal content */
+            overflow-y: auto; /* Enable vertical scrolling if content overflows */
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <header class="bg-indigo-600 text-white p-4 shadow-md">
@@ -358,20 +365,34 @@
                     modalTitle.textContent = `Detail Data ${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)}`;
                     let htmlContent = '';
 
-                    // Define editable fields for the modal (can be expanded)
-                    const editableFields = [
-                        'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
-                        'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
-                        'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
-                        'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
-                        'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
-                        'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
-                        'frekuensi_belajar', 'motivasi_belajar'
-                    ];
+                    // Define editable fields for different collections
+                    const collectionEditableFields = {
+                        [`artifacts/${appId}/public/data/registrations`]: [ // For registrations
+                            'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
+                            'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
+                            'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
+                            'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
+                            'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
+                            'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
+                            'frekuensi_belajar', 'motivasi_belajar'
+                        ],
+                        'studentAttendance': [ // For studentAttendance
+                            'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
+                        ],
+                        'classes': [ // For classes (from class management)
+                            'className', 'level', 'description', 'capacity', 'price', 'isActive'
+                        ],
+                        'teachers': [ // For teachers (from teacher management)
+                            'name', 'email', 'specialization', 'phoneNumber', 'isActive', 'uid'
+                        ]
+                    };
+
+                    const currentEditableFields = collectionEditableFields[collectionName] || [];
+
 
                     for (const key in data) {
                         let value = data[key];
-                        let isEditable = editableFields.includes(key);
+                        let isEditable = currentEditableFields.includes(key);
                         let inputTag = '';
 
                         if (key === 'timestamp' && value && typeof value.toDate === 'function') {
@@ -383,12 +404,33 @@
                         }
 
                         if (mode === 'edit' && isEditable) {
-                            if (key === 'tanggal_lahir') {
+                            // Determine input type based on key and collection
+                            if (key === 'tanggal_lahir' && collectionName === `artifacts/${appId}/public/data/registrations`) {
                                 const dateValue = data[key] instanceof Date ? data[key].toISOString().split('T')[0] : data[key];
                                 inputTag = `<input type="date" id="modal-${key}" name="${key}" value="${dateValue || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key.includes('alamat') || key.includes('catatan') || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
+                            } else if (key === 'date' && collectionName === 'studentAttendance') {
+                                inputTag = `<input type="date" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            } else if (key === 'meetingNumber' && collectionName === 'studentAttendance') {
+                                inputTag = `<input type="number" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            } else if (key === 'status' && collectionName === 'studentAttendance') {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="Hadir" ${value === 'Hadir' ? 'selected' : ''}>Hadir</option>
+                                        <option value="Absen" ${value === 'Absen' ? 'selected' : ''}>Absen</option>
+                                        <option value="Terlambat" ${value === 'Terlambat' ? 'selected' : ''}>Terlambat</option>
+                                        <option value="Izin" ${value === 'Izin' ? 'selected' : ''}>Izin</option>
+                                    </select>
+                                `;
+                            } else if (key.includes('alamat') || key.includes('catatan') || key.includes('deskripsi') || key.includes('materi') || key.includes('tugas') || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
                                 inputTag = `<textarea id="modal-${key}" name="${key}" rows="3" class="w-full p-2 border rounded">${data[key] || ''}</textarea>`;
-                            } else {
+                            } else if ((key === 'capacity' || key === 'price') && collectionName === 'classes') {
+                                inputTag = `<input type="number" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
+                            } else if (key === 'isActive' && (collectionName === 'classes' || collectionName === 'teachers')) {
+                                inputTag = `<input type="checkbox" id="modal-${key}" name="${key}" ${value ? 'checked' : ''} class="mr-2 leading-tight">`;
+                            } else if (key === 'specialization' && collectionName === 'teachers') {
+                                inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${Array.isArray(data[key]) ? data[key].join(', ') : data[key] || ''}" class="w-full p-2 border rounded">`;
+                            }
+                            else {
                                 inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${data[key] || ''}" class="w-full p-2 border rounded">`;
                             }
                             htmlContent += `
@@ -398,17 +440,40 @@
                                 </div>
                             `;
                         } else {
+                            // For display-only fields, handle specific formatting
+                            if (key === 'evaluation' && collectionName === 'studentAttendance' && typeof value === 'object' && value !== null) {
+                                const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][value.mood - 1] || 'N/A';
+                                const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][value.understood - 1] || 'N/A';
+                                const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][value.easy - 1] || 'N/A';
+                                const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][value.creativity - 1] || 'N/A';
+                                const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][value.tired - 1] || 'N/A';
+                                displayValue = `
+                                    <div class="evaluation-scores">
+                                        <p>Mood: ${moodLabel} (${value.mood || 'N/A'})</p>
+                                        <p>Pemahaman Materi: ${understoodLabel} (${value.understood || 'N/A'})</p>
+                                        <p>Materi Mudah: ${easyLabel} (${value.easy || 'N/A'})</p>
+                                        <p>Kreativitas: ${creativityLabel} (${value.creativity || 'N/A'})</p>
+                                        <p>Tingkat Kelelahan: ${tiredLabel} (${value.tired || 'N/A'})</p>
+                                    </div>
+                                `;
+                            } else if (Array.isArray(value)) {
+                                displayValue = value.join(', ');
+                            } else if (typeof value === 'boolean') {
+                                displayValue = value ? 'Ya' : 'Tidak';
+                            }
+
                             htmlContent += `
                                 <div class="modal-detail-item">
                                     <strong>${formatFieldName(key)}:</strong>
-                                    <span class="display-value">${value || '-'}</span>
+                                    <span class="display-value">${displayValue || '-'}</span>
+                                    ${mode === 'edit' && !isEditable && (key === 'evaluation' || key === 'studentId' || key === 'studentEmail' || key === 'studentName' || key === 'recordedByUid' || key === 'recordedByEmail' || key === 'timestamp' || key === 'createdAt' || key === 'measurementId' || key === 'appId' || key === 'authDomain' || key === 'databaseURL' || key === 'messagingSenderId' || key === 'projectId' || key === 'storageBucket' || key === 'apiKey') ? '<p class="text-xs text-gray-500 mt-1"><i>Informasi ini tidak dapat diedit langsung.</i></p>' : ''}
                                 </div>
                             `;
                         }
                     }
 
                     modalContent.innerHTML = htmlContent;
-                    editModal.classList.remove('hidden'); // Use remove('hidden') instead of add('show') for consistency
+                    editModal.classList.remove('hidden');
                     if (mode === 'edit') {
                         modalSaveBtn.classList.remove('hidden');
                     }
@@ -444,8 +509,18 @@
             const updatedData = {};
             const formInputs = modalContent.querySelectorAll('input, textarea, select');
             formInputs.forEach(input => {
-                // Ensure field names are correct for Firestore
-                updatedData[input.name] = input.type === 'number' ? parseFloat(input.value) : input.value;
+                let value;
+                if (input.type === 'checkbox') {
+                    value = input.checked;
+                } else if (input.type === 'number') {
+                    value = parseFloat(input.value);
+                } else if (input.name === 'specialization') { // Specific handling for specialization array
+                    value = input.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                }
+                else {
+                    value = input.value;
+                }
+                updatedData[input.name] = value;
             });
 
             try {
@@ -453,7 +528,6 @@
                 await updateDoc(docRef, updatedData);
                 showMessageBox("Perubahan berhasil disimpan!", 'success');
                 closeEditModal();
-                // Optionally reload the table if needed (onSnapshot handles this automatically)
             } catch (error) {
                 console.error("Error updating document:", error);
                 showMessageBox(`Gagal menyimpan perubahan: ${error.message}`, 'error');
