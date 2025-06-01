@@ -74,6 +74,7 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            z-index: 1;
         }
 
         .tabs button.active {
@@ -565,12 +566,12 @@
 
             // Admin Dashboard Button Event Listener
             adminDashboardButton.addEventListener("click", () => {
-                window.location.href = "admin.html"; // Redirect to admin.html
+                window.location.href = "admin-login.html"; // Redirect to admin-login.html
             });
 
             // Gamelist Button Event Listener
             // gamelistButton.addEventListener("click", () => {
-            //     window.location.href = "gamelist.html"; // Redirect to gamelist.html
+            //      window.location.href = "gamelist.html"; // Redirect to gamelist.html
             // });
         });
     </script>
