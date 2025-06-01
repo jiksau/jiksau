@@ -8,9 +8,28 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         /* Custom styles for modal scrollability */
+        .modal-overlay {
+            display: flex; /* Ensure flexbox for vertical centering and content distribution */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
         .modal-content {
             max-height: 80vh; /* Set maximum height for modal content */
             overflow-y: auto; /* Enable vertical scrolling if content overflows */
+            display: flex; /* Use flexbox for content inside modal */
+            flex-direction: column; /* Stack children vertically */
+            flex-grow: 1; /* Allow content to grow */
+        }
+        .modal-body { /* A new div to wrap scrollable content */
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 1rem; /* Add some padding for scrollbar if present */
+            margin-bottom: 1rem; /* Space before footer */
+        }
+        .modal-footer {
+            flex-shrink: 0; /* Prevent footer from shrinking */
+            padding-top: 1rem; /* Add padding above footer */
+            border-top: 1px solid #e5e7eb; /* Optional: add a separator line */
         }
     </style>
 </head>
@@ -1205,4 +1224,4 @@
 
     </script>
 </body>
-</ht
+</html>
