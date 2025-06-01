@@ -6,46 +6,79 @@
     <title>ExtraCourse User Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Custom styles for Inter font and general layout */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            min-height: 100vh;
+            margin: 0;
+            padding: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Vibrant gradient background */
+            color: #333; /* Default text color */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            visibility: hidden; /* Hide body content until auth state is confirmed */
         }
         .container {
             max-width: 900px;
             margin: 2rem auto;
-            padding: 2rem;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            flex-grow: 1;
+            padding: 2.5rem; /* Slightly more padding */
+            background: rgba(255, 255, 255, 0.95); /* Near opaque white background */
+            border-radius: 16px; /* More rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            backdrop-filter: blur(8px); /* Subtle frosted glass effect */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
+            animation: fadeInScale 0.7s ease-out forwards; /* Fade in and slightly scale */
+            flex-grow: 1; /* Allows container to grow and push footer down */
         }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         h1, h2 {
             color: #1a202c;
             text-align: center;
             margin-bottom: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05); /* Subtle text shadow */
         }
+        h1 {
+            font-size: 2.5rem; /* Larger main title */
+            font-weight: 800; /* Extra bold */
+            color: #312e81; /* Indigo-900 for main title */
+        }
+        h2 {
+            font-size: 2rem; /* Larger section titles */
+            font-weight: 700; /* Bold */
+            color: #3b82f6; /* Blue-500 for section titles */
+        }
+
         .info-card {
-            background-color: #e0f2fe;
-            border-left: 6px solid #007bff;
-            padding: 1.5rem;
+            background-color: #e0f7fa; /* Light cyan background */
+            border-left: 8px solid #00bcd4; /* Cyan border */
+            padding: 1.5rem; /* More padding */
             margin-bottom: 1.5rem;
-            border-radius: 8px;
+            border-radius: 10px; /* More rounded corners */
             text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Subtle shadow */
         }
         .info-card p {
             margin-bottom: 0.5rem;
+            font-size: 1rem; /* Slightly larger font */
+            color: #263238; /* Darker text */
         }
         .info-card strong {
-            color: #0056b3;
+            color: #00838f; /* Darker cyan */
         }
+
         /* Button styles */
         .header-buttons {
             display: flex;
             gap: 1rem; /* Space between buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+            justify-content: flex-end; /* Align to right */
         }
         .header-buttons button {
             padding: 0.75rem 1.5rem;
@@ -54,8 +87,8 @@
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            transition: background-color 0.3s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out; /* Smooth transitions for all button properties */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
         }
         #gamelistButton {
             background-color: #f472b6; /* Pink-400 */
@@ -63,13 +96,17 @@
         }
         #gamelistButton:hover {
             background-color: #ec4899; /* Pink-500 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(236, 72, 153, 0.3);
         }
-        #attendanceButton { /* New button style */
+        #attendanceButton {
             background-color: #34d399; /* Emerald-400 */
             color: white;
         }
         #attendanceButton:hover {
             background-color: #10b981; /* Emerald-500 */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
         }
         #logoutButton {
             background-color: #ef4444; /* Red */
@@ -77,6 +114,8 @@
         }
         #logoutButton:hover {
             background-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(220, 38, 38, 0.3);
         }
         footer {
             text-align: center;
@@ -136,33 +175,62 @@
         /* Attendance History Card */
         .attendance-history-card {
             margin-bottom: 1rem;
-            padding: 1.25rem;
-            border-radius: 8px;
-            background-color: #f8f8f8; /* Lighter background for individual records */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e0e0e0;
+            padding: 1.5rem; /* More padding */
+            border-radius: 10px; /* More rounded */
+            background-color: #f0fdf4; /* Light green background for positive feel */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* Stronger shadow */
+            border: 1px solid #a7f3d0; /* Light green border */
+            transition: transform 0.2s ease-in-out;
+        }
+        .attendance-history-card:hover {
+            transform: translateY(-3px); /* Slight lift on hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
         }
         .attendance-history-card p {
-            margin-bottom: 0.25rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.4rem; /* More space */
+            font-size: 1rem; /* Slightly larger font */
+            color: #2d3748; /* Darker text */
         }
         .attendance-history-card p strong {
-            color: #333;
+            color: #1a202c; /* Even darker for emphasis */
         }
         .evaluation-scores {
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px dashed #ccc;
-            font-size: 0.9rem;
-            color: #555;
+            margin-top: 1rem; /* More space */
+            padding-top: 1rem;
+            border-top: 1px solid #d1fae5; /* Solid light green border */
+            font-size: 0.95rem; /* Slightly larger */
+            color: #4a5568;
         }
         .evaluation-scores span {
             display: inline-block;
-            margin-right: 1rem;
-            background-color: #edf2f7;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 500;
+            margin-right: 1.25rem; /* More space */
+            background-color: #d1fae5; /* Light green background */
+            padding: 0.3rem 0.6rem; /* More padding */
+            border-radius: 6px; /* More rounded */
+            font-weight: 600; /* Semi-bold */
+            color: #065f46; /* Dark green text */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .header-buttons {
+                flex-direction: column; /* Stack buttons vertically */
+                align-items: stretch; /* Stretch buttons to full width */
+            }
+            .header-buttons button {
+                width: 100%; /* Full width buttons */
+            }
         }
     </style>
 </head>
@@ -215,7 +283,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Added setPersistence, browserLocalPersistence
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration (hardcoded for static hosting)
@@ -267,15 +335,13 @@
             overlay.style.display = 'none';
         }
 
-        // --- Set Authentication Persistence (NEW) ---
-        // This ensures the user stays logged in even after closing the browser/tab
+        // --- Set Authentication Persistence ---
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
                 console.log("Authentication persistence set to LOCAL.");
             })
             .catch((error) => {
                 console.error("Error setting persistence:", error);
-                // Handle errors here, e.g., browser not supporting local storage
             });
 
 
@@ -331,6 +397,7 @@
                 loadStudentAttendance(user.uid);
                 
                 initialAuthCheckDone = true; // Mark initial check as complete
+                document.body.style.visibility = 'visible'; // Show content
 
             } else {
                 // User is signed out, redirect to login page
