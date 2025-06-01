@@ -13,16 +13,20 @@
             align-items: center; /* Center vertically */
             justify-content: center; /* Center horizontally */
         }
-        .modal-content {
+        .modal-content-wrapper { /* This is the white box that holds everything */
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* shadow-xl */
+            width: 91.666667%; /* w-11/12 */
+            max-width: 32rem; /* md:w-1/2 lg:w-1/3 (approx. 512px) */
             max-height: 80vh; /* Set maximum height for modal content */
-            overflow-y: auto; /* Enable vertical scrolling if content overflows */
             display: flex; /* Use flexbox for content inside modal */
             flex-direction: column; /* Stack children vertically */
-            flex-grow: 1; /* Allow content to grow */
         }
-        .modal-body { /* A new div to wrap scrollable content */
-            flex-grow: 1;
-            overflow-y: auto;
+        .modal-body-scrollable { /* New div for scrollable content */
+            flex-grow: 1; /* Allows this section to take up available space */
+            overflow-y: auto; /* Enable vertical scrolling if content overflows */
             padding-right: 1rem; /* Add some padding for scrollbar if present */
             margin-bottom: 1rem; /* Space before footer */
         }
@@ -256,11 +260,13 @@
     </div>
 
     <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3">
-            <h3 id="modalTitle" class="text-2xl font-bold mb-4">Detail Data</h3>
-            <div id="modalContent" class="mb-6 space-y-2">
-                </div>
-            <div class="flex justify-end space-x-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 modal-content-wrapper">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4 flex-shrink-0">Detail Data</h3>
+            <div id="modalBodyScrollable" class="flex-grow overflow-y-auto pr-4 mb-4">
+                <div id="modalContent" class="space-y-2">
+                    </div>
+            </div>
+            <div class="flex justify-end space-x-4 modal-footer">
                 <button id="modalCloseBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tutup</button>
                 <button id="modalSaveBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Simpan Perubahan</button>
             </div>
@@ -343,7 +349,8 @@
         // Elemen Modal
         const editModal = document.getElementById('editModal');
         const modalTitle = document.getElementById('modalTitle');
-        const modalContent = document.getElementById('modalContent');
+        const modalBodyScrollable = document.getElementById('modalBodyScrollable'); // New element
+        const modalContent = document.getElementById('modalContent'); // Content will be inside modalBodyScrollable
         const modalCloseBtn = document.getElementById('modalCloseBtn');
         const modalSaveBtn = document.getElementById('modalSaveBtn');
 
@@ -381,7 +388,7 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    modalTitle.textContent = `Detail Data ${collectionName.charAt(0).toUpperCase() + collectionName.slice(1)}`;
+                    modalTitle.textContent = `Detail Data ${formatCollectionName(collectionName)}`;
                     let htmlContent = '';
 
                     // Define editable fields for different collections
@@ -393,7 +400,9 @@
                             'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
                             'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
                             'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
-                            'frekuensi_belajar', 'motivasi_belajar'
+                            'frekuensi_belajar', 'motivasi_belajar',
+                            // Fields that might be select/radio but need to be handled in modal
+                            'jenis_kelamin', 'metode', 'jumlah_pertemuan', 'penempatan_level', 'jenis_kelas', 'setuju_ketentuan'
                         ],
                         'studentAttendance': [ // For studentAttendance
                             'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
@@ -415,13 +424,30 @@
                         let inputTag = '';
                         let displayValue = value; // Initialize displayValue here
 
+                        // Handle special display formats before checking edit mode
                         if (key === 'timestamp' && value && typeof value.toDate === 'function') {
-                            value = value.toDate().toLocaleString();
+                            displayValue = value.toDate().toLocaleString();
                         } else if (Array.isArray(value)) {
-                            value = value.join(', ');
+                            displayValue = value.join(', ');
                         } else if (typeof value === 'boolean') {
-                            value = value ? 'Ya' : 'Tidak';
+                            displayValue = value ? 'Ya' : 'Tidak';
+                        } else if (key === 'evaluation' && collectionName === 'studentAttendance' && typeof value === 'object' && value !== null) {
+                            const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][value.mood - 1] || 'N/A';
+                            const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][value.understood - 1] || 'N/A';
+                            const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][value.easy - 1] || 'N/A';
+                            const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][value.creativity - 1] || 'N/A';
+                            const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][value.tired - 1] || 'N/A';
+                            displayValue = `
+                                <div class="evaluation-scores">
+                                    <p>Mood: ${moodLabel} (${value.mood || 'N/A'})</p>
+                                    <p>Pemahaman Materi: ${understoodLabel} (${value.understood || 'N/A'})</p>
+                                    <p>Materi Mudah: ${easyLabel} (${value.easy || 'N/A'})</p>
+                                    <p>Kreativitas: ${creativityLabel} (${value.creativity || 'N/A'})</p>
+                                    <p>Tingkat Kelelahan: ${tiredLabel} (${value.tired || 'N/A'})</p>
+                                </div>
+                            `;
                         }
+
 
                         if (mode === 'edit' && isEditable) {
                             // Determine input type based on key and collection
@@ -441,7 +467,7 @@
                                         <option value="Izin" ${value === 'Izin' ? 'selected' : ''}>Izin</option>
                                     </select>
                                 `;
-                            } else if (key.includes('alamat') || key.includes('catatan') || key.includes('deskripsi') || key.includes('materi') || key.includes('tugas') || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
+                            } else if (key.includes('alamat') || key.includes('catatan') || key === 'description' || key === 'material' || key === 'homework' || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
                                 inputTag = `<textarea id="modal-${key}" name="${key}" rows="3" class="w-full p-2 border rounded">${data[key] || ''}</textarea>`;
                             } else if ((key === 'capacity' || key === 'price') && collectionName === 'classes') {
                                 inputTag = `<input type="number" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
@@ -449,6 +475,48 @@
                                 inputTag = `<input type="checkbox" id="modal-${key}" name="${key}" ${value ? 'checked' : ''} class="mr-2 leading-tight">`;
                             } else if (key === 'specialization' && collectionName === 'teachers') {
                                 inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${Array.isArray(data[key]) ? data[key].join(', ') : data[key] || ''}" class="w-full p-2 border rounded">`;
+                            } else if (key === 'jenis_kelamin' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="Laki-laki" ${value === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
+                                        <option value="Perempuan" ${value === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
+                                    </select>
+                                `;
+                            } else if (key === 'metode' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="Online" ${value === 'Online' ? 'selected' : ''}>Online</option>
+                                        <option value="Offline" ${value === 'Offline' ? 'selected' : ''}>Offline</option>
+                                    </select>
+                                `;
+                            } else if (key === 'jumlah_pertemuan' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="1x/minggu" ${value === '1x/minggu' ? 'selected' : ''}>1x/minggu</option>
+                                        <option value="2x/minggu" ${value === '2x/minggu' ? 'selected' : ''}>2x/minggu</option>
+                                        <option value="3x/minggu" ${value === '3x/minggu' ? 'selected' : ''}>3x/minggu</option>
+                                    </select>
+                                `;
+                            } else if (key === 'penempatan_level' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="Pre-A1 (Beginner)" ${value === 'Pre-A1 (Beginner)' ? 'selected' : ''}>Pre-A1 (Beginner)</option>
+                                        <option value="A1 (Elementary)" ${value === 'A1 (Elementary)' ? 'selected' : ''}>A1 (Elementary)</option>
+                                        <option value="A2 (Pre-Intermediate)" ${value === 'A2 (Pre-Intermediate)' ? 'selected' : ''}>A2 (Pre-Intermediate)</option>
+                                        <option value="B1 (Intermediate)" ${value === 'B1 (Intermediate)' ? 'selected' : ''}>B1 (Intermediate)</option>
+                                        <option value="B2 (Upper-Intermediate)" ${value === 'B2 (Upper-Intermediate)' ? 'selected' : ''}>B2 (Upper-Intermediate)</option>
+                                        <option value="C1 (Advanced)" ${value === 'C1 (Advanced)' ? 'selected' : ''}>C1 (Advanced)</option>
+                                    </select>
+                                `;
+                            } else if (key === 'jenis_kelas' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `
+                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
+                                        <option value="Private Class" ${value === 'Private Class' ? 'selected' : ''}>Private Class</option>
+                                        <option value="Group Class" ${value === 'Group Class' ? 'selected' : ''}>Group Class</option>
+                                    </select>
+                                `;
+                            } else if (key === 'setuju_ketentuan' && collectionName === `artifacts/${appId}/public/data/registrations`) {
+                                inputTag = `<input type="checkbox" id="modal-${key}" name="${key}" ${value ? 'checked' : ''} class="mr-2 leading-tight">`;
                             }
                             else {
                                 inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${data[key] || ''}" class="w-full p-2 border rounded">`;
@@ -460,28 +528,7 @@
                                 </div>
                             `;
                         } else {
-                            // For display-only fields, handle specific formatting
-                            if (key === 'evaluation' && collectionName === 'studentAttendance' && typeof value === 'object' && value !== null) {
-                                const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][value.mood - 1] || 'N/A';
-                                const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][value.understood - 1] || 'N/A';
-                                const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][value.easy - 1] || 'N/A';
-                                const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][value.creativity - 1] || 'N/A';
-                                const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][value.tired - 1] || 'N/A';
-                                displayValue = `
-                                    <div class="evaluation-scores">
-                                        <p>Mood: ${moodLabel} (${value.mood || 'N/A'})</p>
-                                        <p>Pemahaman Materi: ${understoodLabel} (${value.understood || 'N/A'})</p>
-                                        <p>Materi Mudah: ${easyLabel} (${value.easy || 'N/A'})</p>
-                                        <p>Kreativitas: ${creativityLabel} (${value.creativity || 'N/A'})</p>
-                                        <p>Tingkat Kelelahan: ${tiredLabel} (${value.tired || 'N/A'})</p>
-                                    </div>
-                                `;
-                            } else if (Array.isArray(value)) {
-                                displayValue = value.join(', ');
-                            } else if (typeof value === 'boolean') {
-                                displayValue = value ? 'Ya' : 'Tidak';
-                            }
-
+                            // For display-only fields, use the pre-formatted displayValue
                             htmlContent += `
                                 <div class="modal-detail-item">
                                     <strong>${formatFieldName(key)}:</strong>
@@ -534,8 +581,10 @@
                     value = input.checked;
                 } else if (input.type === 'number') {
                     value = parseFloat(input.value);
-                } else if (input.name === 'specialization') { // Specific handling for specialization array
+                } else if (input.name === 'specialization' && currentEditingCollection === 'teachers') { // Specific handling for specialization array
                     value = input.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                } else if (input.name === 'jenis_kelas' && currentEditingCollection === `artifacts/${appId}/public/data/registrations`) {
+                    value = input.value; // Assuming it's a single string from select
                 }
                 else {
                     value = input.value;
