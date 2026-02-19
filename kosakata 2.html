@@ -3,384 +3,1079 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Memorization</title>
+    <title>Vocabulary Memorization Pro</title>
     <style>
         /* General Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #222; /* Dark background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
             margin: 0;
             padding: 20px;
-            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h1 {
             font-size: 2.5rem;
-            color: #fff;
-            margin-bottom: 20px;
-            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         h2 {
             font-size: 1.2rem;
-            color: #ddd;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
         }
 
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            background-color: #006bb3;
-            color: #fff;
-            transition: background-color 0.3s, transform 0.3s;
-            width: 100%;
-            max-width: 250px;
-            margin: 15px auto;
-        }
-
-        button:hover {
-            background-color: #005f8b;
-            transform: translateY(-2px);
-        }
-
         .input-row {
+            display: flex;
+            gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
         }
 
         input {
-            padding: 10px;
-            font-size: 1rem;
-            border-radius: 8px;
-            border: 1px solid #ddd;
             width: 100%;
-            max-width: 300px;
-            margin: 5px auto;
-            box-sizing: border-box;
-            display: block;
-            transition: all 0.3s;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
         }
 
         input:focus {
             outline: none;
-            border-color: #006bb3;
-            box-shadow: 0 0 5px rgba(0, 107, 179, 0.5);
+            border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
         }
 
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            text-align: left;
-            background: #333;
+        button {
+            padding: 12px 24px;
+            border: none;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .word-list {
-            margin-top: 20px;
-            padding: 0;
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        button.success {
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+        }
+
+        button.warning {
+            background: linear-gradient(135deg, #ff9a44, #fc6076);
+        }
+
+        .word-list-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .word-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .word-stats {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        .word-items {
+            max-height: 250px;
+            overflow-y: auto;
+            border-radius: 10px;
         }
 
         .word-item {
             display: flex;
             justify-content: space-between;
-            background-color: #444;
-            border: 1px solid #ddd;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-            color: #fff;
-            transition: background-color 0.3s ease;
-            flex-wrap: wrap;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .word-item:hover {
-            background-color: #555;
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(5px);
         }
 
-        .word-item div {
+        .word-pair {
+            display: flex;
+            gap: 20px;
             flex: 1;
-            text-align: center;
-            padding: 5px;
         }
 
-        #timer {
-            font-size: 1.4rem;
-            color: #ff6f61;
-            margin-bottom: 20px;
+        .word-english {
+            font-weight: bold;
+            color: #fff;
+            min-width: 120px;
+        }
+
+        .word-translation {
+            color: #a8e6cf;
+        }
+
+        .word-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .word-actions button {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+
+        .word-actions button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .timer-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-align: center;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-display.warning {
+            color: #ffd93d;
+            animation: pulse 1s infinite;
+        }
+
+        .timer-display.danger {
+            color: #ff6b6b;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .progress-container {
+            margin: 20px 0;
         }
 
         .progress-bar {
             width: 100%;
             height: 12px;
-            background-color: #e9ecef;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 20px;
         }
 
-        .progress {
+        .progress-fill {
             height: 100%;
-            background-color: #5cb85c;
-            width: 100%;
-            transition: width 1s linear;
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
         }
 
-        .row {
+        .quiz-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .feedback-message {
-            font-size: 1.4rem;
-            margin: 20px 0;
+        .score-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
             font-weight: bold;
-            transition: opacity 1s ease;
+            font-size: 1.2rem;
         }
 
-        .centered-button {
+        .quiz-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        .quiz-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .quiz-word {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .quiz-input {
             display: flex;
-            justify-content: center;
-            margin-top: 20px;
+            gap: 10px;
+            align-items: center;
         }
 
-        /* New Styles for Icons */
+        .quiz-input input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .quiz-feedback {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
         .correct {
-            color: #28a745;
+            color: #00b09b;
         }
 
         .incorrect {
-            color: #dc3545;
+            color: #ff6b6b;
         }
 
-        .icon {
-            font-size: 1.2rem;
-            margin-left: 10px;
+        .correct-bg {
+            background: rgba(0, 176, 155, 0.2);
+            border-left: 4px solid #00b09b;
         }
 
-        /* Centering buttons */
-        .centered-button {
+        .incorrect-bg {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .feedback-message {
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            animation: slideIn 0.5s ease;
+        }
+
+        .button-group {
             display: flex;
+            gap: 10px;
             justify-content: center;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
-        /* Retry button */
-        .retry-button {
-            background-color: #ffc107;
-            color: #000;
+        .hidden {
+            display: none !important;
         }
 
-        @media (max-width: 768px) {
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
             h1 {
-                font-size: 1.8rem;
+                font-size: 2rem;
             }
 
-            button {
-                font-size: 1rem;
+            .input-row {
+                flex-direction: column;
             }
 
-            input {
-                max-width: 100%;
+            .input-group {
+                min-width: 100%;
             }
 
             .word-item {
                 flex-direction: column;
-                text-align: center;
+                gap: 10px;
             }
 
-            .word-item div {
-                flex: none;
+            .word-pair {
                 width: 100%;
-                text-align: center;
+                justify-content: space-between;
+            }
+
+            .word-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .quiz-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .timer-display {
+                font-size: 2rem;
+            }
+
+            .button-group button {
+                width: 100%;
             }
         }
 
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            button {
-                font-size: 0.9rem;
-                padding: 10px;
-            }
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        /* Hide elements initially */
-        .hidden {
-            display: none;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 0.8rem;
+            border-radius: 5px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        [data-tooltip]:hover:before {
+            opacity: 1;
+            visibility: visible;
         }
     </style>
 </head>
 <body>
     <div id="settingsPage" class="container">
-        <h1>Vocabulary Memorization</h1>
-        <h2>Please Enter The Words!</h2>
+        <h1>📚 Vocabulary Memorization</h1>
+        <h2>Master your vocabulary with interactive quizzes!</h2>
 
-        <div class="input-row">
-            <input type="text" id="wordInput" placeholder="Enter English word" />
-            <input type="text" id="translationInput" placeholder="Type translation" />
+        <div class="input-section">
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="wordInput">📝 English Word</label>
+                    <input type="text" id="wordInput" placeholder="e.g., apple" />
+                </div>
+                <div class="input-group">
+                    <label for="translationInput">🌍 Translation</label>
+                    <input type="text" id="translationInput" placeholder="e.g., apel" />
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="addWord()" class="success">➕ Add Word Pair</button>
+                <button onclick="importSampleData()" class="secondary">📋 Add Samples</button>
+            </div>
         </div>
-        <div class="centered-button">
-            <button onclick="addWord()">Add Word</button>
-        </div>
-        <div class="word-list" id="wordList"></div>
 
-        <div class="input-row">
-            <label for="timeInput">Set Timer (Minutes):</label>
-            <input type="number" id="timeInput" min="1" placeholder="Enter minutes" />
+        <div id="wordListContainer" class="word-list-container hidden">
+            <div class="word-list-header">
+                <h3>Your Vocabulary List</h3>
+                <div class="word-stats" id="wordStats">0 words</div>
+            </div>
+            <div id="wordItems" class="word-items"></div>
+            
+            <div class="button-group">
+                <button onclick="clearAllWords()" class="warning" id="clearAllBtn">🗑️ Clear All</button>
+            </div>
         </div>
-        <div class="centered-button">
-            <button onclick="startQuiz()">Start Quiz</button>
+
+        <div class="timer-section">
+            <h3>⏰ Quiz Settings</h3>
+            <div class="input-group">
+                <label for="timeInput">Time Limit (minutes):</label>
+                <input type="number" id="timeInput" min="1" max="30" value="2" placeholder="Enter minutes" />
+            </div>
+            
+            <div class="input-group">
+                <label for="quizMode">🎮 Quiz Mode:</label>
+                <select id="quizMode" class="input-group">
+                    <option value="normal">Normal (All words)</option>
+                    <option value="shuffle">Shuffle (Random order)</option>
+                    <option value="reverse">Reverse (Translation to English)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="startQuiz()" class="success" id="startBtn">🚀 Start Quiz</button>
         </div>
     </div>
 
     <div id="quizPage" class="container hidden">
-        <h1>Vocabulary Quiz</h1>
-        <div id="timer"></div>
-        <div class="progress-bar">
-            <div id="progress" class="progress"></div>
+        <h1>📝 Vocabulary Quiz</h1>
+        
+        <div class="quiz-header">
+            <div class="timer-display" id="timer">02:00</div>
+            <div class="score-badge" id="scoreDisplay">🏆 0/0</div>
         </div>
-        <div class="container" id="quizContainer"></div>
-        <div class="centered-button">
-            <button onclick="manualSubmit()">Submit Quiz</button>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
         </div>
-        <div id="feedback" class="feedback-message hidden"></div>
-        <div class="centered-button">
-            <button id="retryButton" class="retry-button hidden" onclick="retryQuiz()">Retry Quiz</button>
+
+        <div id="quizContainer"></div>
+
+        <div class="button-group">
+            <button onclick="submitQuiz()" class="success" id="submitBtn">✅ Submit Answers</button>
+            <button onclick="pauseTimer()" class="secondary" id="pauseBtn">⏸️ Pause</button>
+        </div>
+
+        <div id="feedbackContainer">
+            <div id="feedbackMessage" class="feedback-message hidden"></div>
+            
+            <div class="button-group">
+                <button onclick="retryQuiz()" class="warning" id="retryButton">🔄 Try Again</button>
+                <button onclick="backToSettings()" class="secondary" id="backBtn">🏠 Back to Menu</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // State Management
+        let words = [];
+        let quizWords = [];
+        let timerInterval;
+        let remainingTime = 0;
+        let totalTime = 120; // 2 minutes default
+        let isPaused = false;
+        let score = 0;
+        let answeredCount = 0;
+        let quizMode = 'normal';
+        let correctAnswers = [];
+
+        // DOM Elements
         const settingsPage = document.getElementById('settingsPage');
         const quizPage = document.getElementById('quizPage');
-        const wordList = document.getElementById('wordList');
+        const wordListContainer = document.getElementById('wordListContainer');
+        const wordItems = document.getElementById('wordItems');
+        const wordStats = document.getElementById('wordStats');
+        const timerDisplay = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
         const quizContainer = document.getElementById('quizContainer');
-        const timer = document.getElementById('timer');
-        const progressBar = document.getElementById('progress');
-        const timeInput = document.getElementById('timeInput');
-        const feedback = document.getElementById('feedback');
+        const feedbackMessage = document.getElementById('feedbackMessage');
         const retryButton = document.getElementById('retryButton');
+        const backBtn = document.getElementById('backBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
 
-        let words = [];
-        let countdown;
-        let totalTime = 60; // Default time (1 minute)
-        let remainingTime = totalTime;
-        let score = 0;
-
-        // Add word to list
+        // Add Word Function
         function addWord() {
-            const word = document.getElementById('wordInput').value.trim();
-            const translation = document.getElementById('translationInput').value.trim();
+            const wordInput = document.getElementById('wordInput');
+            const translationInput = document.getElementById('translationInput');
+            
+            const word = wordInput.value.trim();
+            const translation = translationInput.value.trim();
 
-            if (word && translation) {
-                words.push({ word, translation });
-                const item = document.createElement('div');
-                item.className = 'word-item';
-                item.innerHTML = `<div><strong>${word}</strong></div><div>${translation}</div>`;
-                wordList.appendChild(item);
-
-                document.getElementById('wordInput').value = '';
-                document.getElementById('translationInput').value = '';
+            if (!word || !translation) {
+                showMessage('Please fill in both fields!', 'warning');
+                return;
             }
+
+            if (word.length > 50 || translation.length > 50) {
+                showMessage('Words too long! Maximum 50 characters.', 'warning');
+                return;
+            }
+
+            // Check for duplicates
+            const exists = words.some(w => 
+                w.word.toLowerCase() === word.toLowerCase() || 
+                w.translation.toLowerCase() === translation.toLowerCase()
+            );
+
+            if (exists) {
+                showMessage('This word pair already exists!', 'warning');
+                return;
+            }
+
+            words.push({ 
+                word, 
+                translation,
+                id: Date.now() + Math.random()
+            });
+            
+            wordInput.value = '';
+            translationInput.value = '';
+            
+            updateWordList();
+            showMessage('Word added successfully!', 'success');
         }
 
-        // Switch to quiz page and display words
-        function startQuiz() {
-            const time = parseInt(timeInput.value);
-            totalTime = time > 0 ? time * 60 : 60; // Convert minutes to seconds or set to default if invalid
-            remainingTime = totalTime;
+        // Update Word List Display
+        function updateWordList() {
+            if (words.length === 0) {
+                wordListContainer.classList.add('hidden');
+                return;
+            }
 
-            settingsPage.classList.add('hidden');
-            quizPage.classList.remove('hidden');
-            renderQuiz();
-            startCountdown();
-        }
+            wordListContainer.classList.remove('hidden');
+            wordStats.textContent = `${words.length} words`;
 
-        // Render quiz input fields
-        function renderQuiz() {
-            quizContainer.innerHTML = '';
-            words.forEach(pair => {
-                const row = document.createElement('div');
-                row.className = 'row';
-                row.innerHTML = `
-                    <div>${pair.word}</div>
-                    <input type="text" placeholder="Type your answer" />
+            wordItems.innerHTML = '';
+            words.forEach((item, index) => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <div class="word-pair">
+                        <span class="word-english">${item.word}</span>
+                        <span class="word-translation">→ ${item.translation}</span>
+                    </div>
+                    <div class="word-actions">
+                        <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
+                        <button onclick="deleteWord(${index})" class="warning" data-tooltip="Delete">🗑️</button>
+                    </div>
                 `;
-                quizContainer.appendChild(row);
+                wordItems.appendChild(wordItem);
             });
         }
 
-        // Start countdown timer
-        function startCountdown() {
-            updateTimer();
-            countdown = setInterval(() => {
-                remainingTime--;
-                updateTimer();
-                if (remainingTime <= 0) {
-                    clearInterval(countdown);
-                    autoSubmit();
+        // Edit Word
+        function editWord(index) {
+            const word = words[index];
+            const newWord = prompt('Edit English word:', word.word);
+            const newTranslation = prompt('Edit translation:', word.translation);
+            
+            if (newWord && newTranslation) {
+                words[index] = { ...word, word: newWord.trim(), translation: newTranslation.trim() };
+                updateWordList();
+                showMessage('Word updated!', 'success');
+            }
+        }
+
+        // Delete Word
+        function deleteWord(index) {
+            if (confirm('Are you sure you want to delete this word?')) {
+                words.splice(index, 1);
+                updateWordList();
+                showMessage('Word deleted!', 'info');
+            }
+        }
+
+        // Clear All Words
+        function clearAllWords() {
+            if (words.length > 0 && confirm('Are you sure you want to clear all words?')) {
+                words = [];
+                updateWordList();
+                showMessage('All words cleared!', 'info');
+            }
+        }
+
+        // Import Sample Data
+        function importSampleData() {
+            const sampleWords = [
+                { word: 'apple', translation: 'apel' },
+                { word: 'book', translation: 'buku' },
+                { word: 'car', translation: 'mobil' },
+                { word: 'dog', translation: 'anjing' },
+                { word: 'eat', translation: 'makan' },
+                { word: 'house', translation: 'rumah' }
+            ];
+            
+            // Filter duplicates
+            const newWords = sampleWords.filter(sample => 
+                !words.some(w => w.word.toLowerCase() === sample.word.toLowerCase())
+            );
+            
+            words = [...words, ...newWords];
+            updateWordList();
+            showMessage(`Added ${newWords.length} sample words!`, 'success');
+        }
+
+        // Start Quiz
+        function startQuiz() {
+            if (words.length === 0) {
+                showMessage('Please add some words first!', 'warning');
+                return;
+            }
+
+            const timeInput = document.getElementById('timeInput');
+            const minutes = parseInt(timeInput.value) || 2;
+            totalTime = minutes * 60;
+            remainingTime = totalTime;
+
+            quizMode = document.getElementById('quizMode').value;
+
+            // Prepare quiz words
+            if (quizMode === 'shuffle') {
+                quizWords = [...words].sort(() => Math.random() - 0.5);
+            } else {
+                quizWords = [...words];
+            }
+
+            // Reset quiz state
+            score = 0;
+            answeredCount = 0;
+            correctAnswers = new Array(quizWords.length).fill(false);
+            isPaused = false;
+            pauseBtn.innerHTML = '⏸️ Pause';
+
+            // Update UI
+            settingsPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
+            
+            renderQuiz();
+            startTimer();
+            updateScore();
+        }
+
+        // Render Quiz
+        function renderQuiz() {
+            quizContainer.innerHTML = '';
+
+            quizWords.forEach((item, index) => {
+                const quizItem = document.createElement('div');
+                quizItem.className = 'quiz-item';
+                quizItem.id = `quiz-item-${index}`;
+
+                const isReverse = quizMode === 'reverse';
+                
+                quizItem.innerHTML = `
+                    <div class="quiz-word">${isReverse ? item.translation : item.word}</div>
+                    <div class="quiz-input">
+                        <input type="text" 
+                               id="answer-${index}" 
+                               placeholder="Type the ${isReverse ? 'english' : 'translation'}..." 
+                               oninput="checkLiveProgress()"
+                               onkeypress="handleEnter(event, ${index})">
+                    </div>
+                    <div id="feedback-${index}" class="quiz-feedback hidden"></div>
+                `;
+
+                quizContainer.appendChild(quizItem);
+            });
+        }
+
+        // Handle Enter Key
+        function handleEnter(event, index) {
+            if (event.key === 'Enter') {
+                if (index === quizWords.length - 1) {
+                    submitQuiz();
+                } else {
+                    document.getElementById(`answer-${index + 1}`).focus();
+                }
+            }
+        }
+
+        // Start Timer
+        function startTimer() {
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    remainingTime--;
+                    updateTimerDisplay();
+                    
+                    if (remainingTime <= 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz();
+                    }
                 }
             }, 1000);
         }
 
-        // Update timer and progress bar
-        function updateTimer() {
-            timer.textContent = `Time Remaining: ${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s`;
-            progressBar.style.width = `${(remainingTime / totalTime) * 100}%`;
+        // Update Timer Display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update timer color
+            timerDisplay.classList.remove('warning', 'danger');
+            if (remainingTime <= 30) {
+                timerDisplay.classList.add('danger');
+            } else if (remainingTime <= 60) {
+                timerDisplay.classList.add('warning');
+            }
+
+            // Update progress bar
+            const progress = ((totalTime - remainingTime) / totalTime) * 100;
+            progressBar.style.width = `${progress}%`;
         }
 
-        // Automatically submit answers when time is up
-        function autoSubmit() {
-            evaluateAnswers();
+        // Pause Timer
+        function pauseTimer() {
+            isPaused = !isPaused;
+            pauseBtn.innerHTML = isPaused ? '▶️ Resume' : '⏸️ Pause';
+            
+            if (!isPaused) {
+                showMessage('Quiz resumed!', 'info');
+            } else {
+                showMessage('Quiz paused!', 'info');
+            }
         }
 
-        // Manually submit answers
-        function manualSubmit() {
-            clearInterval(countdown);
-            evaluateAnswers();
-        }
-
-        // Evaluate answers and provide feedback
-        function evaluateAnswers() {
-            const rows = quizContainer.querySelectorAll('.row');
-            rows.forEach((row, index) => {
-                const input = row.querySelector('input');
-                const answerDiv = document.createElement('div');
-                answerDiv.classList.add('icon');
-
-                if (input.value.trim().toLowerCase() === words[index].translation.toLowerCase()) {
-                    answerDiv.innerHTML = '<span class="correct">✔ Correct!</span>';
-                } else {
-                    answerDiv.innerHTML = '<span class="incorrect">✘ Incorrect!</span>';
+        // Check Live Progress
+        function checkLiveProgress() {
+            let answered = 0;
+            quizWords.forEach((_, index) => {
+                const input = document.getElementById(`answer-${index}`);
+                if (input && input.value.trim() !== '') {
+                    answered++;
                 }
+            });
+            answeredCount = answered;
+            updateScore();
+        }
 
-                row.appendChild(answerDiv);
+        // Update Score Display
+        function updateScore() {
+            scoreDisplay.textContent = `🏆 ${score}/${quizWords.length}`;
+        }
+
+        // Submit Quiz
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            
+            let correctCount = 0;
+            
+            quizWords.forEach((item, index) => {
+                const input = document.getElementById(`answer-${index}`);
+                const feedback = document.getElementById(`feedback-${index}`);
+                const quizItem = document.getElementById(`quiz-item-${index}`);
+                
+                if (!input || !feedback) return;
+                
+                const userAnswer = input.value.trim().toLowerCase();
+                const isReverse = quizMode === 'reverse';
+                const correctAnswer = isReverse ? item.word.toLowerCase() : item.translation.toLowerCase();
+                
+                // Remove existing classes
+                quizItem.classList.remove('correct-bg', 'incorrect-bg');
+                
+                if (userAnswer === correctAnswer) {
+                    feedback.innerHTML = '✅ Correct!';
+                    feedback.className = 'quiz-feedback correct';
+                    quizItem.classList.add('correct-bg');
+                    correctCount++;
+                } else {
+                    feedback.innerHTML = `❌ Incorrect! Correct answer: "${correctAnswer}"`;
+                    feedback.className = 'quiz-feedback incorrect';
+                    quizItem.classList.add('incorrect-bg');
+                }
+                
+                feedback.classList.remove('hidden');
+                input.disabled = true;
             });
 
-            feedback.classList.remove('hidden');
-            feedback.textContent = `You got ${score} out of ${words.length} correct!`;
+            // Calculate score
+            score = correctCount;
+            updateScore();
+
+            // Show feedback
+            const percentage = (correctCount / quizWords.length * 100).toFixed(1);
+            feedbackMessage.classList.remove('hidden');
+            
+            if (correctCount === quizWords.length) {
+                feedbackMessage.innerHTML = '🎉 Perfect Score! Excellent work!';
+                feedbackMessage.style.background = 'linear-gradient(135deg, #00b09b, #96c93d)';
+                confetti(); // Simple confetti effect
+            } else if (correctCount >= quizWords.length * 0.7) {
+                feedbackMessage.innerHTML = `👍 Good job! You got ${correctCount}/${quizWords.length} (${percentage}%)`;
+                feedbackMessage.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            } else {
+                feedbackMessage.innerHTML = `💪 Keep practicing! You got ${correctCount}/${quizWords.length} (${percentage}%)`;
+                feedbackMessage.style.background = 'linear-gradient(135deg, #ff9a44, #fc6076)';
+            }
+            
+            // Show retry button
             retryButton.classList.remove('hidden');
         }
 
-        // Retry the quiz
-        function retryQuiz() {
-            score = 0;
-            remainingTime = totalTime;
-            renderQuiz();
-            feedback.classList.add('hidden');
-            retryButton.classList.add('hidden');
-            startCountdown();
+        // Simple Confetti Effect
+        function confetti() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const colors = ['#00b09b', '#96c93d', '#667eea', '#764ba2', '#ff9a44'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        top: -10px;
+                        left: ${Math.random() * 100}%;
+                        width: 10px;
+                        height: 10px;
+                        background: ${color};
+                        border-radius: 50%;
+                        animation: fall ${Math.random() * 2 + 2}s linear forwards;
+                        z-index: 10000;
+                    `;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(confetti);
+                    }, 4000);
+                }, i * 200);
+            }
         }
+
+        // Add animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Retry Quiz
+        function retryQuiz() {
+            // Reset quiz state
+            remainingTime = totalTime;
+            isPaused = false;
+            pauseBtn.innerHTML = '⏸️ Pause';
+            
+            // Hide feedback
+            feedbackMessage.classList.add('hidden');
+            retryButton.classList.add('hidden');
+            
+            // Clear all feedback and enable inputs
+            quizWords.forEach((_, index) => {
+                const input = document.getElementById(`answer-${index}`);
+                const feedback = document.getElementById(`feedback-${index}`);
+                const quizItem = document.getElementById(`quiz-item-${index}`);
+                
+                if (input) {
+                    input.value = '';
+                    input.disabled = false;
+                }
+                if (feedback) {
+                    feedback.classList.add('hidden');
+                }
+                if (quizItem) {
+                    quizItem.classList.remove('correct-bg', 'incorrect-bg');
+                }
+            });
+            
+            // Shuffle if needed
+            if (quizMode === 'shuffle') {
+                quizWords = [...words].sort(() => Math.random() - 0.5);
+                renderQuiz();
+            }
+            
+            // Reset timer
+            startTimer();
+            
+            // Reset score
+            score = 0;
+            answeredCount = 0;
+            updateScore();
+            
+            showMessage('Quiz restarted! Good luck!', 'success');
+        }
+
+        // Back to Settings
+        function backToSettings() {
+            clearInterval(timerInterval);
+            
+            quizPage.classList.add('hidden');
+            settingsPage.classList.remove('hidden');
+            
+            // Reset UI
+            feedbackMessage.classList.add('hidden');
+            retryButton.classList.add('hidden');
+        }
+
+        // Show Message
+        function showMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 10px;
+                background: ${type === 'success' ? '#00b09b' : type === 'warning' ? '#ff9a44' : '#667eea'};
+                color: white;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                animation: slideInRight 0.3s ease;
+                z-index: 10000;
+            `;
+            messageDiv.textContent = text;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(messageDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add CSS animations for messages
+        const messageStyle = document.createElement('style');
+        messageStyle.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(messageStyle);
     </script>
 </body>
 </html>
