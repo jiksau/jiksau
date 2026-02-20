@@ -577,6 +577,79 @@
                 opacity: 0;
             }
         }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e4b6e, #0c4a6e);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .modal-content h3 {
+            color: #fff;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: #bae6fd;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .modal-buttons button {
+            min-width: 100px;
+        }
+
+        .modal-buttons .cancel-btn {
+            background: linear-gradient(135deg, #4b5563, #6b7280);
+        }
+
+        .modal-buttons .confirm-btn {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -610,7 +683,7 @@
             <div id="wordItems" class="word-items"></div>
             
             <div class="button-group">
-                <button onclick="clearAllWords()" class="warning" id="clearAllBtn">🗑️ Clear All</button>
+                <button onclick="showClearAllConfirmation()" class="warning" id="clearAllBtn">🗑️ Clear All</button>
             </div>
         </div>
 
@@ -667,6 +740,18 @@
         </div>
     </div>
 
+    <!-- Custom Modal for Confirmations -->
+    <div id="confirmationModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure?</p>
+            <div class="modal-buttons">
+                <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+                <button id="modalConfirmBtn" class="confirm-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // State Management
         let words = [];
@@ -679,6 +764,10 @@
         let answeredCount = 0;
         let quizMode = 'normal';
         let correctAnswers = [];
+        
+        // Modal state
+        let pendingAction = null;
+        let pendingIndex = null;
 
         // DOM Elements
         const settingsPage = document.getElementById('settingsPage');
@@ -696,6 +785,39 @@
         const scoreDisplay = document.getElementById('scoreDisplay');
         const startBtn = document.getElementById('startBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
+        
+        // Modal elements
+        const modalOverlay = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+        // ============= MODAL FUNCTIONS =============
+        
+        function showModal(title, message, onConfirm) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.remove('hidden');
+            
+            // Remove previous event listener and add new one
+            const newConfirmBtn = modalConfirmBtn.cloneNode(true);
+            modalConfirmBtn.parentNode.replaceChild(newConfirmBtn, modalConfirmBtn);
+            newConfirmBtn.addEventListener('click', () => {
+                onConfirm();
+                closeModal();
+            });
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
 
         // ============= HELPER FUNCTIONS =============
         
@@ -743,7 +865,7 @@
                     </div>
                     <div class="word-actions">
                         <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
-                        <button onclick="deleteWord(${index})" class="warning" data-tooltip="Delete">🗑️</button>
+                        <button onclick="showDeleteConfirmation(${index})" class="warning" data-tooltip="Delete">🗑️</button>
                     </div>
                 `;
                 wordItems.appendChild(wordItem);
@@ -816,33 +938,48 @@
             }
         }
 
+        // Show Delete Confirmation
+        function showDeleteConfirmation(index) {
+            const word = words[index];
+            showModal(
+                'Delete Word',
+                `Are you sure you want to delete "${word.word}"?`,
+                () => deleteWord(index)
+            );
+        }
+
         // Delete Word
         function deleteWord(index) {
-            if (confirm('Are you sure you want to delete this word?')) {
-                const deletedWord = words[index];
-                words.splice(index, 1);
-                updateWordList();
-                showMessage(`"${deletedWord.word}" deleted!`, 'info');
-                
-                if (words.length === 0) {
-                    wordListContainer.classList.add('hidden');
-                }
+            const deletedWord = words[index];
+            words.splice(index, 1);
+            updateWordList();
+            showMessage(`"${deletedWord.word}" deleted!`, 'info');
+            
+            if (words.length === 0) {
+                wordListContainer.classList.add('hidden');
             }
         }
 
-        // Clear All Words
-        function clearAllWords() {
+        // Show Clear All Confirmation
+        function showClearAllConfirmation() {
             if (words.length === 0) {
                 showMessage('No words to clear!', 'warning');
                 return;
             }
             
-            if (confirm(`Are you sure you want to clear all ${words.length} words?`)) {
-                words = [];
-                updateWordList();
-                wordListContainer.classList.add('hidden');
-                showMessage('All words cleared!', 'success');
-            }
+            showModal(
+                'Clear All Words',
+                `Are you sure you want to clear all ${words.length} words?`,
+                clearAllWords
+            );
+        }
+
+        // Clear All Words
+        function clearAllWords() {
+            words = [];
+            updateWordList();
+            wordListContainer.classList.add('hidden');
+            showMessage('All words cleared!', 'success');
         }
 
         // Import Sample Data
@@ -1168,8 +1305,8 @@
         window.onload = function() {
             updateWordList();
             
-            // Add sample data for testing (optional - comment out if not needed)
-            // importSampleData();
+            // Add sample data for testing
+            // importSampleData(); // Uncomment if you want sample data on load
         };
     </script>
 </body>
