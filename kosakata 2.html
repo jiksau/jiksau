@@ -697,6 +697,61 @@
         const startBtn = document.getElementById('startBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
 
+        // ============= HELPER FUNCTIONS =============
+        
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show Message
+        function showMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-notification message-${type}`;
+            messageDiv.textContent = text;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(messageDiv);
+                }, 300);
+            }, 3000);
+        }
+
+        // Update Word List Display
+        function updateWordList() {
+            if (words.length === 0) {
+                wordListContainer.classList.add('hidden');
+                return;
+            }
+
+            wordListContainer.classList.remove('hidden');
+            wordStats.textContent = `${words.length} word${words.length > 1 ? 's' : ''}`;
+
+            wordItems.innerHTML = '';
+            words.forEach((item, index) => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <div class="word-pair">
+                        <span class="word-english">${escapeHtml(item.word)}</span>
+                        <span class="word-translation">→ ${escapeHtml(item.translation)}</span>
+                    </div>
+                    <div class="word-actions">
+                        <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
+                        <button onclick="deleteWord(${index})" class="warning" data-tooltip="Delete">🗑️</button>
+                    </div>
+                `;
+                wordItems.appendChild(wordItem);
+            });
+        }
+
+        // ============= WORD MANAGEMENT FUNCTIONS =============
+        
         // Add Word Function
         function addWord() {
             const wordInput = document.getElementById('wordInput');
@@ -737,41 +792,6 @@
             
             updateWordList();
             showMessage('Word added successfully!', 'success');
-        }
-
-        // Update Word List Display
-        function updateWordList() {
-            if (words.length === 0) {
-                wordListContainer.classList.add('hidden');
-                return;
-            }
-
-            wordListContainer.classList.remove('hidden');
-            wordStats.textContent = `${words.length} word${words.length > 1 ? 's' : ''}`;
-
-            wordItems.innerHTML = '';
-            words.forEach((item, index) => {
-                const wordItem = document.createElement('div');
-                wordItem.className = 'word-item';
-                wordItem.innerHTML = `
-                    <div class="word-pair">
-                        <span class="word-english">${escapeHtml(item.word)}</span>
-                        <span class="word-translation">→ ${escapeHtml(item.translation)}</span>
-                    </div>
-                    <div class="word-actions">
-                        <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
-                        <button onclick="deleteWord(${index})" class="warning" data-tooltip="Delete">🗑️</button>
-                    </div>
-                `;
-                wordItems.appendChild(wordItem);
-            });
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         // Edit Word
@@ -853,43 +873,8 @@
             showMessage(`Added ${newWords.length} sample words!`, 'success');
         }
 
-        // Start Quiz
-        function startQuiz() {
-            if (words.length === 0) {
-                showMessage('Please add some words first!', 'warning');
-                return;
-            }
-
-            const timeInput = document.getElementById('timeInput');
-            const minutes = parseInt(timeInput.value) || 2;
-            totalTime = minutes * 60;
-            remainingTime = totalTime;
-
-            quizMode = document.getElementById('quizMode').value;
-
-            // Prepare quiz words
-            if (quizMode === 'shuffle') {
-                quizWords = [...words].sort(() => Math.random() - 0.5);
-            } else {
-                quizWords = [...words];
-            }
-
-            // Reset quiz state
-            score = 0;
-            answeredCount = 0;
-            correctAnswers = new Array(quizWords.length).fill(false);
-            isPaused = false;
-            pauseBtn.innerHTML = '⏸️ Pause';
-
-            // Update UI
-            settingsPage.classList.add('hidden');
-            quizPage.classList.remove('hidden');
-            
-            renderQuiz();
-            startTimer();
-            updateScore();
-        }
-
+        // ============= QUIZ FUNCTIONS =============
+        
         // Render Quiz
         function renderQuiz() {
             quizContainer.innerHTML = '';
@@ -933,23 +918,6 @@
             }
         }
 
-        // Start Timer
-        function startTimer() {
-            updateTimerDisplay();
-            
-            timerInterval = setInterval(() => {
-                if (!isPaused) {
-                    remainingTime--;
-                    updateTimerDisplay();
-                    
-                    if (remainingTime <= 0) {
-                        clearInterval(timerInterval);
-                        submitQuiz();
-                    }
-                }
-            }, 1000);
-        }
-
         // Update Timer Display
         function updateTimerDisplay() {
             const minutes = Math.floor(remainingTime / 60);
@@ -967,6 +935,23 @@
             // Update progress bar
             const progress = ((totalTime - remainingTime) / totalTime) * 100;
             progressBar.style.width = `${progress}%`;
+        }
+
+        // Start Timer
+        function startTimer() {
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                if (!isPaused) {
+                    remainingTime--;
+                    updateTimerDisplay();
+                    
+                    if (remainingTime <= 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz();
+                    }
+                }
+            }, 1000);
         }
 
         // Pause Timer
@@ -991,6 +976,36 @@
         // Update Score Display
         function updateScore() {
             scoreDisplay.textContent = `🏆 ${score}/${quizWords.length}`;
+        }
+
+        // Simple Confetti Effect
+        function confetti() {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const colors = ['#0284c7', '#38bdf8', '#0ea5e9', '#7dd3fc', '#bae6fd'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: fixed;
+                        top: -10px;
+                        left: ${Math.random() * 100}%;
+                        width: 12px;
+                        height: 12px;
+                        background: ${color};
+                        border-radius: 50%;
+                        animation: fall ${Math.random() * 2 + 2}s linear forwards;
+                        z-index: 10000;
+                        box-shadow: 0 0 10px ${color};
+                    `;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(confetti);
+                    }, 4000);
+                }, i * 150);
+            }
         }
 
         // Submit Quiz
@@ -1038,7 +1053,7 @@
             
             if (correctCount === quizWords.length) {
                 feedbackMessage.innerHTML = '🎉 Perfect Score! Excellent work! 🌟';
-                confetti(); // Simple confetti effect
+                confetti();
             } else if (correctCount >= quizWords.length * 0.7) {
                 feedbackMessage.innerHTML = `👍 Good job! You got ${correctCount}/${quizWords.length} (${percentage}%)`;
             } else {
@@ -1047,36 +1062,6 @@
             
             // Show retry button
             retryButton.classList.remove('hidden');
-        }
-
-        // Simple Confetti Effect
-        function confetti() {
-            for (let i = 0; i < 15; i++) {
-                setTimeout(() => {
-                    const colors = ['#0284c7', '#38bdf8', '#0ea5e9', '#7dd3fc', '#bae6fd'];
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    
-                    const confetti = document.createElement('div');
-                    confetti.style.cssText = `
-                        position: fixed;
-                        top: -10px;
-                        left: ${Math.random() * 100}%;
-                        width: 12px;
-                        height: 12px;
-                        background: ${color};
-                        border-radius: 50%;
-                        animation: fall ${Math.random() * 2 + 2}s linear forwards;
-                        z-index: 10000;
-                        box-shadow: 0 0 10px ${color};
-                    `;
-                    
-                    document.body.appendChild(confetti);
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(confetti);
-                    }, 4000);
-                }, i * 150);
-            }
         }
 
         // Retry Quiz
@@ -1142,25 +1127,49 @@
             retryButton.classList.add('hidden');
         }
 
-        // Show Message
-        function showMessage(text, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message-notification message-${type}`;
-            messageDiv.textContent = text;
+        // Start Quiz
+        function startQuiz() {
+            if (words.length === 0) {
+                showMessage('Please add some words first!', 'warning');
+                return;
+            }
+
+            const timeInput = document.getElementById('timeInput');
+            const minutes = parseInt(timeInput.value) || 2;
+            totalTime = minutes * 60;
+            remainingTime = totalTime;
+
+            quizMode = document.getElementById('quizMode').value;
+
+            // Prepare quiz words
+            if (quizMode === 'shuffle') {
+                quizWords = [...words].sort(() => Math.random() - 0.5);
+            } else {
+                quizWords = [...words];
+            }
+
+            // Reset quiz state
+            score = 0;
+            answeredCount = 0;
+            correctAnswers = new Array(quizWords.length).fill(false);
+            isPaused = false;
+            pauseBtn.innerHTML = '⏸️ Pause';
+
+            // Update UI
+            settingsPage.classList.add('hidden');
+            quizPage.classList.remove('hidden');
             
-            document.body.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => {
-                    document.body.removeChild(messageDiv);
-                }, 300);
-            }, 3000);
+            renderQuiz();
+            startTimer();
+            updateScore();
         }
 
         // Initialize
         window.onload = function() {
             updateWordList();
+            
+            // Add sample data for testing (optional - comment out if not needed)
+            // importSampleData();
         };
     </script>
 </body>
