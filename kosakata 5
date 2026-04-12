@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Hafalan Kosakata - Tanpa Contek (Sembunyikan Jawaban)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Poppins', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0f172a 0%, #1e1b2e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .app-container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(3px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.4);
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.8rem;
+            padding: 1.6rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin: 0 0 0.2rem 0;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        h1 .badge {
+            font-size: 0.7rem;
+            background: #facc15;
+            color: #0f172a;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-weight: bold;
+        }
+
+        .sub {
+            color: #475569;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #facc15;
+            padding-left: 12px;
+            font-size: 0.85rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #1e293b;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .pair-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pair-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 1rem;
+            border: 1.5px solid #e2e8f0;
+            font-size: 0.9rem;
+            background: #f8fafc;
+        }
+
+        .pair-row input:focus {
+            outline: none;
+            border-color: #facc15;
+            box-shadow: 0 0 0 3px rgba(250,204,21,0.2);
+        }
+
+        .btn-icon {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .btn-icon:hover {
+            background: #dc2626;
+            transform: scale(0.95);
+        }
+
+        .btn-add {
+            background: #10b981;
+            width: auto;
+            border-radius: 2rem;
+            padding: 0 18px;
+        }
+
+        .btn-add:hover {
+            background: #059669;
+        }
+
+        button {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button.primary {
+            background: #facc15;
+            color: #0f172a;
+            box-shadow: 0 4px 10px rgba(250,204,21,0.3);
+        }
+
+        button.primary:hover {
+            background: #eab308;
+            transform: translateY(-1px);
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.secondary {
+            background: #64748b;
+        }
+
+        .flex-btns {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            justify-content: space-between;
+        }
+
+        .word-list-preview {
+            background: #f1f5f9;
+            border-radius: 1.2rem;
+            padding: 12px 16px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Saat mode kuis, daftar kata disembunyikan atau dikaburkan */
+        .quiz-mode .preview-hidden {
+            display: none;
+        }
+        
+        .quiz-preview-blur {
+            background: #f1f5f9;
+            border-radius: 1.2rem;
+            padding: 12px 16px;
+            margin-top: 20px;
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+        }
+        
+        .quiz-preview-blur:hover {
+            filter: blur(4px);
+        }
+        
+        .unlock-hint {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 8px;
+            color: #94a3b8;
+        }
+
+        .word-pair-item {
+            background: white;
+            border-radius: 30px;
+            padding: 6px 14px;
+            margin: 5px 8px 5px 0;
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .quiz-area {
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+
+        .question-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #475569;
+        }
+
+        .question-word {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+            background: #fef9e3;
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 3rem;
+            margin: 10px 0;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 1rem;
+            font-weight: 500;
+        }
+
+        .feedback.error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .feedback.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .feedback.info {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .progress-badge {
+            background: #e2e8f0;
+            border-radius: 100px;
+            padding: 6px 14px;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        hr {
+            margin: 18px 0;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 3rem;
+        }
+
+        .mode-option {
+            flex: 1;
+            text-align: center;
+            padding: 6px;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .mode-option.active {
+            background: #facc15;
+            color: #0f172a;
+        }
+
+        .warning-text {
+            font-size: 0.75rem;
+            color: #eab308;
+            margin-top: 5px;
+        }
+        
+        .blur-overlay-info {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            border-radius: 20px;
+            padding: 4px 12px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="card">
+        <h1>📚 Hafalan Kosakata <span class="badge">Salah = Ulang dari Awal</span></h1>
+        <div class="sub">Tambahkan pasangan kata asing & terjemahan (minimal 1, maksimal 10 pasang).<br>
+        Hafalan akan diuji dengan menampilkan <strong>satu sisi</strong>. Anda menjawab sisi lainnya.<br>
+        <span style="color:#dc2626; font-weight:500;">⚠️ Selama kuis, daftar kosakata akan DIKABURKAN agar tidak bisa nyontek!</span></div>
+
+        <!-- MODE INPUT DATA -->
+        <div id="inputSection">
+            <div class="mode-selector" id="quizModeSelector">
+                <div class="mode-option active" data-mode="askWord">🔤 Tampilkan KATA ASING → Jawab TERJEMAHAN</div>
+                <div class="mode-option" data-mode="askMeaning">🌍 Tampilkan TERJEMAHAN → Jawab KATA ASING</div>
+            </div>
+
+            <div id="pairsContainer">
+                <!-- dynamic pair inputs will appear here -->
+            </div>
+            
+            <div class="flex-btns">
+                <button id="addPairBtn" class="btn-add" style="background:#10b981;">+ Tambah Pasangan</button>
+                <button id="startQuizBtn" class="primary">🚀 Mulai Hafalan</button>
+                <button id="resetAllDataBtn" class="secondary">🗑️ Reset Semua</button>
+            </div>
+            <div id="inputWarning" class="warning-text"></div>
+            
+            <div class="word-list-preview" id="previewList">
+                <strong>📖 Daftar kosakata:</strong><br>
+                <span style="color:#94a3b8;">Belum ada data</span>
+            </div>
+        </div>
+
+        <!-- MODE KUIS -->
+        <div id="quizSection" style="display: none;">
+            <div class="progress-badge" id="quizProgress"></div>
+            <div class="quiz-area">
+                <div class="question-label" id="questionDirectionLabel">Pertanyaan:</div>
+                <div class="question-word" id="currentQuestionText">-</div>
+                <input type="text" id="answerField" placeholder="Ketik jawabanmu di sini..." autocomplete="off" style="width:100%; margin-top:12px;">
+                <div class="flex-btns" style="justify-content: center; margin-top: 18px;">
+                    <button id="submitAnswerBtn" class="primary">✓ Periksa</button>
+                    <button id="restartQuizBtn" class="secondary">🔄 Ulang Sesi</button>
+                    <button id="backToInputBtn" class="secondary">✏️ Edit Kosakata</button>
+                </div>
+                <div id="quizFeedback" class="feedback"></div>
+            </div>
+            <hr>
+            
+            <!-- Daftar kata di sini akan DIKABURKAN saat kuis berlangsung agar tidak contek -->
+            <div id="quizWordPreviewContainer">
+                <div id="quizWordPreviewBlur" class="quiz-preview-blur">
+                    🔒 Daftar kosakata DIKABURKAN saat sesi hafalan (agar tidak nyontek)<br>
+                    🌟 Hafalkan dengan sungguh-sungguh! 🌟
+                </div>
+            </div>
+            <div class="unlock-hint">
+                ⚠️ Peraturan: Jika jawaban SALAH, sesi akan diulang dari kata pertama!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------------------- DATA STRUCTURE ----------------------
+    let vocabulary = []; // each item: { word: "Apple", meaning: "Apel" }
+    let currentIndex = 0;
+    let quizActive = false;
+    let currentMode = "askWord"; // "askWord" = tampilkan kata asing, minta terjemahan; "askMeaning" = tampilkan terjemahan, minta kata
+    
+    // DOM elements
+    const inputSection = document.getElementById('inputSection');
+    const quizSection = document.getElementById('quizSection');
+    const pairsContainer = document.getElementById('pairsContainer');
+    const addPairBtn = document.getElementById('addPairBtn');
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const resetAllDataBtn = document.getElementById('resetAllDataBtn');
+    const previewList = document.getElementById('previewList');
+    const inputWarning = document.getElementById('inputWarning');
+    
+    const quizProgress = document.getElementById('quizProgress');
+    const questionDirectionLabel = document.getElementById('questionDirectionLabel');
+    const currentQuestionText = document.getElementById('currentQuestionText');
+    const answerField = document.getElementById('answerField');
+    const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+    const restartQuizBtn = document.getElementById('restartQuizBtn');
+    const backToInputBtn = document.getElementById('backToInputBtn');
+    const quizFeedback = document.getElementById('quizFeedback');
+    const quizWordPreviewBlur = document.getElementById('quizWordPreviewBlur');
+    
+    const modeOptions = document.querySelectorAll('.mode-option');
+    
+    // ---------------------- Helper Functions ----------------------
+    function saveToLocalStorage() {
+        const dataToStore = {
+            vocab: vocabulary,
+            mode: currentMode
+        };
+        localStorage.setItem('hafalanVocab', JSON.stringify(dataToStore));
+    }
+    
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('hafalanVocab');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.vocab && Array.isArray(parsed.vocab)) {
+                    vocabulary = parsed.vocab;
+                }
+                if (parsed.mode) currentMode = parsed.mode;
+                updateModeSelectorUI();
+                renderPairInputs();
+                updatePreview();
+            } catch(e) {}
+        } else {
+            // default example 2 pairs
+            if(vocabulary.length === 0) {
+                vocabulary = [
+                    { word: "confident", meaning: "percaya diri" },
+                    { word: "patient", meaning: "sabar" },
+                    { word: "gradually", meaning: "secara bertahap" }
+                ];
+            }
+            renderPairInputs();
+            updatePreview();
+        }
+    }
+    
+    function updateModeSelectorUI() {
+        modeOptions.forEach(opt => {
+            const modeVal = opt.getAttribute('data-mode');
+            if (modeVal === currentMode) {
+                opt.classList.add('active');
+            } else {
+                opt.classList.remove('active');
+            }
+        });
+    }
+    
+    function renderPairInputs() {
+        pairsContainer.innerHTML = '';
+        if (vocabulary.length === 0) {
+            addEmptyPairRow(0);
+        } else {
+            vocabulary.forEach((item, idx) => {
+                addPairRow(idx, item.word, item.meaning);
+            });
+        }
+    }
+    
+    function addEmptyPairRow(index) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'pair-row';
+        rowDiv.setAttribute('data-index', index);
+        rowDiv.innerHTML = `
+            <input type="text" placeholder="Kata asing (contoh: House)" class="word-input" value="">
+            <input type="text" placeholder="Terjemahan (contoh: Rumah)" class="meaning-input" value="">
+            <button class="btn-icon remove-row" ${index === 0 && vocabulary.length === 0 ? 'style="visibility:hidden"' : ''}>✖</button>
+        `;
+        pairsContainer.appendChild(rowDiv);
+    }
+    
+    function addPairRow(index, wordVal, meaningVal) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'pair-row';
+        rowDiv.setAttribute('data-index', index);
+        rowDiv.innerHTML = `
+            <input type="text" placeholder="Kata asing" class="word-input" value="${escapeHtml(wordVal)}">
+            <input type="text" placeholder="Terjemahan" class="meaning-input" value="${escapeHtml(meaningVal)}">
+            <button class="btn-icon remove-row">✖</button>
+        `;
+        pairsContainer.appendChild(rowDiv);
+    }
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function collectVocabularyFromInputs() {
+        const rows = document.querySelectorAll('#pairsContainer .pair-row');
+        const newVocab = [];
+        for (let row of rows) {
+            const wordInput = row.querySelector('.word-input');
+            const meaningInput = row.querySelector('.meaning-input');
+            let word = wordInput ? wordInput.value.trim() : '';
+            let meaning = meaningInput ? meaningInput.value.trim() : '';
+            if (word !== "" && meaning !== "") {
+                newVocab.push({ word: word, meaning: meaning });
+            }
+        }
+        return newVocab;
+    }
+    
+    function updatePreview() {
+        if (vocabulary.length === 0) {
+            previewList.innerHTML = '<strong>📖 Daftar kosakata:</strong><br><span style="color:#94a3b8;">Belum ada data, tambahkan pasangan kata.</span>';
+            return;
+        }
+        let html = '<strong>📖 Daftar kosakata:</strong><br>';
+        vocabulary.forEach((item, idx) => {
+            html += `<span class="word-pair-item">${idx+1}. ${item.word} → ${item.meaning}</span>`;
+        });
+        previewList.innerHTML = html;
+    }
+    
+    function syncVocabularyFromDOM() {
+        const newVocab = collectVocabularyFromInputs();
+        if (newVocab.length > 10) {
+            inputWarning.innerText = '⚠️ Maksimal 10 pasang kata! Kelebihan akan diabaikan saat mulai.';
+            return false;
+        }
+        if (newVocab.length === 0) {
+            inputWarning.innerText = '⚠️ Minimal 1 pasang kata (kata asing dan terjemahan harus diisi).';
+            return false;
+        }
+        vocabulary = newVocab.slice(0,10);
+        inputWarning.innerText = '';
+        updatePreview();
+        saveToLocalStorage();
+        return true;
+    }
+    
+    // MEMPERBAIKI: Sembunyikan daftar kata dengan blur (TIDAK BISA NYONTEK)
+    function updateQuizWordPreviewBlur() {
+        if (!quizWordPreviewBlur) return;
+        // Selama kuis aktif, kita TIDAK menampilkan daftar kata yang jelas.
+        // Yang ditampilkan hanya pesan bahwa daftar dikaburkan.
+        // Tapi jika user sudah selesai (quizActive = false) atau selesai total, boleh ditampilkan.
+        if (!quizActive) {
+            // Tampilkan daftar sebenarnya setelah selesai (opsional)
+            let html = '<strong>📋 Daftar hafalan (selesai):</strong><br>';
+            vocabulary.forEach((item, idx) => {
+                html += `<span class="word-pair-item">${idx+1}. ${item.word} ⇔ ${item.meaning}</span>`;
+            });
+            quizWordPreviewBlur.innerHTML = html;
+            quizWordPreviewBlur.style.filter = "none";
+            quizWordPreviewBlur.style.userSelect = "auto";
+            return;
+        }
+        
+        // Saat kuis aktif, tampilkan pesan blur
+        quizWordPreviewBlur.innerHTML = `
+            <strong>🔒 DAFTAR KOSAKATA DISEMBUNYIKAN 🔒</strong><br>
+            ⚡ Agar tidak bisa nyontek, daftar kata tidak ditampilkan selama sesi hafalan.<br>
+            🌟 Hafalkan dengan baik! Jika salah, akan diulang dari awal.<br>
+            <span style="font-size:0.7rem;">✅ Selesaikan semua kata dengan benar untuk melihat daftar.</span>
+        `;
+        quizWordPreviewBlur.style.filter = "blur(5px)";
+        quizWordPreviewBlur.style.userSelect = "none";
+        quizWordPreviewBlur.style.pointerEvents = "none";
+    }
+    
+    // ---------- QUIZ LOGIC (ULANG DARI AWAL JIKA SALAH) ----------
+    function startQuiz() {
+        const isValid = syncVocabularyFromDOM();
+        if (!isValid) return;
+        if (vocabulary.length === 0) {
+            inputWarning.innerText = 'Tambahkan minimal 1 pasang kata terlebih dahulu.';
+            return;
+        }
+        // reset quiz state
+        currentIndex = 0;
+        quizActive = true;
+        // pindah tampilan
+        inputSection.style.display = 'none';
+        quizSection.style.display = 'block';
+        updateQuizUI();
+        updateQuizWordPreviewBlur(); // pastikan blur aktif
+        answerField.value = '';
+        quizFeedback.innerHTML = '';
+        quizFeedback.className = 'feedback';
+        answerField.disabled = false;
+        submitAnswerBtn.disabled = false;
+        setTimeout(() => answerField.focus(), 100);
+    }
+    
+    function updateQuizUI() {
+        if (!quizActive) return;
+        if (currentIndex >= vocabulary.length) {
+            // Selesai semua
+            quizFeedback.innerHTML = '🎉🎉 SELAMAT! Kamu berhasil menghafal semua kata tanpa kesalahan! 🎉🎉';
+            quizFeedback.className = 'feedback success';
+            currentQuestionText.innerText = '✨ Selesai ✨';
+            questionDirectionLabel.innerText = '✅ Luar biasa!';
+            answerField.disabled = true;
+            submitAnswerBtn.disabled = true;
+            quizActive = false;
+            quizProgress.innerText = `🏆 Tuntas! ${vocabulary.length}/${vocabulary.length}`;
+            updateQuizWordPreviewBlur(); // tampilkan daftar setelah selesai
+            return;
+        }
+        
+        const currentPair = vocabulary[currentIndex];
+        let questionText = "";
+        let expectedAnswer = "";
+        let directionMsg = "";
+        
+        if (currentMode === "askWord") {
+            questionText = currentPair.word;
+            expectedAnswer = currentPair.meaning;
+            directionMsg = "🔤 Tuliskan TERJEMAHAN dari kata di atas:";
+        } else {
+            questionText = currentPair.meaning;
+            expectedAnswer = currentPair.word;
+            directionMsg = "🌍 Tuliskan KATA ASING dari terjemahan di atas:";
+        }
+        
+        currentQuestionText.innerText = questionText;
+        questionDirectionLabel.innerText = directionMsg;
+        quizProgress.innerText = `📌 Hafalan: ${currentIndex+1} / ${vocabulary.length}  |  ❌ Jika salah → reset ke awal`;
+        
+        // Selalu pastikan blur aktif saat quiz berlangsung
+        if (quizActive) updateQuizWordPreviewBlur();
+    }
+    
+    function checkAnswer() {
+        if (!quizActive) {
+            quizFeedback.innerHTML = '⚠️ Sesi sudah selesai atau belum dimulai. Klik "Ulang Sesi" untuk mulai lagi.';
+            quizFeedback.className = 'feedback error';
+            return;
+        }
+        if (currentIndex >= vocabulary.length) {
+            updateQuizUI();
+            return;
+        }
+        
+        const userAnswer = answerField.value.trim();
+        if (userAnswer === "") {
+            quizFeedback.innerHTML = '✏️ Masukkan jawaban terlebih dahulu!';
+            quizFeedback.className = 'feedback error';
+            return;
+        }
+        
+        const currentPair = vocabulary[currentIndex];
+        let correctAnswer = "";
+        if (currentMode === "askWord") {
+            correctAnswer = currentPair.meaning;
+        } else {
+            correctAnswer = currentPair.word;
+        }
+        
+        const isCorrect = (userAnswer.toLowerCase() === correctAnswer.toLowerCase());
+        
+        if (isCorrect) {
+            quizFeedback.innerHTML = '✅ Benar! Lanjut ke kata berikutnya.';
+            quizFeedback.className = 'feedback success';
+            currentIndex++;
+            answerField.value = '';
+            if (currentIndex < vocabulary.length) {
+                updateQuizUI();
+            } else {
+                updateQuizUI(); // akan menampilkan finish
+            }
+            setTimeout(() => answerField.focus(), 50);
+        } else {
+            quizFeedback.innerHTML = `❌ SALAH! Jawaban yang benar adalah "${correctAnswer}". 🔄 Mengulang dari kata pertama...`;
+            quizFeedback.className = 'feedback error';
+            currentIndex = 0;
+            updateQuizUI();
+            answerField.value = '';
+            setTimeout(() => answerField.focus(), 100);
+        }
+        // pastikan blur tetap aktif
+        if (quizActive) updateQuizWordPreviewBlur();
+    }
+    
+    function resetQuizSession() {
+        if (vocabulary.length === 0) {
+            backToInput();
+            return;
+        }
+        quizActive = true;
+        currentIndex = 0;
+        answerField.disabled = false;
+        submitAnswerBtn.disabled = false;
+        updateQuizUI();
+        updateQuizWordPreviewBlur();
+        answerField.value = '';
+        quizFeedback.innerHTML = '🔄 Sesi direset ke kata pertama. Selamat mencoba!';
+        quizFeedback.className = 'feedback info';
+        setTimeout(() => answerField.focus(), 100);
+    }
+    
+    function backToInput() {
+        syncVocabularyFromDOM();
+        inputSection.style.display = 'block';
+        quizSection.style.display = 'none';
+        quizActive = false;
+        renderPairInputs();
+        updatePreview();
+    }
+    
+    function fullReset() {
+        vocabulary = [];
+        currentMode = "askWord";
+        updateModeSelectorUI();
+        renderPairInputs();
+        updatePreview();
+        saveToLocalStorage();
+        inputWarning.innerText = '';
+        if (inputSection.style.display !== 'block') {
+            inputSection.style.display = 'block';
+            quizSection.style.display = 'none';
+        }
+    }
+    
+    // Event Handlers
+    function attachDynamicEvents() {
+        pairsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-row')) {
+                const row = e.target.closest('.pair-row');
+                if (row) {
+                    row.remove();
+                    const tempVocab = collectVocabularyFromInputs();
+                    vocabulary = tempVocab;
+                    updatePreview();
+                    saveToLocalStorage();
+                }
+            }
+        });
+        
+        pairsContainer.addEventListener('input', () => {
+            const newVocab = collectVocabularyFromInputs();
+            vocabulary = newVocab;
+            updatePreview();
+            saveToLocalStorage();
+        });
+    }
+    
+    addPairBtn.addEventListener('click', () => {
+        const currentRows = document.querySelectorAll('#pairsContainer .pair-row').length;
+        if (currentRows >= 10) {
+            inputWarning.innerText = 'Maksimal 10 pasang kata!';
+            return;
+        }
+        const currentVocab = collectVocabularyFromInputs();
+        currentVocab.push({ word: "", meaning: "" });
+        vocabulary = currentVocab;
+        renderPairInputs();
+        updatePreview();
+        saveToLocalStorage();
+    });
+    
+    modeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            const mode = opt.getAttribute('data-mode');
+            if (mode === "askWord" || mode === "askMeaning") {
+                currentMode = mode;
+                updateModeSelectorUI();
+                saveToLocalStorage();
+            }
+        });
+    });
+    
+    startQuizBtn.addEventListener('click', startQuiz);
+    resetAllDataBtn.addEventListener('click', fullReset);
+    submitAnswerBtn.addEventListener('click', checkAnswer);
+    restartQuizBtn.addEventListener('click', resetQuizSession);
+    backToInputBtn.addEventListener('click', backToInput);
+    answerField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && quizSection.style.display === 'block' && quizActive) {
+            e.preventDefault();
+            checkAnswer();
+        }
+    });
+    
+    // Inisialisasi
+    loadFromLocalStorage();
+    attachDynamicEvents();
+    renderPairInputs();
+    updatePreview();
+</script>
+</body>
+</html>
