@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* Container di atas, footer di bawah (bukan berdampingan) */
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Vibrant gradient background */
@@ -21,8 +21,11 @@
             visibility: hidden; /* Hide body content until auth state is confirmed */
         }
         .container {
+            box-sizing: border-box;
+            width: calc(100% - 2rem);
             max-width: 900px;
-            margin: 2rem auto;
+            margin: 2rem auto 0;
+            overflow-wrap: anywhere; /* Teks panjang (email, ID) turun baris, tidak terpotong */
             padding: 2.5rem; /* Slightly more padding */
             background: rgba(255, 255, 255, 0.95); /* Near opaque white background */
             border-radius: 16px; /* More rounded corners */
@@ -30,7 +33,6 @@
             backdrop-filter: blur(8px); /* Subtle frosted glass effect */
             border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
             animation: fadeInScale 0.7s ease-out forwards; /* Fade in and slightly scale */
-            flex-grow: 1; /* Allows container to grow and push footer down */
         }
 
         @keyframes fadeInScale {
@@ -119,10 +121,10 @@
         }
         footer {
             text-align: center;
-            padding: 2rem;
+            padding: 1.5rem 1rem 2rem;
             margin-top: auto;
             font-size: 0.85rem;
-            color: #718096;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         /* Message Box styles (reused) */
@@ -203,7 +205,7 @@
         }
         .evaluation-scores span {
             display: inline-block;
-            margin-right: 1.25rem; /* More space */
+            margin: 0 0.5rem 0.5rem 0;
             background-color: #d1fae5; /* Light green background */
             padding: 0.3rem 0.6rem; /* More padding */
             border-radius: 6px; /* More rounded */
@@ -211,18 +213,115 @@
             color: #065f46; /* Dark green text */
         }
 
+        /* Progres Latihan Game */
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #eef2ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            padding: 0.9rem 0.5rem;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #4338ca;
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #4b5563;
+            margin-top: 0.25rem;
+        }
+        .game-subtitle {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 0.6rem;
+        }
+        .best-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .best-chip {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.875rem;
+        }
+        .game-history {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0 1rem;
+        }
+        .game-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.25rem 1rem;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .game-row:last-child { border-bottom: none; }
+        .game-row .game-name { font-weight: 600; color: #1f2937; }
+        .game-row .game-time { font-size: 0.75rem; color: #6b7280; }
+        .game-row .game-result { font-size: 0.875rem; font-weight: 700; }
+        .score-good { color: #15803d; }
+        .score-mid { color: #a16207; }
+        .score-low { color: #b91c1c; }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
-                margin: 1rem;
-                padding: 1.5rem;
+                width: calc(100% - 1.5rem);
+                margin: 0.75rem auto 0;
+                padding: 1.25rem 1rem;
                 border-radius: 12px;
             }
+            header {
+                flex-direction: column; /* Judul di atas, tombol di bawah */
+                align-items: stretch !important;
+                gap: 1rem;
+                margin-bottom: 1.5rem !important;
+            }
             h1 {
-                font-size: 2rem;
+                font-size: 1.6rem !important;
+                line-height: 1.25;
+                margin-bottom: 0;
             }
             h2 {
-                font-size: 1.5rem;
+                font-size: 1.3rem !important;
+                margin-bottom: 0.9rem !important;
+            }
+            .info-card {
+                padding: 1rem;
+                border-left-width: 5px;
+            }
+            .info-card p,
+            .attendance-history-card p {
+                font-size: 0.95rem;
+            }
+            .attendance-history-card {
+                padding: 1rem;
+            }
+            .evaluation-scores span {
+                font-size: 0.85rem;
+            }
+            .stat-card .stat-value {
+                font-size: 1.3rem;
+            }
+            .stat-card .stat-label {
+                font-size: 0.72rem;
             }
             .header-buttons {
                 flex-direction: column; /* Stack buttons vertically */
@@ -272,10 +371,10 @@
 
         <section id="game-progress-section" class="mt-8">
             <h2 class="text-2xl font-bold mb-4">Progres Latihan Game</h2>
-            <div id="gameStats" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"></div>
-            <div id="gameBestList" class="mb-6"></div>
-            <h3 class="text-lg font-semibold mb-2">Latihan Terakhir</h3>
-            <div id="gameHistoryList">
+            <div id="gameStats" class="game-stats"></div>
+            <div id="gameBestList"></div>
+            <h3 class="game-subtitle">Latihan Terakhir</h3>
+            <div id="gameHistoryList" class="game-history">
                 <p class="text-gray-600 text-center">Memuat progres latihan...</p>
             </div>
         </section>
@@ -544,9 +643,9 @@
         }
 
         function scoreColor(percent) {
-            if (percent >= 80) return 'text-green-700';
-            if (percent >= 60) return 'text-yellow-700';
-            return 'text-red-700';
+            if (percent >= 80) return 'score-good';
+            if (percent >= 60) return 'score-mid';
+            return 'score-low';
         }
 
         function describeScore(item) {
@@ -571,7 +670,7 @@
                 if (items.length === 0) {
                     statsEl.innerHTML = '';
                     bestEl.innerHTML = '';
-                    historyEl.innerHTML = '<p class="text-gray-600 text-center">Belum ada skor. Mainkan game di menu Game, skormu akan tersimpan otomatis di sini.</p>';
+                    historyEl.innerHTML = '<p class="text-gray-600 text-center" style="padding:1rem 0">Belum ada skor. Mainkan game di menu Game, skormu akan tersimpan otomatis di sini.</p>';
                     return;
                 }
 
@@ -580,12 +679,12 @@
                 const avg = Math.round(items.reduce((sum, i) => sum + (i.percent || 0), 0) / items.length);
 
                 const statCard = (label, value) => `
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-center">
-                        <div class="text-2xl font-bold text-indigo-700">${value}</div>
-                        <div class="text-sm text-gray-600">${label}</div>
+                    <div class="stat-card">
+                        <div class="stat-value">${value}</div>
+                        <div class="stat-label">${label}</div>
                     </div>`;
                 statsEl.innerHTML = statCard('Total latihan', items.length)
-                    + statCard('Latihan 7 hari terakhir', thisWeek)
+                    + statCard('7 hari terakhir', thisWeek)
                     + statCard('Rata-rata nilai', `${avg}%`);
 
                 // Nilai terbaik per game
@@ -593,9 +692,9 @@
                 items.forEach((i) => {
                     if (!best[i.gameId] || i.percent > best[i.gameId].percent) best[i.gameId] = i;
                 });
-                bestEl.innerHTML = '<h3 class="text-lg font-semibold mb-2">Nilai Terbaik per Game</h3><div class="flex flex-wrap gap-2">'
+                bestEl.innerHTML = '<h3 class="game-subtitle">Nilai Terbaik per Game</h3><div class="best-chips">'
                     + Object.values(best).map((b) => `
-                        <span class="bg-white border border-gray-200 rounded-full px-3 py-1 text-sm">
+                        <span class="best-chip">
                             ${escapeHtml(b.gameName)}: <strong class="${scoreColor(b.percent)}">${b.percent}%</strong>
                         </span>`).join('')
                     + '</div>';
@@ -603,12 +702,12 @@
                 historyEl.innerHTML = items.slice(0, 15).map((i) => {
                     const when = i.timestamp ? i.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Baru saja';
                     return `
-                        <div class="flex justify-between items-center gap-3 border-b border-gray-100 py-2">
+                        <div class="game-row">
                             <div>
-                                <div class="font-medium">${escapeHtml(i.gameName)}</div>
-                                <div class="text-xs text-gray-500">${when}</div>
+                                <div class="game-name">${escapeHtml(i.gameName)}</div>
+                                <div class="game-time">${when}</div>
                             </div>
-                            <div class="text-right text-sm font-semibold ${scoreColor(i.percent)}">${describeScore(i)}</div>
+                            <div class="game-result ${scoreColor(i.percent)}">${describeScore(i)}</div>
                         </div>`;
                 }).join('');
             }, (error) => {
