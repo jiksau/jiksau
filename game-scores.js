@@ -28,6 +28,7 @@ const db = getFirestore(app);
 let currentUser = null;
 let currentName = null;
 let currentLevel = null;
+let hasProfile = false;
 
 // Menunggu Firebase selesai memeriksa status login (sekali di awal).
 const authReady = new Promise((resolve) => {
@@ -35,10 +36,12 @@ const authReady = new Promise((resolve) => {
         currentUser = user;
         currentName = null;
         currentLevel = null;
+        hasProfile = false;
         if (user) {
             try {
                 const snap = await getDoc(doc(db, "users", user.uid));
                 if (snap.exists()) {
+                    hasProfile = true;
                     currentName = snap.data().name || null;
                     currentLevel = snap.data().level || null;
                 }
@@ -92,10 +95,14 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         return;
     }
 
+    if (!hasProfile) {
+        showToast('Skor tidak disimpan: akun ini tidak aktif. Hubungi admin.', true);
+        return;
+    }
+
     const data = {
         userId: currentUser.uid,
         userName: currentName || currentUser.email || "Siswa",
-        userEmail: currentUser.email || null,
         gameId: String(gameId),
         gameName: String(gameName || gameId),
         correct,

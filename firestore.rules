@@ -86,9 +86,11 @@ service cloud.firestore {
 
     // ---------- Skor game: gameScores/{id} ----------
     // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
+    // Hanya siswa yang profilnya masih ada (belum dihapus admin).
     match /gameScores/{scoreId} {
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && request.resource.data.correct is int
         && request.resource.data.total is int
         && request.resource.data.total > 0

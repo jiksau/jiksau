@@ -86,16 +86,26 @@
         }
         .card h2 { margin: 0 0 4px; font-size: 1.2rem; }
         .card .desc { margin: 0 0 16px; color: var(--muted); font-size: 0.88rem; }
+        /* Form: semua kolom sejajar (label, isian, petunjuk) */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            align-items: end;
+            grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)) 150px;
+            gap: 14px;
+            align-items: start;
         }
-        label.field { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; }
-        label.field input, label.field select, .toolbar input, .toolbar select, td select {
+        label.field, div.field, .field-btn {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .field-label { line-height: 1.3; min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .field-btn .btn { margin-top: 4px; height: 40px; }
+        label.field input, label.field select, div.field input, .toolbar input, .toolbar select, td select {
             display: block;
             width: 100%;
+            height: 40px;
             margin-top: 4px;
             padding: 9px 10px;
             border: 1px solid #d1d5db;
@@ -104,10 +114,10 @@
             background: #fff;
             color: var(--text);
         }
-        .field small { display: block; font-weight: 400; color: var(--muted); margin-top: 3px; }
+        .field small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; min-height: 1.2em; line-height: 1.2; }
         .code-row { display: flex; gap: 6px; }
-        .code-row input { text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        .code-row .btn { margin-top: 4px; white-space: nowrap; }
+        .code-row input { text-transform: uppercase; letter-spacing: 1px; font-weight: 700; min-width: 0; }
+        .code-row .btn { margin-top: 4px; height: 40px; white-space: nowrap; border: 1px solid #c7d2fe; }
         .form-msg { margin-top: 10px; font-size: 0.88rem; min-height: 1.2em; }
         .form-msg.ok { color: var(--green); }
         .form-msg.err { color: var(--red); }
@@ -117,7 +127,8 @@
             gap: 10px;
             margin-bottom: 12px;
         }
-        .toolbar > * { flex: 1 1 180px; }
+        .toolbar > input { flex: 3 1 260px; }
+        .toolbar > select { flex: 1 1 180px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th {
             text-align: left;
@@ -130,7 +141,9 @@
             border-bottom: 1px solid var(--line);
         }
         td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-        td select { margin: 0; padding: 6px 8px; width: auto; min-width: 120px; }
+        td select { margin: 0; padding: 6px 8px; width: auto; min-width: 130px; height: 34px; }
+        .actions { display: flex; gap: 4px; flex-wrap: nowrap; }
+        th.col-actions, td.col-actions { width: 1%; white-space: nowrap; }
         .empty { text-align: center; color: var(--muted); padding: 18px; }
         .pill {
             display: inline-block;
@@ -154,8 +167,17 @@
         .stat span { font-size: 0.8rem; color: var(--muted); }
         .note { font-size: 0.82rem; color: var(--muted); background: #f9fafb; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
 
+        @media (max-width: 960px) {
+            .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .field-btn { grid-column: 1 / -1; }
+            .field-btn .field-label { display: none; }
+        }
+
         /* Tabel menjadi kartu di layar HP */
         @media (max-width: 680px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .field-label { white-space: normal; }
+            .actions { justify-content: flex-end; flex-wrap: wrap; }
             header.topbar { padding: 12px 16px; }
             nav.tabs, main { padding-left: 12px; padding-right: 12px; }
             .card { padding: 16px; }
@@ -201,22 +223,26 @@
             <div class="card">
                 <h2>Buat Akun Siswa (tanpa email)</h2>
                 <p class="desc">Untuk siswa yang belum punya email. Siswa masuk di halaman depan dengan <b>nama pengguna</b> dan password ini.</p>
-                <form id="createStudentForm" class="form-grid" autocomplete="off">
-                    <label class="field">Nama lengkap
-                        <input type="text" id="newName" required>
+                <form id="createStudentForm" class="form-grid" style="--cols:4" autocomplete="off">
+                    <label class="field"><span class="field-label">Nama lengkap</span>
+                        <input type="text" id="newName" placeholder="contoh: Budi Santoso" required>
+                        <small>Tampil di dashboard siswa</small>
                     </label>
-                    <label class="field">Nama pengguna
+                    <label class="field"><span class="field-label">Nama pengguna</span>
                         <input type="text" id="newUsername" placeholder="contoh: budi.smp" autocapitalize="none" required>
-                        <small>3–30 huruf kecil/angka, boleh titik & garis bawah</small>
+                        <small>Huruf kecil, angka, titik, _</small>
                     </label>
-                    <label class="field">Password
+                    <label class="field"><span class="field-label">Password</span>
                         <input type="text" id="newPassword" placeholder="min. 6 karakter" required>
                         <small>Catat & berikan ke siswa</small>
                     </label>
-                    <label class="field">Jenjang
+                    <label class="field"><span class="field-label">Jenjang</span>
                         <select id="newLevel" required></select>
+                        <small>&nbsp;</small>
                     </label>
-                    <button class="btn" type="submit" id="createStudentBtn">Buat Akun</button>
+                    <div class="field-btn"><span class="field-label">&nbsp;</span>
+                        <button class="btn" type="submit" id="createStudentBtn">Buat Akun</button>
+                    </div>
                 </form>
                 <div class="form-msg" id="createStudentMsg"></div>
             </div>
@@ -236,12 +262,13 @@
                             <th>Login</th>
                             <th>Jenjang</th>
                             <th>Daftar Lewat</th>
-                            <th>Aksi</th>
+                            <th class="col-actions">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="studentsBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
                 </table>
-                <p class="note">Password siswa yang memakai nama pengguna tidak bisa direset dari website. Jika lupa, buatkan akun baru dengan nama pengguna lain. Untuk menonaktifkan akun sepenuhnya, gunakan Firebase Console → Authentication.</p>
+                <p class="note"><b>Hapus akun</b> menghapus profil dan semua skor siswa secara permanen. Siswa itu tidak bisa bermain lagi, dan akun loginnya terhapus otomatis saat ia mencoba masuk, sehingga email/nama penggunanya bisa dipakai lagi.<br>
+                Password akun nama pengguna tidak bisa direset dari website. Jika siswa lupa, hapus akunnya lalu buatkan akun baru dengan nama pengguna <b>lain</b> (misalnya tambahkan angka: budi.smp2).</p>
             </div>
         </section>
 
@@ -250,21 +277,25 @@
             <div class="card">
                 <h2>Buat Kode Kelas</h2>
                 <p class="desc">Siswa memasukkan kode ini saat mendaftar. Jenjangnya otomatis mengikuti kode.</p>
-                <form id="codeForm" class="form-grid" autocomplete="off">
-                    <label class="field">Kode
+                <form id="codeForm" class="form-grid" style="--cols:3" autocomplete="off">
+                    <label class="field"><span class="field-label">Jenjang</span>
+                        <select id="codeLevel" required></select>
+                        <small>Pilih dulu, lalu klik Acak</small>
+                    </label>
+                    <div class="field"><label class="field-label" for="codeInput">Kode</label>
                         <span class="code-row">
                             <input type="text" id="codeInput" maxlength="12" placeholder="SMP24" required>
                             <button class="btn ghost" type="button" id="randomCodeBtn">Acak</button>
                         </span>
                         <small>4–12 huruf/angka</small>
-                    </label>
-                    <label class="field">Jenjang
-                        <select id="codeLevel" required></select>
-                    </label>
-                    <label class="field">Keterangan (opsional)
+                    </div>
+                    <label class="field"><span class="field-label">Keterangan (opsional)</span>
                         <input type="text" id="codeNote" placeholder="contoh: SMP kelas Senin-Rabu">
+                        <small>Hanya terlihat oleh admin</small>
                     </label>
-                    <button class="btn" type="submit" id="codeSubmitBtn">Buat Kode</button>
+                    <div class="field-btn"><span class="field-label">&nbsp;</span>
+                        <button class="btn" type="submit" id="codeSubmitBtn">Buat Kode</button>
+                    </div>
                 </form>
                 <div class="form-msg" id="codeMsg"></div>
             </div>
@@ -279,7 +310,7 @@
                             <th>Keterangan</th>
                             <th>Siswa</th>
                             <th>Status</th>
-                            <th>Aksi</th>
+                            <th class="col-actions">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="codesBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody>
@@ -338,7 +369,7 @@
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
             getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc,
-            query, orderBy, limit, onSnapshot, serverTimestamp
+            query, where, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
@@ -452,7 +483,10 @@
                         </select>
                     </td>
                     <td data-label="Daftar lewat"><span>${u.classCode ? `kode <span class="mono">${escapeHtml(u.classCode)}</span>` : (u.loginType === 'username' ? 'dibuat admin' : 'akun lama')}${u.createdAt ? `<br><span class="sub">${fmtDate(u.createdAt)}</span>` : ''}</span></td>
-                    <td data-label="Aksi"><button class="btn ghost" data-rename="${u.id}">Ubah nama</button></td>
+                    <td data-label="Aksi" class="col-actions"><span class="actions">
+                        <button class="btn ghost" data-rename="${u.id}">Ubah nama</button>
+                        <button class="btn danger" data-delete-user="${u.id}">Hapus akun</button>
+                    </span></td>
                 </tr>`).join('');
         }
 
@@ -472,7 +506,40 @@
                 e.target.disabled = false;
             }
         });
+        // Hapus akun: profil + semua skor siswa. Akun login siswa terhapus
+        // otomatis saat ia mencoba masuk lagi (lihat user-dashboard.html).
+        async function deleteStudent(uid) {
+            const student = students.find((s) => s.id === uid);
+            const name = student?.name || 'siswa ini';
+            const login = usernameFromEmail(student?.email) || student?.email || '';
+            if (!confirm(`Hapus akun "${name}" (${login})?\n\nProfil dan semua skor game siswa ini akan dihapus permanen dan tidak bisa dikembalikan.`)) return;
+
+            const scoreSnap = await getDocs(query(collection(db, 'gameScores'), where('userId', '==', uid)));
+            const refs = scoreSnap.docs.map((d) => d.ref);
+            // Firestore membatasi 500 operasi per batch
+            for (let i = 0; i < refs.length; i += 450) {
+                const batch = writeBatch(db);
+                refs.slice(i, i + 450).forEach((ref) => batch.delete(ref));
+                await batch.commit();
+            }
+            await deleteDoc(doc(db, 'users', uid));
+            alert(`Akun "${name}" dihapus (${refs.length} skor ikut dihapus).`);
+        }
+
         $('studentsBody').addEventListener('click', async (e) => {
+            const delId = e.target.dataset.deleteUser;
+            if (delId) {
+                e.target.disabled = true;
+                try {
+                    await deleteStudent(delId);
+                } catch (err) {
+                    console.error(err);
+                    alert('Gagal menghapus akun: ' + err.message);
+                } finally {
+                    e.target.disabled = false;
+                }
+                return;
+            }
             const uid = e.target.dataset.rename;
             if (!uid) return;
             const current = students.find((s) => s.id === uid)?.name || '';
@@ -558,7 +625,7 @@
                     <td data-label="Keterangan">${escapeHtml(c.note || '-')}</td>
                     <td data-label="Siswa">${count}</td>
                     <td data-label="Status"><span class="pill ${c.active ? 'on' : 'off'}">${c.active ? 'Aktif' : 'Nonaktif'}</span></td>
-                    <td data-label="Aksi"><span>
+                    <td data-label="Aksi" class="col-actions"><span class="actions">
                         <button class="btn ghost" data-toggle-code="${escapeHtml(c.id)}">${c.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
                         <button class="btn danger" data-delete-code="${escapeHtml(c.id)}">Hapus</button>
                     </span></td>

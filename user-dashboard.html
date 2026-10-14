@@ -400,9 +400,10 @@
                         : 'Ini pertama kalinya 🎉';
                     await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
                 } else {
-                    $('userName').textContent = 'Profil belum ada, hubungi admin.';
-                    $('userLevel').textContent = '-';
-                    $('lastLoginAt').textContent = '-';
+                    // Profil sudah dihapus admin: hapus juga akun loginnya
+                    // agar email/nama pengguna bisa dipakai lagi.
+                    await handleDeletedAccount(user);
+                    return;
                 }
             } catch (error) {
                 console.error("Error loading profile:", error);
@@ -412,6 +413,25 @@
             loadGameScores(user.uid);
             document.body.style.visibility = 'visible';
         });
+
+        async function handleDeletedAccount(user) {
+            document.body.style.visibility = 'visible';
+            document.querySelector('.container').innerHTML = `
+                <h1 class="text-3xl font-extrabold text-center">Akun tidak aktif</h1>
+                <div class="info-card" style="margin-top:1.5rem">
+                    <p>Akun ini sudah dihapus oleh admin ExtraCourse.</p>
+                    <p>Jika menurutmu ini keliru, hubungi guru atau admin untuk dibuatkan akun baru.</p>
+                </div>
+                <div class="header-buttons" style="justify-content:center"><button id="backHome" style="background:#4338ca;color:#fff">Kembali ke halaman depan</button></div>`;
+            document.getElementById('backHome').addEventListener('click', () => { window.location.href = 'index.html'; });
+            try {
+                await user.delete();
+            } catch (e) {
+                // Mis. sesi login sudah terlalu lama; cukup keluar saja.
+                console.warn('Gagal menghapus akun login:', e);
+                await signOut(auth);
+            }
+        }
 
         $('logoutButton').addEventListener('click', async () => {
             await signOut(auth);

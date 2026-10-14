@@ -55,7 +55,7 @@ Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana ya
 ## Keterbatasan
 
 - **Password akun nama pengguna** tidak bisa direset dari website, karena Firebase versi gratis tidak mengizinkannya tanpa server. Jika siswa lupa, buatkan akun baru. Siswa yang memakai email bisa memakai tombol "Lupa password".
-- Akun yang dihapus profilnya masih bisa login sampai dinonaktifkan di **Firebase Console → Authentication**.
+- **Hapus akun** di admin menghapus profil & semua skor siswa. Akun loginnya terhapus otomatis saat siswa itu mencoba masuk lagi; sebelum itu ia tidak bisa bermain atau menyimpan skor.
 
 ## Kalau email admin diganti
 
