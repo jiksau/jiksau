@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Peringkat - ExtraCourse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --purple: #6a11cb;
+            --blue: #2575fc;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --gold: #f59e0b;
+            --silver: #94a3b8;
+            --bronze: #c2703d;
+            --me: #fef3c7;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+            background-attachment: fixed;
+            color: var(--ink);
+            visibility: hidden; /* Tampil setelah login terverifikasi */
+        }
+        header.top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 16px 16px 4px;
+            color: #fff;
+        }
+        header.top a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,.18);
+            padding: 8px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+        header.top h1 { margin: 0; font-size: 1.35rem; font-weight: 800; }
+        main {
+            max-width: 720px;
+            margin: 12px auto 32px;
+            padding: 20px 16px 24px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.2);
+        }
+        @media (min-width: 760px) { main { padding: 24px 28px 28px; } }
+
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+        .seg { display: inline-flex; background: #f3f4f6; border-radius: 999px; padding: 4px; }
+        .seg button {
+            border: none; background: transparent; font: inherit; font-weight: 600; font-size: .9rem;
+            padding: 8px 16px; border-radius: 999px; cursor: pointer; color: var(--muted);
+        }
+        .seg button.active { background: #fff; color: var(--purple); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+        .level-pill { background: #ede9fe; color: var(--purple); font-weight: 700; padding: 6px 14px; border-radius: 999px; font-size: .9rem; }
+        #levelSelect { font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 10px; border: 1px solid #d1d5db; color: var(--purple); }
+        .meta { color: var(--muted); font-size: .85rem; margin: 12px 0 16px; line-height: 1.5; }
+
+        .my-rank {
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #78350f;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .my-rank .big { font-size: 1.9rem; font-weight: 800; line-height: 1; min-width: 56px; text-align: center; }
+        .my-rank .txt { font-size: .9rem; line-height: 1.45; }
+        .my-rank .txt b { font-size: 1rem; }
+        .my-rank a { color: #92400e; font-weight: 700; }
+        .my-rank.empty { background: #eef2ff; color: #3730a3; }
+        .my-rank.empty a { color: #4338ca; }
+
+        /* Podium */
+        .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin: 8px 0 18px; }
+        .pod { text-align: center; }
+        .pod .medal { font-size: 1.8rem; line-height: 1; }
+        .pod .name { font-weight: 700; font-size: .92rem; margin: 6px 0 2px; overflow-wrap: anywhere; }
+        .pod .pts { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+        .pod .block { border-radius: 12px 12px 0 0; color: #fff; font-weight: 800; font-size: 1.4rem; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
+        .pod.p1 .block { height: 92px; }
+        .pod.p2 .block { height: 68px; }
+        .pod.p3 .block { height: 52px; }
+        .pod .block.r1 { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+        .pod .block.r2 { background: linear-gradient(180deg, #cbd5e1, #94a3b8); }
+        .pod .block.r3 { background: linear-gradient(180deg, #e7a578, #c2703d); }
+        .pod.me .name::after { content: " (kamu)"; color: var(--purple); font-weight: 600; font-size: .75rem; }
+        .pod.blank { visibility: hidden; }
+
+        /* Daftar */
+        .list { list-style: none; margin: 0; padding: 0; }
+        .row {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+        }
+        .row:nth-child(odd) { background: #f9fafb; }
+        .row .rank { font-weight: 800; color: var(--muted); text-align: center; }
+        .row .who { font-weight: 600; overflow-wrap: anywhere; }
+        .row .who small { display: block; font-weight: 400; color: var(--muted); font-size: .75rem; }
+        .row .pts { font-weight: 800; color: var(--purple); white-space: nowrap; }
+        .row.me { background: var(--me) !important; outline: 2px solid #fbbf24; }
+        .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 2px 0; }
+        .empty-state { text-align: center; color: var(--muted); padding: 28px 8px; }
+        .empty-state .big { font-size: 2.4rem; }
+
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .btn {
+            flex: 1 1 200px;
+            border: none; border-radius: 12px; padding: 12px 16px;
+            font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
+            background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff;
+            text-decoration: none; text-align: center;
+        }
+        .btn.secondary { background: #f3f4f6; color: var(--ink); }
+        .btn:disabled { opacity: .6; cursor: wait; }
+
+        /* ---------- Kartu siap dibagikan (1080x1350, ditampilkan 540x675) ---------- */
+        .overlay {
+            position: fixed; inset: 0; z-index: 50;
+            background: rgba(17, 24, 39, .94);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; padding: 16px;
+        }
+        .overlay[hidden] { display: none; }
+        .poster-frame { position: relative; flex-shrink: 0; }
+        .poster-frame > .poster { transform-origin: top left; position: absolute; top: 0; left: 0; }
+        .overlay .share-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; max-width: 540px; }
+        .overlay .share-actions .btn { flex: 1 1 140px; }
+        .overlay .hint { color: #d1d5db; font-size: .8rem; text-align: center; margin: 0; }
+
+        .poster {
+            width: 540px; height: 675px;
+            padding: 34px 34px 26px;
+            display: flex; flex-direction: column;
+            background:
+                radial-gradient(circle at 85% 8%, rgba(255,255,255,.18) 0 70px, transparent 71px),
+                radial-gradient(circle at 8% 92%, rgba(255,255,255,.12) 0 90px, transparent 91px),
+                linear-gradient(150deg, #6a11cb 0%, #4f46e5 50%, #2575fc 100%);
+            color: #fff;
+            font-family: 'Poppins', system-ui, sans-serif;
+            border-radius: 0;
+            overflow: hidden;
+        }
+        .poster .brand { font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; opacity: .85; }
+        .poster .title { font-size: 34px; font-weight: 800; line-height: 1.1; margin: 6px 0 4px; }
+        .poster .sub { font-size: 15px; font-weight: 500; opacity: .9; }
+        .poster .sub b { background: rgba(255,255,255,.22); padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
+        .poster .ppodium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; margin: 22px 0 14px; }
+        .poster .ppod { text-align: center; }
+        .poster .ppod .m { font-size: 30px; line-height: 1; }
+        .poster .ppod .n { font-size: 16px; font-weight: 700; margin: 6px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .poster .ppod .p { font-size: 13px; opacity: .9; margin-bottom: 6px; }
+        .poster .ppod .b { border-radius: 14px 14px 0 0; display: flex; justify-content: center; padding-top: 8px; font-size: 26px; font-weight: 800; color: rgba(255,255,255,.95); }
+        .poster .ppod.p1 .b { height: 104px; }
+        .poster .ppod.p2 .b { height: 76px; }
+        .poster .ppod.p3 .b { height: 58px; }
+        .poster .ppod .b.r1 { background: linear-gradient(180deg, #fcd34d, #f59e0b); }
+        .poster .ppod .b.r2 { background: linear-gradient(180deg, #e2e8f0, #94a3b8); }
+        .poster .ppod .b.r3 { background: linear-gradient(180deg, #f0b48b, #c2703d); }
+        .poster .ppod.blank { visibility: hidden; }
+        .poster .plist { background: rgba(255,255,255,.14); border-radius: 16px; padding: 8px 14px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+        .poster .prow { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; font-size: 15px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+        .poster .prow:last-child { border-bottom: none; }
+        .poster .prow .r { font-weight: 800; opacity: .85; }
+        .poster .prow .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+        .poster .prow .p { font-weight: 700; }
+        .poster .pempty { margin: auto; text-align: center; font-size: 16px; opacity: .9; }
+        .poster .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; opacity: .9; }
+        .poster .foot b { font-size: 14px; }
+    </style>
+</head>
+<body>
+    <header class="top">
+        <a id="backLink" href="user-dashboard.html">← Kembali</a>
+        <h1>🏆 Papan Peringkat</h1>
+    </header>
+
+    <main>
+        <div class="controls">
+            <div class="seg" role="tablist">
+                <button data-week="this" class="active" role="tab">Minggu Ini</button>
+                <button data-week="last" role="tab">Minggu Lalu</button>
+            </div>
+            <span id="levelPill" class="level-pill" hidden></span>
+            <select id="levelSelect" hidden aria-label="Pilih jenjang"></select>
+        </div>
+        <p class="meta" id="meta">Memuat...</p>
+
+        <div id="myRank"></div>
+        <div id="podium" class="podium"></div>
+        <ol id="list" class="list"></ol>
+
+        <div class="actions">
+            <button class="btn" id="shareBtn" type="button">📸 Tampilan untuk dibagikan</button>
+            <a class="btn secondary" href="gamelist.html">🎮 Main game</a>
+        </div>
+    </main>
+
+    <!-- Kartu siap dibagikan -->
+    <div class="overlay" id="shareOverlay" hidden>
+        <div class="poster-frame" id="posterFrame">
+            <div class="poster" id="poster"></div>
+        </div>
+        <p class="hint">Bisa langsung di-screenshot, atau unduh sebagai gambar (1080×1350).</p>
+        <div class="share-actions">
+            <button class="btn" id="downloadBtn" type="button">⬇️ Unduh gambar</button>
+            <button class="btn" id="nativeShareBtn" type="button" hidden>📤 Bagikan</button>
+            <button class="btn secondary" id="closeShare" type="button">Tutup</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import {
+            firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
+            weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName
+        } from "./ec-common.js";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const $ = (id) => document.getElementById(id);
+
+        const TOP_N = 10;
+        const state = { uid: null, isAdmin: false, level: null, week: 'this', ranking: [] };
+        const weekKey = () => state.week === 'this' ? weekKeyFor() : previousWeekKey(weekKeyFor());
+
+        // ---------- Login ----------
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            if (state.uid) return;
+            state.uid = user.uid;
+            state.isAdmin = user.email === ADMIN_EMAIL;
+
+            if (state.isAdmin) {
+                $('backLink').href = 'admin.html';
+                $('levelSelect').innerHTML = LEVELS.map((l) => `<option value="${l.value}">${l.label}</option>`).join('');
+                const saved = (() => { try { return localStorage.getItem('lbLevel'); } catch { return null; } })();
+                state.level = LEVELS.some((l) => l.value === saved) ? saved : 'SMP';
+                $('levelSelect').value = state.level;
+                $('levelSelect').hidden = false;
+            } else {
+                try {
+                    const snap = await getDoc(doc(db, 'users', user.uid));
+                    if (!snap.exists()) { window.location.href = 'user-dashboard.html'; return; }
+                    state.level = snap.data().level || null;
+                } catch (e) {
+                    console.error(e);
+                }
+                $('levelPill').textContent = `Jenjang ${levelLabel(state.level)}`;
+                $('levelPill').hidden = false;
+            }
+            document.body.style.visibility = 'visible';
+            load();
+        });
+
+        // ---------- Kontrol ----------
+        document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+            document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('active', x === b));
+            state.week = b.dataset.week;
+            load();
+        }));
+        $('levelSelect').addEventListener('change', (e) => {
+            state.level = e.target.value;
+            try { localStorage.setItem('lbLevel', state.level); } catch { /* abaikan */ }
+            load();
+        });
+
+        // ---------- Data ----------
+        function buildRanking(docs) {
+            const by = {};
+            docs.forEach((d) => {
+                const s = d.data();
+                const r = by[s.userId] ||= { uid: s.userId, name: s.userName, points: 0, games: 0, last: 0 };
+                r.points += Number(s.correct) || 0;
+                r.games += 1;
+                const t = s.timestamp?.toMillis?.() ?? 0;
+                if (t >= r.last) { r.last = t; r.name = s.userName || r.name; }
+            });
+            const list = Object.values(by).filter((r) => r.points > 0)
+                .sort((a, b) => b.points - a.points || b.games - a.games || shortName(a.name).localeCompare(shortName(b.name), 'id'));
+            // Poin sama = peringkat sama (1, 2, 2, 4, ...)
+            list.forEach((r, i) => { r.rank = i > 0 && r.points === list[i - 1].points ? list[i - 1].rank : i + 1; });
+            return list;
+        }
+
+        async function load() {
+            const key = weekKey();
+            renderMeta(key);
+            $('myRank').innerHTML = '';
+            $('podium').innerHTML = '';
+            if (!state.level) {
+                $('list').innerHTML = `<li class="empty-state"><div class="big">🧭</div>Jenjangmu belum diatur. Minta guru/admin mengatur jenjangmu supaya bisa ikut papan peringkat.</li>`;
+                state.ranking = [];
+                return;
+            }
+            $('list').innerHTML = '<li class="empty-state">Memuat peringkat...</li>';
+            try {
+                const snap = await getDocs(query(collection(db, 'gameScores'), where('level', '==', state.level), where('week', '==', key)));
+                state.ranking = buildRanking(snap.docs);
+                render();
+            } catch (e) {
+                console.error(e);
+                $('list').innerHTML = `<li class="empty-state">Gagal memuat peringkat: ${escapeHtml(e.message)}</li>`;
+            }
+        }
+
+        function renderMeta(key) {
+            const parts = [weekRangeLabel(key)];
+            if (state.week === 'this') {
+                const ms = weekEndMs(key) - Date.now();
+                const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5), m = Math.floor((ms % 36e5) / 6e4);
+                parts.push(`reset dalam ${d > 0 ? `${d} hari ${h} jam` : `${h} jam ${m} menit`}`);
+            } else {
+                parts.push('hasil akhir');
+            }
+            parts.push('1 jawaban benar = 1 poin');
+            $('meta').textContent = parts.join(' · ');
+        }
+
+        // ---------- Tampilan ----------
+        const medal = (rank) => ({ 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '');
+
+        function render() {
+            const list = state.ranking;
+            const isThis = state.week === 'this';
+            const me = list.find((r) => r.uid === state.uid);
+
+            // Kartu posisi saya (khusus siswa)
+            if (!state.isAdmin) {
+                if (!me) {
+                    $('myRank').innerHTML = `<div class="my-rank empty"><div class="big">🎯</div><div class="txt">${isThis
+                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Selesaikan satu game untuk masuk papan peringkat! <a href="gamelist.html">Main sekarang →</a>'
+                        : '<b>Kamu tidak bermain minggu lalu.</b><br>Ayo kejar peringkat di minggu ini!'}</div></div>`;
+                } else {
+                    let tip;
+                    const above = list.filter((r) => r.points > me.points).pop();
+                    if (!isThis) tip = me.rank === 1 ? 'Kamu juara minggu lalu! 🎉' : `Peringkat akhirmu minggu lalu.`;
+                    else if (me.rank === 1) tip = list.length > 1 ? 'Kamu juara sementara! Pertahankan 💪' : 'Kamu satu-satunya yang punya poin. Pertahankan! 💪';
+                    else if (me.rank > TOP_N) tip = `<b>${list[TOP_N - 1].points - me.points + 1} poin lagi</b> untuk masuk 10 besar!`;
+                    else tip = `<b>${above.points - me.points + 1} poin lagi</b> untuk menyalip ${escapeHtml(shortName(above.name))}!`;
+                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.games} kali main · dari ${list.length} siswa<br>${tip}</div></div>`;
+                }
+            }
+
+            if (list.length === 0) {
+                $('podium').innerHTML = '';
+                $('list').innerHTML = `<li class="empty-state"><div class="big">🏁</div>${isThis ? 'Belum ada poin minggu ini. Jadilah yang pertama!' : 'Tidak ada yang bermain minggu lalu di jenjang ini.'}</li>`;
+                return;
+            }
+
+            // Podium: urutan tampil 2 - 1 - 3
+            const top = list.slice(0, 3);
+            const pod = (r, cls) => r
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank) || '🏅'}</div><div class="name">${escapeHtml(shortName(r.name))}</div><div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                : `<div class="pod ${cls} blank"></div>`;
+            $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
+
+            // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}<small>${r.games} kali main</small></span><span class="pts">${r.points} poin</span></li>`;
+            let html = list.slice(3, TOP_N).map(row).join('');
+            if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
+            $('list').innerHTML = html;
+        }
+
+        // ---------- Kartu siap dibagikan ----------
+        function posterHtml() {
+            const list = state.ranking;
+            const isThis = state.week === 'this';
+            const top = list.slice(0, 3);
+            const p = (r, cls) => r
+                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank) || '🏅'}</div><div class="n">${escapeHtml(shortName(r.name))}</div><div class="p">${r.points} poin</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                : `<div class="ppod ${cls} blank"></div>`;
+            const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${r.rank}</span><span class="n">${escapeHtml(shortName(r.name))}</span><span class="p">${r.points} poin</span></div>`).join('');
+            return `
+                <div class="brand">ExtraCourse · Teman Belajar</div>
+                <div class="title">${isThis ? 'Klasemen Sementara 🔥' : 'Juara Mingguan 🏆'}</div>
+                <div class="sub"><b>${escapeHtml(levelLabel(state.level))}</b>${weekRangeLabel(weekKey())}</div>
+                ${list.length ? `<div class="ppodium">${p(top[1], 'p2')}${p(top[0], 'p1')}${p(top[2], 'p3')}</div>` : ''}
+                <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar! 💪' : 'Selamat untuk para juara! 🎉'}</div>` : '<div class="pempty">Belum ada poin di minggu ini.<br>Siapa yang jadi juara pertama? 🚀</div>')}</div>
+                <div class="foot"><span>1 jawaban benar = 1 poin</span><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara! 🎉'}</b></div>`;
+        }
+
+        function fitPoster() {
+            const scale = Math.min(1, (window.innerWidth - 32) / 540, (window.innerHeight - 170) / 675);
+            const frame = $('posterFrame');
+            frame.style.width = `${540 * scale}px`;
+            frame.style.height = `${675 * scale}px`;
+            $('poster').style.transform = `scale(${scale})`;
+        }
+
+        $('shareBtn').addEventListener('click', () => {
+            if (!state.level) return;
+            $('poster').innerHTML = posterHtml();
+            $('shareOverlay').hidden = false;
+            fitPoster();
+            $('nativeShareBtn').hidden = !(navigator.canShare && window.File);
+        });
+        $('closeShare').addEventListener('click', () => { $('shareOverlay').hidden = true; });
+        window.addEventListener('resize', () => { if (!$('shareOverlay').hidden) fitPoster(); });
+
+        // Render kartu ke gambar PNG 1080x1350 (salinan tanpa skala agar tajam)
+        async function posterBlob() {
+            if (!window.html2canvas) throw new Error('Pembuat gambar belum termuat. Coba lagi, atau screenshot saja.');
+            const clone = $('poster').cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = 'position:fixed;left:-10000px;top:0;transform:none;';
+            document.body.appendChild(clone);
+            try {
+                if (document.fonts?.ready) await document.fonts.ready;
+                const canvas = await window.html2canvas(clone, { scale: 2, backgroundColor: null, useCORS: true, logging: false });
+                return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            } finally {
+                clone.remove();
+            }
+        }
+        const fileName = () => `peringkat-${state.level}-${weekKey()}.png`.toLowerCase();
+
+        $('downloadBtn').addEventListener('click', async (e) => {
+            e.target.disabled = true;
+            try {
+                const blob = await posterBlob();
+                const url = URL.createObjectURL(blob);
+                const a = Object.assign(document.createElement('a'), { href: url, download: fileName() });
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                e.target.disabled = false;
+            }
+        });
+
+        $('nativeShareBtn').addEventListener('click', async (e) => {
+            e.target.disabled = true;
+            try {
+                const blob = await posterBlob();
+                const file = new File([blob], fileName(), { type: 'image/png' });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Papan Peringkat ExtraCourse', text: `Peringkat ${levelLabel(state.level)} · ${weekRangeLabel(weekKey())}` });
+                } else {
+                    alert('Perangkat ini tidak mendukung berbagi gambar langsung. Gunakan tombol Unduh gambar.');
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') alert(err.message);
+            } finally {
+                e.target.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

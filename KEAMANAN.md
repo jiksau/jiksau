@@ -10,7 +10,7 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 |---|---|---|---|---|
 | Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
-| Skor game (`gameScores`) | Game, nilai, waktu | Simpan & lihat skor sendiri, tidak bisa mengubah | Semua, termasuk hapus | Tidak bisa |
+| Skor game (`gameScores`) | Nama, jenjang, game, nilai, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); lihat skor sendiri + skor siswa **sejenjang** untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
 
@@ -51,6 +51,13 @@ Data absensi, pendaftaran, kelas, dan guru tidak dipakai lagi. Untuk menghapusny
 - [ ] Login sebagai siswa lalu buka `admin.html` → diarahkan keluar
 
 Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana yang gagal.
+
+## Papan peringkat
+
+- Poin = jumlah jawaban benar dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB), per jenjang.
+- Nama ditampilkan singkat (nama depan + inisial), misalnya "Aisyah P.".
+- Skor yang mencurigakan bisa dihapus admin di tab **Skor Game**; poinnya otomatis hilang dari peringkat.
+- Skor lama (sebelum fitur peringkat) tidak ikut dihitung karena belum punya data minggu.
 
 ## Keterbatasan
 

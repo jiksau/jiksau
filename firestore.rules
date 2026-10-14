@@ -88,6 +88,10 @@ service cloud.firestore {
     // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
     // Hanya siswa yang profilnya masih ada (belum dihapus admin).
     match /gameScores/{scoreId} {
+      function myProfile() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      }
+
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -96,11 +100,20 @@ service cloud.firestore {
         && request.resource.data.total > 0
         && request.resource.data.total <= 1000
         && request.resource.data.correct >= 0
-        && request.resource.data.correct <= request.resource.data.total;
+        && request.resource.data.correct <= request.resource.data.total
+        // Waktu & minggu diisi apa adanya (tidak bisa dimundurkan/dimajukan)
+        && request.resource.data.timestamp == request.time
+        && request.resource.data.week is string
+        && request.resource.data.week.size() == 10
+        // Jenjang di skor harus sama dengan jenjang di profil siswa
+        && (!('level' in request.resource.data)
+            || request.resource.data.level == myProfile().get('level', null));
 
-      // Siswa melihat skornya sendiri; admin melihat semua.
+      // Siswa melihat skornya sendiri, dan skor siswa lain di JENJANG YANG SAMA
+      // (untuk papan peringkat). Admin melihat semua.
       allow read: if isAdmin()
-        || (isSignedIn() && resource.data.userId == request.auth.uid);
+        || (isSignedIn() && resource.data.userId == request.auth.uid)
+        || (isSignedIn() && resource.data.level == myProfile().get('level', 'TIDAK-ADA'));
 
       // Skor tidak bisa diubah siswa; admin boleh menghapus.
       allow update, delete: if isAdmin();

@@ -18,7 +18,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig } from "./ec-common.js";
+import { firebaseConfig, weekKeyFor } from "./ec-common.js";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -109,6 +109,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         total,
         percent: Math.round((correct / total) * 100),
         timestamp: serverTimestamp(),
+        week: weekKeyFor(), // untuk papan peringkat mingguan
     };
     if (Number.isFinite(Number(points)) && points !== null) data.points = Math.round(Number(points));
     if (mode) data.mode = String(mode);

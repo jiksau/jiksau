@@ -88,3 +88,40 @@ export function friendlyAuthError(error) {
     };
     return map[code] || error?.message || "Terjadi kesalahan. Coba lagi.";
 }
+
+// ---------- Minggu peringkat (Senin 00.00 - Minggu 23.59 WIB) ----------
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Kunci minggu = tanggal Senin (WIB) dalam format "YYYY-MM-DD".
+export function weekKeyFor(date = new Date()) {
+    const wib = new Date(date.getTime() + WIB_OFFSET_MS);
+    const daysSinceMonday = (wib.getUTCDay() + 6) % 7;
+    const monday = Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate() - daysSinceMonday);
+    return new Date(monday).toISOString().slice(0, 10);
+}
+
+export function previousWeekKey(key) {
+    return new Date(Date.parse(key + "T00:00:00Z") - 7 * DAY_MS).toISOString().slice(0, 10);
+}
+
+// Waktu (ms) saat minggu berakhir / peringkat direset.
+export function weekEndMs(key) {
+    return Date.parse(key + "T00:00:00Z") + 7 * DAY_MS - WIB_OFFSET_MS;
+}
+
+// Contoh: "13–19 Okt 2026" atau "28 Sep – 4 Okt 2026"
+export function weekRangeLabel(key) {
+    const start = new Date(Date.parse(key + "T00:00:00Z"));
+    const end = new Date(start.getTime() + 6 * DAY_MS);
+    const month = (d) => d.toLocaleDateString("id-ID", { month: "short", timeZone: "UTC" });
+    const sameMonth = start.getUTCMonth() === end.getUTCMonth();
+    const left = sameMonth ? `${start.getUTCDate()}` : `${start.getUTCDate()} ${month(start)} `;
+    return `${left}–${sameMonth ? "" : " "}${end.getUTCDate()} ${month(end)} ${end.getUTCFullYear()}`;
+}
+
+// "Aisyah Putri Ramadhani" -> "Aisyah P." (privasi di papan peringkat)
+export function shortName(name) {
+    const parts = String(name || "Siswa").trim().split(/\s+/);
+    return parts.length > 1 ? `${parts[0]} ${parts[1][0].toUpperCase()}.` : parts[0];
+}

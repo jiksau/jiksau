@@ -101,6 +101,28 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(236, 72, 153, 0.3);
         }
+        #leaderboardButton {
+            background-color: #f59e0b;
+            color: white;
+        }
+        #leaderboardButton:hover {
+            background-color: #d97706;
+            transform: translateY(-2px);
+        }
+        .week-rank {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #78350f;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 1.25rem;
+            text-decoration: none;
+        }
+        .week-rank .big { font-size: 1.6rem; font-weight: 800; min-width: 48px; text-align: center; }
+        .week-rank .txt { font-size: 0.9rem; line-height: 1.4; }
+        .week-rank .go { margin-left: auto; font-weight: 700; white-space: nowrap; }
         #logoutButton {
             background-color: #ef4444; /* Red */
             color: white;
@@ -330,6 +352,7 @@
             <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>! 👋</h1>
             <div class="header-buttons">
                 <button id="gamelistButton">🎮 Main Game</button>
+                <button id="leaderboardButton">🏆 Peringkat</button>
                 <button id="logoutButton">Keluar</button>
             </div>
         </header>
@@ -346,6 +369,7 @@
 
         <section id="game-progress-section" class="mt-8">
             <h2 class="text-2xl font-bold mb-4">Progres Latihan Game</h2>
+            <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
             <div id="gameStats" class="game-stats"></div>
             <div id="gameBestList"></div>
             <h3 class="game-subtitle">Latihan Terakhir</h3>
@@ -362,8 +386,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml } from "./ec-common.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -399,6 +423,7 @@
                         ? data.lastLoginAt.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
                         : 'Ini pertama kalinya 🎉';
                     await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
+                    if (data.level) loadWeekRank(user.uid, data.level);
                 } else {
                     // Profil sudah dihapus admin: hapus juga akun loginnya
                     // agar email/nama pengguna bisa dipakai lagi.
@@ -437,6 +462,31 @@
             await signOut(auth);
             window.location.href = "index.html";
         });
+        $('leaderboardButton').addEventListener('click', () => {
+            window.location.href = "leaderboard.html";
+        });
+
+        // Ringkasan peringkat minggu ini (detail di leaderboard.html)
+        async function loadWeekRank(uid, level) {
+            try {
+                const snap = await getDocs(query(collection(db, "gameScores"), where("level", "==", level), where("week", "==", weekKeyFor())));
+                const points = {};
+                snap.docs.forEach((d) => { const s = d.data(); points[s.userId] = (points[s.userId] || 0) + (Number(s.correct) || 0); });
+                const mine = points[uid] || 0;
+                const others = Object.values(points).filter((p) => p > 0);
+                const box = $('weekRank');
+                if (mine > 0) {
+                    const rank = 1 + others.filter((p) => p > mine).length;
+                    box.innerHTML = `<div class="big">#${rank}</div><div class="txt"><b>Peringkatmu minggu ini</b><br>${mine} poin · dari ${others.length} siswa ${escapeHtml(levelLabel(level))}</div><span class="go">Lihat →</span>`;
+                } else {
+                    box.innerHTML = `<div class="big">🎯</div><div class="txt"><b>Belum ada poin minggu ini</b><br>1 jawaban benar = 1 poin. Ayo masuk papan peringkat!</div><span class="go">Lihat →</span>`;
+                }
+                box.hidden = false;
+            } catch (e) {
+                console.warn("Gagal memuat peringkat:", e);
+            }
+        }
+
         $('gamelistButton').addEventListener('click', () => {
             window.location.href = "gamelist.html";
         });
