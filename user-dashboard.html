@@ -349,10 +349,10 @@
 <body>
     <div class="container">
         <header class="mb-8 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>! 👋</h1>
+            <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>!</h1>
             <div class="header-buttons">
-                <button id="gamelistButton">🎮 Main Game</button>
-                <button id="leaderboardButton">🏆 Peringkat</button>
+                <button id="gamelistButton">Main Game</button>
+                <button id="leaderboardButton">Peringkat</button>
                 <button id="logoutButton">Keluar</button>
             </div>
         </header>
@@ -421,9 +421,9 @@
                     $('userLevel').textContent = levelLabel(data.level);
                     $('lastLoginAt').textContent = data.lastLoginAt
                         ? data.lastLoginAt.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
-                        : 'Ini pertama kalinya 🎉';
+                        : 'Ini pertama kalinya';
                     await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
-                    if (data.level) loadWeekRank(user.uid, data.level);
+                    loadWeekRank(user.uid, data.level || null);
                 } else {
                     // Profil sudah dihapus admin: hapus juga akun loginnya
                     // agar email/nama pengguna bisa dipakai lagi.
@@ -466,20 +466,31 @@
             window.location.href = "leaderboard.html";
         });
 
-        // Ringkasan peringkat minggu ini (detail di leaderboard.html)
+        // Ringkasan peringkat minggu ini: semua jenjang + jenjang sendiri
+        // (detail di leaderboard.html)
         async function loadWeekRank(uid, level) {
             try {
-                const snap = await getDocs(query(collection(db, "gameScores"), where("level", "==", level), where("week", "==", weekKeyFor())));
-                const points = {};
-                snap.docs.forEach((d) => { const s = d.data(); points[s.userId] = (points[s.userId] || 0) + (Number(s.correct) || 0); });
-                const mine = points[uid] || 0;
-                const others = Object.values(points).filter((p) => p > 0);
+                const snap = await getDocs(query(collection(db, "gameScores"), where("week", "==", weekKeyFor())));
+                const all = {}, same = {};
+                snap.docs.forEach((d) => {
+                    const s = d.data();
+                    const p = Number(s.correct) || 0;
+                    all[s.userId] = (all[s.userId] || 0) + p;
+                    if (level && s.level === level) same[s.userId] = (same[s.userId] || 0) + p;
+                });
+                const rankOf = (map) => {
+                    const mine = map[uid] || 0;
+                    const players = Object.values(map).filter((p) => p > 0);
+                    return { mine, total: players.length, rank: 1 + players.filter((p) => p > mine).length };
+                };
+                const g = rankOf(all);
                 const box = $('weekRank');
-                if (mine > 0) {
-                    const rank = 1 + others.filter((p) => p > mine).length;
-                    box.innerHTML = `<div class="big">#${rank}</div><div class="txt"><b>Peringkatmu minggu ini</b><br>${mine} poin · dari ${others.length} siswa ${escapeHtml(levelLabel(level))}</div><span class="go">Lihat →</span>`;
+                if (g.mine > 0) {
+                    const l = rankOf(same);
+                    const levelLine = level ? `<br>#${l.rank} dari ${l.total} siswa ${escapeHtml(levelLabel(level))}` : '';
+                    box.innerHTML = `<div class="big">#${g.rank}</div><div class="txt"><b>Peringkatmu minggu ini</b> · ${g.mine} poin<br>#${g.rank} dari ${g.total} siswa (semua jenjang)${levelLine}</div><span class="go">Lihat →</span>`;
                 } else {
-                    box.innerHTML = `<div class="big">🎯</div><div class="txt"><b>Belum ada poin minggu ini</b><br>1 jawaban benar = 1 poin. Ayo masuk papan peringkat!</div><span class="go">Lihat →</span>`;
+                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><br>1 jawaban benar = 1 poin. Ayo masuk papan peringkat!</div><span class="go">Lihat →</span>`;
                 }
                 box.hidden = false;
             } catch (e) {

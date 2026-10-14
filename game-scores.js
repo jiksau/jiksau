@@ -117,7 +117,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
 
     try {
         await addDoc(collection(db, "gameScores"), data);
-        showToast(`✅ Skor ${correct}/${total} tersimpan ke akunmu`);
+        showToast(`Skor ${correct}/${total} tersimpan ke akunmu`);
     } catch (e) {
         console.error("Gagal menyimpan skor:", e);
         showToast("Skor gagal disimpan. Coba lagi nanti.", true);

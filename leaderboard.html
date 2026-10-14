@@ -66,7 +66,8 @@
             padding: 8px 16px; border-radius: 999px; cursor: pointer; color: var(--muted);
         }
         .seg button.active { background: #fff; color: var(--purple); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
-        .level-pill { background: #ede9fe; color: var(--purple); font-weight: 700; padding: 6px 14px; border-radius: 999px; font-size: .9rem; }
+        .seg[hidden] { display: none; }
+        .tag { display: inline-block; font-size: .7rem; font-weight: 700; color: var(--purple); background: #ede9fe; border-radius: 999px; padding: 1px 8px; margin-left: 4px; vertical-align: middle; }
         #levelSelect { font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 10px; border: 1px solid #d1d5db; color: var(--purple); }
         .meta { color: var(--muted); font-size: .85rem; margin: 12px 0 16px; line-height: 1.5; }
 
@@ -82,7 +83,7 @@
         .my-rank .txt { font-size: .9rem; line-height: 1.45; }
         .my-rank .txt b { font-size: 1rem; }
         .my-rank a { color: #92400e; font-weight: 700; }
-        .my-rank.empty { background: #eef2ff; color: #3730a3; }
+        .my-rank.empty { background: #eef2ff; color: #3730a3; display: block; }
         .my-rank.empty a { color: #4338ca; }
 
         /* Podium */
@@ -119,7 +120,6 @@
         .row.me { background: var(--me) !important; outline: 2px solid #fbbf24; }
         .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 2px 0; }
         .empty-state { text-align: center; color: var(--muted); padding: 28px 8px; }
-        .empty-state .big { font-size: 2.4rem; }
 
         .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
         .btn {
@@ -182,6 +182,8 @@
         .poster .prow .r { font-weight: 800; opacity: .85; }
         .poster .prow .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
         .poster .prow .p { font-weight: 700; }
+        .poster .prow .lv { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.22); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+        .poster .ppod .lv { font-size: 11px; font-weight: 700; opacity: .9; }
         .poster .pempty { margin: auto; text-align: center; font-size: 16px; opacity: .9; }
         .poster .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; opacity: .9; }
         .poster .foot b { font-size: 14px; }
@@ -190,17 +192,20 @@
 <body>
     <header class="top">
         <a id="backLink" href="user-dashboard.html">← Kembali</a>
-        <h1>🏆 Papan Peringkat</h1>
+        <h1>Papan Peringkat</h1>
     </header>
 
     <main>
         <div class="controls">
-            <div class="seg" role="tablist">
+            <div class="seg" id="weekSeg" role="tablist">
                 <button data-week="this" class="active" role="tab">Minggu Ini</button>
                 <button data-week="last" role="tab">Minggu Lalu</button>
             </div>
-            <span id="levelPill" class="level-pill" hidden></span>
-            <select id="levelSelect" hidden aria-label="Pilih jenjang"></select>
+            <div class="seg" id="scopeSeg" role="tablist" hidden>
+                <button data-scope="all" class="active" role="tab">Semua Jenjang</button>
+                <button data-scope="level" role="tab" id="scopeLevelBtn">Jenjangku</button>
+            </div>
+            <select id="levelSelect" hidden aria-label="Pilih papan peringkat"></select>
         </div>
         <p class="meta" id="meta">Memuat...</p>
 
@@ -209,8 +214,8 @@
         <ol id="list" class="list"></ol>
 
         <div class="actions">
-            <button class="btn" id="shareBtn" type="button">📸 Tampilan untuk dibagikan</button>
-            <a class="btn secondary" href="gamelist.html">🎮 Main game</a>
+            <button class="btn" id="shareBtn" type="button">Tampilan untuk dibagikan</button>
+            <a class="btn secondary" href="gamelist.html">Main game</a>
         </div>
     </main>
 
@@ -221,8 +226,7 @@
         </div>
         <p class="hint">Bisa langsung di-screenshot, atau unduh sebagai gambar (1080×1350).</p>
         <div class="share-actions">
-            <button class="btn" id="downloadBtn" type="button">⬇️ Unduh gambar</button>
-            <button class="btn" id="nativeShareBtn" type="button" hidden>📤 Bagikan</button>
+            <button class="btn" id="downloadBtn" type="button">Unduh gambar</button>
             <button class="btn secondary" id="closeShare" type="button">Tutup</button>
         </div>
     </div>
@@ -243,7 +247,13 @@
         const $ = (id) => document.getElementById(id);
 
         const TOP_N = 10;
-        const state = { uid: null, isAdmin: false, level: null, week: 'this', ranking: [] };
+        // scope: 'all' = semua jenjang, 'level' = jenjang sendiri (siswa).
+        // boardLevel: null = semua jenjang, atau kode jenjang (mis. 'SMP').
+        const state = { uid: null, isAdmin: false, level: null, scope: 'all', boardLevel: null, week: 'this', ranking: [] };
+        const pref = {
+            get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+            set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* abaikan */ } },
+        };
         const weekKey = () => state.week === 'this' ? weekKeyFor() : previousWeekKey(weekKeyFor());
 
         // ---------- Login ----------
@@ -255,10 +265,11 @@
 
             if (state.isAdmin) {
                 $('backLink').href = 'admin.html';
-                $('levelSelect').innerHTML = LEVELS.map((l) => `<option value="${l.value}">${l.label}</option>`).join('');
-                const saved = (() => { try { return localStorage.getItem('lbLevel'); } catch { return null; } })();
-                state.level = LEVELS.some((l) => l.value === saved) ? saved : 'SMP';
-                $('levelSelect').value = state.level;
+                $('levelSelect').innerHTML = '<option value="ALL">Semua jenjang</option>'
+                    + LEVELS.map((l) => `<option value="${l.value}">Jenjang ${l.label}</option>`).join('');
+                const saved = pref.get('lbBoard');
+                state.boardLevel = LEVELS.some((l) => l.value === saved) ? saved : null;
+                $('levelSelect').value = state.boardLevel || 'ALL';
                 $('levelSelect').hidden = false;
             } else {
                 try {
@@ -268,35 +279,48 @@
                 } catch (e) {
                     console.error(e);
                 }
-                $('levelPill').textContent = `Jenjang ${levelLabel(state.level)}`;
-                $('levelPill').hidden = false;
+                $('scopeLevelBtn').textContent = state.level ? `Jenjang ${levelLabel(state.level)}` : 'Jenjangku';
+                state.scope = pref.get('lbScope') === 'level' && state.level ? 'level' : 'all';
+                setScope(state.scope);
+                $('scopeSeg').hidden = false;
             }
             document.body.style.visibility = 'visible';
             load();
         });
 
         // ---------- Kontrol ----------
-        document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
-            document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('active', x === b));
+        document.querySelectorAll('#weekSeg button').forEach((b) => b.addEventListener('click', () => {
+            document.querySelectorAll('#weekSeg button').forEach((x) => x.classList.toggle('active', x === b));
             state.week = b.dataset.week;
             load();
         }));
+        function setScope(scope) {
+            state.scope = scope;
+            state.boardLevel = scope === 'level' ? state.level : null;
+            document.querySelectorAll('#scopeSeg button').forEach((x) => x.classList.toggle('active', x.dataset.scope === scope));
+        }
+        document.querySelectorAll('#scopeSeg button').forEach((b) => b.addEventListener('click', () => {
+            setScope(b.dataset.scope);
+            pref.set('lbScope', b.dataset.scope);
+            load();
+        }));
         $('levelSelect').addEventListener('change', (e) => {
-            state.level = e.target.value;
-            try { localStorage.setItem('lbLevel', state.level); } catch { /* abaikan */ }
+            state.boardLevel = e.target.value === 'ALL' ? null : e.target.value;
+            pref.set('lbBoard', e.target.value);
             load();
         });
+        const boardLabel = () => state.boardLevel ? `Jenjang ${levelLabel(state.boardLevel)}` : 'Semua Jenjang';
 
         // ---------- Data ----------
         function buildRanking(docs) {
             const by = {};
             docs.forEach((d) => {
                 const s = d.data();
-                const r = by[s.userId] ||= { uid: s.userId, name: s.userName, points: 0, games: 0, last: 0 };
+                const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, points: 0, games: 0, last: 0 };
                 r.points += Number(s.correct) || 0;
                 r.games += 1;
                 const t = s.timestamp?.toMillis?.() ?? 0;
-                if (t >= r.last) { r.last = t; r.name = s.userName || r.name; }
+                if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }
             });
             const list = Object.values(by).filter((r) => r.points > 0)
                 .sort((a, b) => b.points - a.points || b.games - a.games || shortName(a.name).localeCompare(shortName(b.name), 'id'));
@@ -310,14 +334,17 @@
             renderMeta(key);
             $('myRank').innerHTML = '';
             $('podium').innerHTML = '';
-            if (!state.level) {
-                $('list').innerHTML = `<li class="empty-state"><div class="big">🧭</div>Jenjangmu belum diatur. Minta guru/admin mengatur jenjangmu supaya bisa ikut papan peringkat.</li>`;
+            if (!state.isAdmin && state.scope === 'level' && !state.level) {
+                $('list').innerHTML = `<li class="empty-state">Jenjangmu belum diatur. Minta guru/admin mengatur jenjangmu, atau lihat papan Semua Jenjang.</li>`;
                 state.ranking = [];
                 return;
             }
             $('list').innerHTML = '<li class="empty-state">Memuat peringkat...</li>';
             try {
-                const snap = await getDocs(query(collection(db, 'gameScores'), where('level', '==', state.level), where('week', '==', key)));
+                const filters = state.boardLevel
+                    ? [where('level', '==', state.boardLevel), where('week', '==', key)]
+                    : [where('week', '==', key)];
+                const snap = await getDocs(query(collection(db, 'gameScores'), ...filters));
                 state.ranking = buildRanking(snap.docs);
                 render();
             } catch (e) {
@@ -350,35 +377,37 @@
             // Kartu posisi saya (khusus siswa)
             if (!state.isAdmin) {
                 if (!me) {
-                    $('myRank').innerHTML = `<div class="my-rank empty"><div class="big">🎯</div><div class="txt">${isThis
-                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Selesaikan satu game untuk masuk papan peringkat! <a href="gamelist.html">Main sekarang →</a>'
-                        : '<b>Kamu tidak bermain minggu lalu.</b><br>Ayo kejar peringkat di minggu ini!'}</div></div>`;
+                    $('myRank').innerHTML = `<div class="my-rank empty"><div class="txt">${isThis
+                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Selesaikan satu game untuk masuk papan peringkat. <a href="gamelist.html">Main sekarang →</a>'
+                        : '<b>Kamu tidak bermain minggu lalu.</b><br>Ayo kejar peringkat di minggu ini.'}</div></div>`;
                 } else {
                     let tip;
                     const above = list.filter((r) => r.points > me.points).pop();
-                    if (!isThis) tip = me.rank === 1 ? 'Kamu juara minggu lalu! 🎉' : `Peringkat akhirmu minggu lalu.`;
-                    else if (me.rank === 1) tip = list.length > 1 ? 'Kamu juara sementara! Pertahankan 💪' : 'Kamu satu-satunya yang punya poin. Pertahankan! 💪';
+                    if (!isThis) tip = me.rank === 1 ? 'Kamu juara minggu lalu. Selamat!' : `Peringkat akhirmu minggu lalu.`;
+                    else if (me.rank === 1) tip = list.length > 1 ? 'Kamu juara sementara. Pertahankan!' : 'Kamu satu-satunya yang punya poin. Pertahankan!';
                     else if (me.rank > TOP_N) tip = `<b>${list[TOP_N - 1].points - me.points + 1} poin lagi</b> untuk masuk 10 besar!`;
                     else tip = `<b>${above.points - me.points + 1} poin lagi</b> untuk menyalip ${escapeHtml(shortName(above.name))}!`;
-                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.games} kali main · dari ${list.length} siswa<br>${tip}</div></div>`;
+                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.games} kali main · dari ${list.length} siswa (${state.boardLevel ? `jenjang ${escapeHtml(levelLabel(state.boardLevel))}` : 'semua jenjang'})<br>${tip}</div></div>`;
                 }
             }
 
             if (list.length === 0) {
                 $('podium').innerHTML = '';
-                $('list').innerHTML = `<li class="empty-state"><div class="big">🏁</div>${isThis ? 'Belum ada poin minggu ini. Jadilah yang pertama!' : 'Tidak ada yang bermain minggu lalu di jenjang ini.'}</li>`;
+                $('list').innerHTML = `<li class="empty-state">${isThis ? 'Belum ada poin minggu ini. Jadilah yang pertama!' : 'Tidak ada yang bermain minggu lalu di papan ini.'}</li>`;
                 return;
             }
 
             // Podium: urutan tampil 2 - 1 - 3
             const top = list.slice(0, 3);
+            const showLevel = !state.boardLevel;
+            const lvTag = (r) => showLevel && r.level ? `<span class="tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
             const pod = (r, cls) => r
-                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank) || '🏅'}</div><div class="name">${escapeHtml(shortName(r.name))}</div><div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div><div class="name">${escapeHtml(shortName(r.name))}</div><div class="pts">${r.points} poin${lvTag(r)}</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}<small>${r.games} kali main</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}${lvTag(r)}<small>${r.games} kali main</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;
@@ -390,16 +419,16 @@
             const isThis = state.week === 'this';
             const top = list.slice(0, 3);
             const p = (r, cls) => r
-                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank) || '🏅'}</div><div class="n">${escapeHtml(shortName(r.name))}</div><div class="p">${r.points} poin</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(shortName(r.name))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="ppod ${cls} blank"></div>`;
-            const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${r.rank}</span><span class="n">${escapeHtml(shortName(r.name))}</span><span class="p">${r.points} poin</span></div>`).join('');
+            const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${medal(r.rank) || r.rank}</span><span class="n">${escapeHtml(shortName(r.name))}${!state.boardLevel && r.level ? `<span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</span><span class="p">${r.points} poin</span></div>`).join('');
             return `
                 <div class="brand">ExtraCourse · Teman Belajar</div>
-                <div class="title">${isThis ? 'Klasemen Sementara 🔥' : 'Juara Mingguan 🏆'}</div>
-                <div class="sub"><b>${escapeHtml(levelLabel(state.level))}</b>${weekRangeLabel(weekKey())}</div>
+                <div class="title">${isThis ? 'Klasemen Sementara' : 'Juara Mingguan'}</div>
+                <div class="sub"><b>${escapeHtml(boardLabel())}</b>${weekRangeLabel(weekKey())}</div>
                 ${list.length ? `<div class="ppodium">${p(top[1], 'p2')}${p(top[0], 'p1')}${p(top[2], 'p3')}</div>` : ''}
-                <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar! 💪' : 'Selamat untuk para juara! 🎉'}</div>` : '<div class="pempty">Belum ada poin di minggu ini.<br>Siapa yang jadi juara pertama? 🚀</div>')}</div>
-                <div class="foot"><span>1 jawaban benar = 1 poin</span><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara! 🎉'}</b></div>`;
+                <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar!' : 'Selamat untuk para juara!'}</div>` : '<div class="pempty">Belum ada poin di minggu ini.<br>Siapa yang jadi juara pertama?</div>')}</div>
+                <div class="foot"><span>1 jawaban benar = 1 poin</span><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara!'}</b></div>`;
         }
 
         function fitPoster() {
@@ -411,11 +440,9 @@
         }
 
         $('shareBtn').addEventListener('click', () => {
-            if (!state.level) return;
             $('poster').innerHTML = posterHtml();
             $('shareOverlay').hidden = false;
             fitPoster();
-            $('nativeShareBtn').hidden = !(navigator.canShare && window.File);
         });
         $('closeShare').addEventListener('click', () => { $('shareOverlay').hidden = true; });
         window.addEventListener('resize', () => { if (!$('shareOverlay').hidden) fitPoster(); });
@@ -435,7 +462,7 @@
                 clone.remove();
             }
         }
-        const fileName = () => `peringkat-${state.level}-${weekKey()}.png`.toLowerCase();
+        const fileName = () => `peringkat-${state.boardLevel || 'semua-jenjang'}-${weekKey()}.png`.toLowerCase();
 
         $('downloadBtn').addEventListener('click', async (e) => {
             e.target.disabled = true;
@@ -452,22 +479,6 @@
             }
         });
 
-        $('nativeShareBtn').addEventListener('click', async (e) => {
-            e.target.disabled = true;
-            try {
-                const blob = await posterBlob();
-                const file = new File([blob], fileName(), { type: 'image/png' });
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Papan Peringkat ExtraCourse', text: `Peringkat ${levelLabel(state.level)} · ${weekRangeLabel(weekKey())}` });
-                } else {
-                    alert('Perangkat ini tidak mendukung berbagi gambar langsung. Gunakan tombol Unduh gambar.');
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') alert(err.message);
-            } finally {
-                e.target.disabled = false;
-            }
-        });
     </script>
 </body>
 </html>

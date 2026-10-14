@@ -109,11 +109,11 @@ service cloud.firestore {
         && (!('level' in request.resource.data)
             || request.resource.data.level == myProfile().get('level', null));
 
-      // Siswa melihat skornya sendiri, dan skor siswa lain di JENJANG YANG SAMA
-      // (untuk papan peringkat). Admin melihat semua.
+      // Siswa melihat skornya sendiri, dan skor siswa lain (untuk papan
+      // peringkat semua jenjang & per jenjang). Admin melihat semua.
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.userId == request.auth.uid)
-        || (isSignedIn() && resource.data.level == myProfile().get('level', 'TIDAK-ADA'));
+        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
 
       // Skor tidak bisa diubah siswa; admin boleh menghapus.
       allow update, delete: if isAdmin();

@@ -468,7 +468,7 @@
                         loginType: "email",
                         createdAt: serverTimestamp(),
                     });
-                    setStatus(`Berhasil! Selamat datang di jenjang ${levelLabel(codeData.level)} 🎉`, "ok");
+                    setStatus(`Berhasil! Selamat datang di jenjang ${levelLabel(codeData.level)}.`, "ok");
                     setTimeout(() => { window.location.href = "user-dashboard.html"; }, 1500);
                 } catch (error) {
                     console.error("Sign up error:", error);
