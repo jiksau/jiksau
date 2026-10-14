@@ -387,7 +387,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor } from "./ec-common.js";
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -471,13 +471,11 @@
         async function loadWeekRank(uid, level) {
             try {
                 const snap = await getDocs(query(collection(db, "gameScores"), where("week", "==", weekKeyFor())));
-                const all = {}, same = {};
-                snap.docs.forEach((d) => {
-                    const s = d.data();
-                    const p = Number(s.correct) || 0;
-                    all[s.userId] = (all[s.userId] || 0) + p;
-                    if (level && s.level === level) same[s.userId] = (same[s.userId] || 0) + p;
-                });
+                // Hanya paket soal guru, hasil terbaik per paket (sama dengan papan peringkat)
+                const scores = snap.docs.map((d) => d.data());
+                const toMap = (list) => Object.fromEntries(weeklyPoints(list).map((r) => [r.uid, r.points]));
+                const all = toMap(scores);
+                const same = level ? toMap(scores.filter((s) => s.level === level)) : {};
                 const rankOf = (map) => {
                     const mine = map[uid] || 0;
                     const players = Object.values(map).filter((p) => p > 0);
@@ -490,7 +488,7 @@
                     const levelLine = level ? `<br>#${l.rank} dari ${l.total} siswa ${escapeHtml(levelLabel(level))}` : '';
                     box.innerHTML = `<div class="big">#${g.rank}</div><div class="txt"><b>Peringkatmu minggu ini</b> · ${g.mine} poin<br>#${g.rank} dari ${g.total} siswa (semua jenjang)${levelLine}</div><span class="go">Lihat →</span>`;
                 } else {
-                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><br>1 jawaban benar = 1 poin. Ayo masuk papan peringkat!</div><span class="go">Lihat →</span>`;
+                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><br>Mainkan paket soal dari guru: 1 jawaban benar = 1 poin.</div><span class="go">Lihat →</span>`;
                 }
                 box.hidden = false;
             } catch (e) {
@@ -566,6 +564,7 @@
                         <div class="game-row">
                             <div>
                                 <div class="game-name">${escapeHtml(i.gameName)}</div>
+                                <div class="game-time">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : 'Latihan bebas'}</div>
                                 <div class="game-time">${when}</div>
                             </div>
                             <div class="game-result ${scoreColor(i.percent)}">${describeScore(i)}</div>

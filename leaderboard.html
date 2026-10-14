@@ -238,7 +238,7 @@
         import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
-            weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName
+            weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints
         } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
@@ -312,18 +312,10 @@
         const boardLabel = () => state.boardLevel ? `Jenjang ${levelLabel(state.boardLevel)}` : 'Semua Jenjang';
 
         // ---------- Data ----------
+        // Poin: hanya paket soal guru, hasil terbaik per paket (lihat weeklyPoints di ec-common.js)
         function buildRanking(docs) {
-            const by = {};
-            docs.forEach((d) => {
-                const s = d.data();
-                const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, points: 0, games: 0, last: 0 };
-                r.points += Number(s.correct) || 0;
-                r.games += 1;
-                const t = s.timestamp?.toMillis?.() ?? 0;
-                if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }
-            });
-            const list = Object.values(by).filter((r) => r.points > 0)
-                .sort((a, b) => b.points - a.points || b.games - a.games || shortName(a.name).localeCompare(shortName(b.name), 'id'));
+            const list = weeklyPoints(docs.map((d) => d.data())).filter((r) => r.points > 0)
+                .sort((a, b) => b.points - a.points || b.packs - a.packs || shortName(a.name).localeCompare(shortName(b.name), 'id'));
             // Poin sama = peringkat sama (1, 2, 2, 4, ...)
             list.forEach((r, i) => { r.rank = i > 0 && r.points === list[i - 1].points ? list[i - 1].rank : i + 1; });
             return list;
@@ -362,7 +354,7 @@
             } else {
                 parts.push('hasil akhir');
             }
-            parts.push('1 jawaban benar = 1 poin');
+            parts.push('1 jawaban benar = 1 poin, dari paket soal guru (hasil terbaik per paket)');
             $('meta').textContent = parts.join(' · ');
         }
 
@@ -378,7 +370,7 @@
             if (!state.isAdmin) {
                 if (!me) {
                     $('myRank').innerHTML = `<div class="my-rank empty"><div class="txt">${isThis
-                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Selesaikan satu game untuk masuk papan peringkat. <a href="gamelist.html">Main sekarang →</a>'
+                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Mainkan paket soal dari guru untuk masuk papan peringkat. <a href="gamelist.html">Main sekarang →</a>'
                         : '<b>Kamu tidak bermain minggu lalu.</b><br>Ayo kejar peringkat di minggu ini.'}</div></div>`;
                 } else {
                     let tip;
@@ -387,7 +379,7 @@
                     else if (me.rank === 1) tip = list.length > 1 ? 'Kamu juara sementara. Pertahankan!' : 'Kamu satu-satunya yang punya poin. Pertahankan!';
                     else if (me.rank > TOP_N) tip = `<b>${list[TOP_N - 1].points - me.points + 1} poin lagi</b> untuk masuk 10 besar!`;
                     else tip = `<b>${above.points - me.points + 1} poin lagi</b> untuk menyalip ${escapeHtml(shortName(above.name))}!`;
-                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.games} kali main · dari ${list.length} siswa (${state.boardLevel ? `jenjang ${escapeHtml(levelLabel(state.boardLevel))}` : 'semua jenjang'})<br>${tip}</div></div>`;
+                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.packs} paket · dari ${list.length} siswa (${state.boardLevel ? `jenjang ${escapeHtml(levelLabel(state.boardLevel))}` : 'semua jenjang'})<br>${tip}</div></div>`;
                 }
             }
 
@@ -407,7 +399,7 @@
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}${lvTag(r)}<small>${r.games} kali main</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}${lvTag(r)}<small>${r.packs} paket</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;

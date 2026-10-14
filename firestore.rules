@@ -84,12 +84,50 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ---------- Paket soal: questionPacks/{id} ----------
+    // Bank soal dari guru. Siswa yang profilnya aktif boleh membaca paket
+    // yang AKTIF (game menampilkan paket jenjangnya + "Semua jenjang").
+    // Batas jenjang ditegakkan saat skor disimpan (lihat isValidPackScore):
+    // paket jenjang lain tidak bisa menghasilkan poin.
+    // Hanya admin yang bisa membuat, mengubah, atau menghapus paket.
+    match /questionPacks/{packId} {
+      allow read: if isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && resource.data.active == true);
+
+      allow create, update: if isAdmin()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.type in ['kosakata', 'verb', 'kalimat']
+        && (request.resource.data.level == 'SEMUA' || isValidLevel(request.resource.data.level))
+        && request.resource.data.active is bool
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 200
+        && request.resource.data.itemCount == request.resource.data.items.size();
+
+      allow delete: if isAdmin();
+    }
+
     // ---------- Skor game: gameScores/{id} ----------
     // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
     // Hanya siswa yang profilnya masih ada (belum dihapus admin).
     match /gameScores/{scoreId} {
       function myProfile() {
         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      }
+
+      // Skor dari paket soal guru (yang dihitung di papan peringkat):
+      // paketnya harus ada, aktif, sesuai jenjang siswa, dan jumlah soal
+      // harus sama persis dengan isi paket (tidak bisa ditambah-tambah).
+      function isValidPackScore() {
+        let pack = get(/databases/$(database)/documents/questionPacks/$(request.resource.data.packId)).data;
+        return request.resource.data.packId is string
+          && pack.active == true
+          && (pack.level == 'SEMUA' || pack.level == myProfile().get('level', null))
+          && request.resource.data.total == pack.itemCount;
       }
 
       allow create: if isSignedIn()
@@ -107,7 +145,10 @@ service cloud.firestore {
         && request.resource.data.week.size() == 10
         // Jenjang di skor harus sama dengan jenjang di profil siswa
         && (!('level' in request.resource.data)
-            || request.resource.data.level == myProfile().get('level', null));
+            || request.resource.data.level == myProfile().get('level', null))
+        // Skor latihan bebas (tanpa paket) tetap boleh disimpan, tetapi
+        // tidak dihitung di papan peringkat.
+        && (!('packId' in request.resource.data) || isValidPackScore());
 
       // Siswa melihat skornya sendiri, dan skor siswa lain (untuk papan
       // peringkat semua jenjang & per jenjang). Admin melihat semua.

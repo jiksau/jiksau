@@ -167,6 +167,18 @@
         .stat span { font-size: 0.8rem; color: var(--muted); }
         .note { font-size: 0.82rem; color: var(--muted); background: #f9fafb; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
 
+        /* Paket soal */
+        .pack-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; }
+        textarea.pack-text {
+            display: block; width: 100%; min-height: 220px; margin-top: 4px; padding: 10px;
+            border: 1px solid #d1d5db; border-radius: 8px; resize: vertical;
+            font: 0.92rem/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--text);
+        }
+        .pack-check { font-size: 0.85rem; margin-top: 8px; color: var(--muted); }
+        .pack-check b { color: var(--text); }
+        .pack-errors { margin: 6px 0 0; padding-left: 18px; color: var(--red); font-size: 0.82rem; }
+        .pack-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
         @media (max-width: 960px) {
             .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .field-btn { grid-column: 1 / -1; }
@@ -176,6 +188,7 @@
         /* Tabel menjadi kartu di layar HP */
         @media (max-width: 680px) {
             .form-grid { grid-template-columns: 1fr; }
+            .pack-grid { grid-template-columns: 1fr; }
             .field-label { white-space: normal; }
             .actions { justify-content: flex-end; flex-wrap: wrap; }
             header.topbar { padding: 12px 16px; }
@@ -215,6 +228,7 @@
     <nav class="tabs">
         <button data-panel="students" class="active">Siswa</button>
         <button data-panel="codes">Kode Kelas</button>
+        <button data-panel="packs">Paket Soal</button>
         <button data-panel="scores">Skor Game</button>
     </nav>
 
@@ -319,6 +333,59 @@
             </div>
         </section>
 
+        <!-- ================= PAKET SOAL ================= -->
+        <section class="panel" id="panel-packs">
+            <div class="card" id="packFormCard">
+                <h2 id="packFormTitle">Buat Paket Soal</h2>
+                <p class="desc">Soal dari guru untuk dimainkan siswa. <b>Hanya permainan dengan paket soal yang menambah poin di papan peringkat</b>; jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung hanya hasil terbaiknya.</p>
+                <form id="packForm" autocomplete="off">
+                    <div class="pack-grid">
+                        <label class="field"><span class="field-label">Judul paket</span>
+                            <input type="text" id="packTitle" maxlength="80" placeholder="contoh: Buah dan Hewan" required>
+                            <small>Terlihat oleh siswa</small>
+                        </label>
+                        <label class="field"><span class="field-label">Jenis soal</span>
+                            <select id="packType"></select>
+                            <small id="packTypeGames">&nbsp;</small>
+                        </label>
+                        <label class="field"><span class="field-label">Untuk jenjang</span>
+                            <select id="packLevel"></select>
+                            <small>&nbsp;</small>
+                        </label>
+                    </div>
+                    <label class="field" style="margin-top:6px"><span class="field-label">Daftar soal</span>
+                        <small id="packHint" style="margin:2px 0 0"></small>
+                        <textarea id="packText" class="pack-text" spellcheck="false"></textarea>
+                    </label>
+                    <div class="pack-check" id="packCheck"></div>
+                    <ul class="pack-errors" id="packErrors"></ul>
+                    <div class="pack-buttons">
+                        <button class="btn" type="submit" id="packSubmitBtn">Simpan Paket</button>
+                        <button class="btn ghost" type="button" id="packCancelBtn" hidden>Batal ubah</button>
+                    </div>
+                </form>
+                <div class="form-msg" id="packMsg"></div>
+            </div>
+            <div class="card">
+                <h2>Daftar Paket Soal</h2>
+                <p class="desc">Paket nonaktif tidak terlihat oleh siswa dan tidak bisa dimainkan untuk poin. Skor yang sudah tersimpan tetap ada.</p>
+                <table class="responsive">
+                    <thead>
+                        <tr>
+                            <th>Judul</th>
+                            <th>Jenis</th>
+                            <th>Jenjang</th>
+                            <th>Soal</th>
+                            <th>Status</th>
+                            <th class="col-actions">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="packsBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody>
+                </table>
+                <p class="note">Jika jumlah soal sebuah paket diubah, siswa yang sedang membuka paket itu perlu memuat ulang halaman game sebelum skornya bisa tersimpan.</p>
+            </div>
+        </section>
+
         <!-- ================= SKOR GAME ================= -->
         <section class="panel" id="panel-scores">
             <div class="card">
@@ -369,13 +436,14 @@
             setPersistence, inMemoryPersistence
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
-            getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc,
+            getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
             query, where, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
             loginIdToEmail, usernameFromEmail, CLASS_CODE_PATTERN, normalizeClassCode,
-            escapeHtml, friendlyAuthError
+            escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
+            parsePackText, packToText
         } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
@@ -404,6 +472,7 @@
                 document.querySelectorAll('nav.tabs button').forEach((b) => b.classList.toggle('active', b === btn));
                 document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + btn.dataset.panel));
                 if (btn.dataset.panel === 'scores') startScores();
+                if (btn.dataset.panel === 'packs') startPacks();
             });
         });
 
@@ -686,6 +755,141 @@
             }
         });
 
+        // ================= PAKET SOAL =================
+        let packs = [];
+        let packsStarted = false;
+        let editingPackId = null;
+
+        $('packType').innerHTML = PACK_TYPES.map((t) => `<option value="${t.value}">${t.label}</option>`).join('');
+        $('packLevel').innerHTML = `<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>` + levelOptions(false);
+
+        function startPacks() {
+            if (packsStarted) return;
+            packsStarted = true;
+            updatePackHelp();
+            onSnapshot(collection(db, 'questionPacks'), (snap) => {
+                packs = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => String(a.title).localeCompare(String(b.title), 'id', { numeric: true }));
+                renderPacks();
+            }, (e) => {
+                console.error(e);
+                packsStarted = false;
+                const hint = e.code === 'permission-denied' ? ' Pastikan aturan keamanan terbaru (firestore.rules) sudah dipasang di Firebase Console.' : '';
+                $('packsBody').innerHTML = `<tr><td colspan="6" class="empty">Gagal memuat paket soal: ${escapeHtml(e.message)}.${hint}</td></tr>`;
+            });
+        }
+
+        function updatePackHelp() {
+            const t = PACK_TYPES.find((x) => x.value === $('packType').value);
+            $('packHint').textContent = t.hint;
+            $('packText').placeholder = 'Contoh:\n' + t.example;
+            $('packTypeGames').textContent = t.games ? `Dipakai di: ${t.games}` : 'Belum ada game yang memakai jenis ini';
+            checkPackText();
+        }
+
+        function checkPackText() {
+            const { items, errors } = parsePackText($('packType').value, $('packText').value);
+            $('packCheck').innerHTML = items.length || errors.length
+                ? `<b>${items.length} soal</b> siap disimpan` + (errors.length ? ` · <span style="color:var(--red)">${errors.length} perlu diperbaiki</span>` : '')
+                : '';
+            $('packErrors').innerHTML = errors.slice(0, 8).map((e) => `<li>${escapeHtml(e)}</li>`).join('')
+                + (errors.length > 8 ? `<li>...dan ${errors.length - 8} lainnya</li>` : '');
+            return { items, errors };
+        }
+
+        $('packType').addEventListener('change', updatePackHelp);
+        $('packText').addEventListener('input', checkPackText);
+
+        function resetPackForm() {
+            editingPackId = null;
+            $('packForm').reset();
+            $('packFormTitle').textContent = 'Buat Paket Soal';
+            $('packSubmitBtn').textContent = 'Simpan Paket';
+            $('packCancelBtn').hidden = true;
+            $('packType').disabled = false;
+            updatePackHelp();
+        }
+        $('packCancelBtn').addEventListener('click', () => { resetPackForm(); setMsg('packMsg', '', true); });
+
+        $('packForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = $('packTitle').value.trim();
+            const type = $('packType').value;
+            const level = $('packLevel').value;
+            const { items, errors } = checkPackText();
+            if (!title) return setMsg('packMsg', 'Judul paket wajib diisi.', false);
+            if (errors.length) return setMsg('packMsg', 'Masih ada baris yang perlu diperbaiki (lihat daftar merah di atas).', false);
+            if (items.length === 0) return setMsg('packMsg', 'Isi minimal satu soal.', false);
+
+            $('packSubmitBtn').disabled = true;
+            try {
+                const data = { title, type, level, items, itemCount: items.length, updatedAt: serverTimestamp() };
+                if (editingPackId) {
+                    await updateDoc(doc(db, 'questionPacks', editingPackId), data);
+                    setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).`, true);
+                } else {
+                    await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp() });
+                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal) dan langsung bisa dimainkan siswa ${packLevelLabel(level)}.`, true);
+                }
+                resetPackForm();
+            } catch (err) {
+                console.error(err);
+                setMsg('packMsg', 'Gagal menyimpan paket: ' + err.message, false);
+            } finally {
+                $('packSubmitBtn').disabled = false;
+            }
+        });
+
+        function renderPacks() {
+            if (packs.length === 0) {
+                $('packsBody').innerHTML = '<tr><td colspan="6" class="empty">Belum ada paket soal. Buat satu di atas.</td></tr>';
+                return;
+            }
+            $('packsBody').innerHTML = packs.map((p) => `
+                <tr>
+                    <td data-label="Judul"><b>${escapeHtml(p.title)}</b></td>
+                    <td data-label="Jenis">${escapeHtml(packTypeLabel(p.type).split(' (')[0])}</td>
+                    <td data-label="Jenjang">${escapeHtml(packLevelLabel(p.level))}</td>
+                    <td data-label="Soal">${p.itemCount ?? (p.items || []).length}</td>
+                    <td data-label="Status"><span class="pill ${p.active ? 'on' : 'off'}">${p.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Aksi" class="col-actions"><span class="actions">
+                        <button class="btn ghost" data-edit-pack="${p.id}">Ubah</button>
+                        <button class="btn ghost" data-toggle-pack="${p.id}">${p.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                        <button class="btn danger" data-delete-pack="${p.id}">Hapus</button>
+                    </span></td>
+                </tr>`).join('');
+        }
+
+        $('packsBody').addEventListener('click', async (e) => {
+            const { editPack, togglePack, deletePack } = e.target.dataset;
+            const p = packs.find((x) => x.id === (editPack || togglePack || deletePack));
+            if (!p) return;
+            try {
+                if (editPack) {
+                    editingPackId = p.id;
+                    $('packTitle').value = p.title || '';
+                    $('packType').value = p.type;
+                    $('packType').disabled = true; // jenis tidak diubah agar skor lama tetap masuk akal
+                    $('packLevel').value = p.level;
+                    $('packText').value = packToText(p.type, p.items);
+                    $('packFormTitle').textContent = 'Ubah Paket Soal';
+                    $('packSubmitBtn').textContent = 'Simpan Perubahan';
+                    $('packCancelBtn').hidden = false;
+                    updatePackHelp();
+                    setMsg('packMsg', '', true);
+                    $('packFormCard').scrollIntoView({ behavior: 'smooth' });
+                } else if (togglePack) {
+                    await updateDoc(doc(db, 'questionPacks', p.id), { active: !p.active, updatedAt: serverTimestamp() });
+                } else if (deletePack) {
+                    if (!confirm(`Hapus paket "${p.title}"?\n\nSkor yang sudah tersimpan tetap ada. Jika hanya ingin menyembunyikan sementara, pilih Nonaktifkan.`)) return;
+                    await deleteDoc(doc(db, 'questionPacks', p.id));
+                    if (editingPackId === p.id) resetPackForm();
+                }
+            } catch (err) {
+                alert('Gagal: ' + err.message);
+            }
+        });
+
         // ================= SKOR GAME =================
         let scores = [];
         let scoresStarted = false;
@@ -758,7 +962,7 @@
             $('gameScoresBody').innerHTML = rows.slice(0, 200).map((i) => `<tr>
                     <td data-label="Waktu">${fmtDate(i.timestamp)}</td>
                     <td data-label="Nama">${escapeHtml(by[i.userId]?.name || i.userName)}</td>
-                    <td data-label="Game">${escapeHtml(i.gameName)}</td>
+                    <td data-label="Game"><span>${escapeHtml(i.gameName)}<br><span class="sub">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : 'Latihan bebas (tanpa poin)'}</span></span></td>
                     <td data-label="Hasil"><span class="${scoreClass(i.percent)}">${scoreText(i)}</span></td>
                     <td data-label="Aksi"><button class="btn danger" data-delete-score="${i.id}">Hapus</button></td>
                 </tr>`).join('');

@@ -423,6 +423,27 @@
         }
 
         /* Mobile Responsive */
+        /* Sumber soal: paket guru / kata sendiri */
+        .source-section { margin-bottom: 20px; text-align: left; }
+        .word-stats { white-space: nowrap; }
+        .source-tabs { display: flex; gap: 6px; background: rgba(2, 84, 123, 0.35); padding: 5px; border-radius: 12px; }
+        .source-tabs button { flex: 1; padding: 10px 12px; background: transparent; box-shadow: none; font-size: 0.95rem; }
+        .source-tabs button:hover { transform: none; box-shadow: none; background: rgba(255, 255, 255, 0.1); }
+        .source-tabs button.active { background: #fff; color: #0c4a6e; }
+        .source-note { margin: 12px 2px 10px; font-size: 0.9rem; color: #e0f2fe; line-height: 1.45; }
+        .pack-list { display: grid; gap: 8px; }
+        .pack-item {
+            display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;
+            padding: 12px 14px; text-align: left; background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.15); box-shadow: none; border-radius: 12px;
+        }
+        .pack-item:hover { transform: none; background: rgba(255, 255, 255, 0.2); box-shadow: none; }
+        .pack-item.selected { border-color: #fff; background: rgba(255, 255, 255, 0.25); }
+        .pack-item .pack-title { font-weight: 700; }
+        .pack-item .pack-meta { font-size: 0.82rem; font-weight: 400; opacity: 0.85; white-space: nowrap; }
+        .pack-empty { padding: 14px; border-radius: 12px; background: rgba(2, 84, 123, 0.3); font-size: 0.92rem; line-height: 1.5; }
+        .pack-empty a { color: #fff; font-weight: 700; }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -657,7 +678,19 @@
         <h1>📚 Vocabulary Memorization</h1>
         <h2>Master your vocabulary with interactive quizzes!</h2>
 
-        <div class="input-section">
+        <div class="source-section">
+            <div class="source-tabs" role="tablist">
+                <button type="button" id="srcPackBtn" class="active" onclick="setSource('pack')">Paket dari Guru</button>
+                <button type="button" id="srcOwnBtn" onclick="setSource('own')">Kata Sendiri</button>
+            </div>
+            <div id="packSection">
+                <p class="source-note">Pilih paket soal dari guru. Hanya permainan dengan paket yang menambah poin di papan peringkat, dan setiap minggu yang dihitung adalah hasil terbaikmu per paket.</p>
+                <div id="packList" class="pack-list"><div class="pack-empty">Memuat paket soal...</div></div>
+            </div>
+            <p id="ownNote" class="source-note hidden">Latihan bebas dengan kata pilihanmu sendiri. Skornya tersimpan sebagai latihan, tetapi tidak menambah poin di papan peringkat.</p>
+        </div>
+
+        <div class="input-section hidden" id="ownInputSection">
             <div class="input-row">
                 <div class="input-group">
                     <label for="wordInput">📝 English Word</label>
@@ -677,7 +710,7 @@
 
         <div id="wordListContainer" class="word-list-container hidden">
             <div class="word-list-header">
-                <h3>Your Vocabulary List</h3>
+                <h3 id="wordListTitle">Your Vocabulary List</h3>
                 <div class="word-stats" id="wordStats">0 words</div>
             </div>
             <div id="wordItems" class="word-items"></div>
@@ -764,6 +797,13 @@
         let answeredCount = 0;
         let quizMode = 'normal';
         let correctAnswers = [];
+
+        // Sumber soal: 'pack' = paket dari guru (berpoin), 'own' = kata sendiri (tanpa poin)
+        let sourceMode = 'pack';
+        let activePack = null;   // paket yang sedang dipilih
+        let lastPack = null;     // diingat saat siswa pindah ke tab Kata Sendiri
+        let ownWords = [];       // kata sendiri disimpan saat siswa membuka tab paket
+        let availablePacks = [];
         
         // Modal state
         let pendingAction = null;
@@ -852,7 +892,10 @@
             }
 
             wordListContainer.classList.remove('hidden');
-            wordStats.textContent = `${words.length} word${words.length > 1 ? 's' : ''}`;
+            const readOnly = !!activePack;
+            document.getElementById('wordListTitle').textContent = readOnly ? `Paket: ${activePack.title}` : 'Your Vocabulary List';
+            clearAllBtn.classList.toggle('hidden', readOnly);
+            wordStats.textContent = readOnly ? `${words.length} kata` : `${words.length} word${words.length > 1 ? 's' : ''}`;
 
             wordItems.innerHTML = '';
             words.forEach((item, index) => {
@@ -863,10 +906,10 @@
                         <span class="word-english">${escapeHtml(item.word)}</span>
                         <span class="word-translation">→ ${escapeHtml(item.translation)}</span>
                     </div>
-                    <div class="word-actions">
+                    ${readOnly ? '' : `<div class="word-actions">
                         <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
                         <button onclick="showDeleteConfirmation(${index})" class="warning" data-tooltip="Delete">🗑️</button>
-                    </div>
+                    </div>`}
                 `;
                 wordItems.appendChild(wordItem);
             });
@@ -1008,6 +1051,81 @@
             words = [...words, ...newWords];
             updateWordList();
             showMessage(`Added ${newWords.length} sample words!`, 'success');
+        }
+
+        // ============= SUMBER SOAL (PAKET GURU / KATA SENDIRI) =============
+
+        function setSource(mode) {
+            if (mode === sourceMode) return;
+            if (mode === 'pack') {
+                ownWords = words;
+                activePack = lastPack;
+                words = activePack ? packToWords(activePack) : [];
+                renderPackList();
+            } else {
+                words = ownWords;
+                lastPack = activePack;
+                activePack = null;
+            }
+            sourceMode = mode;
+            document.getElementById('srcPackBtn').classList.toggle('active', mode === 'pack');
+            document.getElementById('srcOwnBtn').classList.toggle('active', mode === 'own');
+            document.getElementById('packSection').classList.toggle('hidden', mode !== 'pack');
+            document.getElementById('ownNote').classList.toggle('hidden', mode !== 'own');
+            document.getElementById('ownInputSection').classList.toggle('hidden', mode !== 'own');
+            updateWordList();
+        }
+
+        function packToWords(pack) {
+            return (pack.items || []).map((it, i) => ({ word: it.q, translation: it.a, id: i }));
+        }
+
+        function selectPack(id) {
+            activePack = availablePacks.find((p) => p.id === id) || null;
+            words = activePack ? packToWords(activePack) : [];
+            renderPackList();
+            updateWordList();
+        }
+
+        // Dipanggil dari skrip modul di bawah setelah paket dimuat.
+        let packStatus = 'loading';
+        function showPackResult(result) {
+            packStatus = result.status;
+            availablePacks = result.packs || [];
+            renderPackList();
+        }
+
+        function renderPackList() {
+            const box = document.getElementById('packList');
+            const messages = {
+                loading: 'Memuat paket soal...',
+                login: 'Masuk dulu untuk memakai paket soal dari guru. <a href="index.html">Masuk di sini</a>. Tanpa masuk, kamu tetap bisa latihan di tab Kata Sendiri.',
+                inactive: 'Akun ini tidak aktif. Hubungi guru atau admin.',
+                error: 'Paket soal gagal dimuat. Periksa internet lalu muat ulang halaman.',
+                empty: 'Belum ada paket soal untuk jenjangmu. Sementara itu, kamu bisa latihan di tab Kata Sendiri.',
+            };
+            const status = packStatus === 'ok' && !availablePacks.length ? 'empty' : packStatus;
+            if (status !== 'ok') {
+                box.innerHTML = `<div class="pack-empty">${messages[status] || messages.error}</div>`;
+                return;
+            }
+            box.innerHTML = availablePacks.map((p) => `
+                <button type="button" class="pack-item ${activePack?.id === p.id ? 'selected' : ''}" onclick="selectPack('${p.id}')">
+                    <span class="pack-title">${escapeHtml(p.title)}</span>
+                    <span class="pack-meta">${p.itemCount} kata</span>
+                </button>`).join('');
+        }
+
+        // Cocokkan jawaban: abaikan huruf besar/kecil & spasi berlebih.
+        // Jika kunci berisi beberapa jawaban dipisah "/", salah satunya cukup.
+        function normalizeAnswer(text) {
+            return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+        function isAnswerCorrect(userAnswer, key) {
+            const answer = normalizeAnswer(userAnswer);
+            if (!answer) return false;
+            return answer === normalizeAnswer(key)
+                || key.split('/').map(normalizeAnswer).filter(Boolean).includes(answer);
         }
 
         // ============= QUIZ FUNCTIONS =============
@@ -1158,20 +1276,19 @@
                 
                 if (!input || !feedback) return;
                 
-                const userAnswer = input.value.trim().toLowerCase();
                 const isReverse = quizMode === 'reverse';
-                const correctAnswer = isReverse ? item.word.toLowerCase() : item.translation.toLowerCase();
+                const correctAnswer = isReverse ? item.word : item.translation;
                 
                 // Remove existing classes
                 quizItem.classList.remove('correct-bg', 'incorrect-bg');
                 
-                if (userAnswer === correctAnswer) {
+                if (isAnswerCorrect(input.value, correctAnswer)) {
                     feedback.innerHTML = '✅ Correct!';
                     feedback.className = 'quiz-feedback correct';
                     quizItem.classList.add('correct-bg');
                     correctCount++;
                 } else {
-                    feedback.innerHTML = `❌ Incorrect! Correct answer: "${correctAnswer}"`;
+                    feedback.innerHTML = `❌ Incorrect! Correct answer: "${escapeHtml(correctAnswer)}"`;
                     feedback.className = 'quiz-feedback incorrect';
                     quizItem.classList.add('incorrect-bg');
                 }
@@ -1185,7 +1302,10 @@
             updateScore();
 
             // Simpan skor ke akun siswa
-            window.saveGameScore?.({ gameId: "kosakata-2", gameName: "Vocabulary Memorize", correct: correctCount, total: quizWords.length, mode: quizMode });
+            window.saveGameScore?.({
+                gameId: "kosakata-2", gameName: "Vocabulary Memorize", correct: correctCount, total: quizWords.length, mode: quizMode,
+                ...(activePack ? { packId: activePack.id, packName: activePack.title } : {}),
+            });
 
             // Show feedback
             const percentage = (correctCount / quizWords.length * 100).toFixed(1);
@@ -1270,7 +1390,7 @@
         // Start Quiz
         function startQuiz() {
             if (words.length === 0) {
-                showMessage('Please add some words first!', 'warning');
+                showMessage(sourceMode === 'pack' ? 'Pilih paket soal dulu, atau buka tab Kata Sendiri.' : 'Please add some words first!', 'warning');
                 return;
             }
 
@@ -1313,5 +1433,10 @@
         };
     </script>
     <script type="module" src="game-scores.js"></script>
+    <script type="module">
+        // Muat paket soal kosakata dari guru (lihat game-scores.js)
+        const result = await window.loadQuestionPacks("kosakata");
+        showPackResult(result);
+    </script>
 </body>
 </html>

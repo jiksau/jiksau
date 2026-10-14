@@ -120,6 +120,106 @@ export function weekRangeLabel(key) {
     return `${left}–${sameMonth ? "" : " "}${end.getUTCDate()} ${month(end)} ${end.getUTCFullYear()}`;
 }
 
+// ---------- Paket soal (bank soal dari guru) ----------
+// Disimpan di koleksi questionPacks. Hanya permainan dengan paket soal
+// yang menambah poin di papan peringkat.
+export const PACK_ALL_LEVELS = "SEMUA";
+export const PACK_MAX_ITEMS = 200;
+
+export const PACK_TYPES = [
+    {
+        value: "kosakata", label: "Kosakata (kata = arti)",
+        hint: "Satu pasang per baris: kata = arti. Jika ada beberapa jawaban benar, pisahkan dengan / (contoh: big = besar / luas).",
+        example: "apple = apel\nbook = buku\nbig = besar / luas",
+        games: "Kosakata 2",
+    },
+    {
+        value: "verb", label: "Kata kerja (V1, V2, V3 = arti)",
+        hint: "Satu kata kerja per baris: V1, V2, V3 = arti.",
+        example: "eat, ate, eaten = makan\ngo, went, gone = pergi",
+        games: "",
+    },
+    {
+        value: "kalimat", label: "Kalimat (untuk susun kalimat)",
+        hint: "Satu kalimat per baris, 2–20 kata.",
+        example: "I go to school every day.\nShe is reading a book.",
+        games: "",
+    },
+];
+
+export function packTypeLabel(value) {
+    return PACK_TYPES.find((t) => t.value === value)?.label || value;
+}
+
+export function packLevelLabel(value) {
+    return value === PACK_ALL_LEVELS ? "Semua jenjang" : levelLabel(value);
+}
+
+// Mengubah teks yang ditempel admin menjadi daftar soal.
+// Hasil: { items: [...], errors: ["Baris 3: ..."] }
+export function parsePackText(type, text) {
+    const items = [];
+    const errors = [];
+    const clean = (s) => String(s || "").trim().replace(/\s+/g, " ");
+    String(text || "").split(/\r?\n/).forEach((raw, i) => {
+        const line = clean(raw);
+        if (!line) return;
+        const at = `Baris ${i + 1}`;
+        if (type === "kalimat") {
+            const words = line.split(" ").length;
+            if (words < 2 || words > 20) errors.push(`${at}: kalimat harus 2–20 kata.`);
+            else if (line.length > 200) errors.push(`${at}: kalimat terlalu panjang (maks. 200 huruf).`);
+            else items.push({ text: line });
+            return;
+        }
+        const eq = line.indexOf("=");
+        if (eq < 0) { errors.push(`${at}: tanda = tidak ditemukan.`); return; }
+        const left = clean(line.slice(0, eq));
+        const right = clean(line.slice(eq + 1));
+        if (!left || !right) { errors.push(`${at}: sisi kiri dan kanan tanda = harus diisi.`); return; }
+        if (left.length > 80 || right.length > 80) { errors.push(`${at}: terlalu panjang (maks. 80 huruf per sisi).`); return; }
+        if (type === "verb") {
+            const forms = left.split(",").map(clean);
+            if (forms.length !== 3 || forms.some((f) => !f)) { errors.push(`${at}: tulis tiga bentuk dipisah koma, contoh: eat, ate, eaten = makan.`); return; }
+            items.push({ v1: forms[0], v2: forms[1], v3: forms[2], arti: right });
+        } else {
+            items.push({ q: left, a: right });
+        }
+    });
+    if (items.length > PACK_MAX_ITEMS) errors.push(`Maksimal ${PACK_MAX_ITEMS} soal per paket (sekarang ${items.length}).`);
+    return { items, errors };
+}
+
+// Kebalikan parsePackText, untuk mengubah paket yang sudah ada.
+export function packToText(type, items) {
+    return (items || []).map((it) => type === "kalimat" ? it.text
+        : type === "verb" ? `${it.v1}, ${it.v2}, ${it.v3} = ${it.arti}`
+        : `${it.q} = ${it.a}`).join("\n");
+}
+
+// ---------- Hitung poin mingguan ----------
+// Hanya skor dari paket soal guru (punya packId) yang dihitung.
+// Jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung
+// hanya hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.
+// scores: array data dokumen gameScores. Hasil: array per siswa.
+export function weeklyPoints(scores) {
+    const by = {};
+    scores.forEach((s) => {
+        if (!s || !s.packId) return;
+        const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, best: {}, points: 0, games: 0, last: 0 };
+        r.best[s.packId] = Math.max(r.best[s.packId] || 0, Number(s.correct) || 0);
+        r.games += 1;
+        const t = s.timestamp?.toMillis?.() ?? Date.now();
+        if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }
+    });
+    return Object.values(by).map((r) => {
+        r.points = Object.values(r.best).reduce((a, b) => a + b, 0);
+        r.packs = Object.keys(r.best).length;
+        delete r.best;
+        return r;
+    });
+}
+
 // "Aisyah Putri Ramadhani" -> "Aisyah P." (privasi di papan peringkat)
 export function shortName(name) {
     const parts = String(name || "Siswa").trim().split(/\s+/);

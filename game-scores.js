@@ -11,14 +11,22 @@
 //           points: 950, mode: "timed",     // opsional
 //         });
 //
+//       Untuk permainan dengan paket soal guru, tambahkan juga
+//         packId: paket.id, packName: paket.title
+//       Hanya skor dengan packId yang dihitung di papan peringkat.
+//    3. Daftar paket soal untuk siswa yang sedang login:
+//         const hasil = await window.loadQuestionPacks("kosakata");
+//         // hasil.status: "ok" | "login" | "inactive" | "error"
+//         // hasil.packs: [{ id, title, type, level, items, itemCount }]
+//
 //  Skor disimpan ke koleksi "gameScores" jika siswa sedang login.
 //  Jika belum login, muncul pemberitahuan kecil dan skor tidak disimpan.
 // =====================================================================
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor } from "./ec-common.js";
+import { getFirestore, collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { firebaseConfig, weekKeyFor, PACK_ALL_LEVELS } from "./ec-common.js";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -70,21 +78,23 @@ function showToast(html, isError = false) {
     box.style.background = isError ? "#b45309" : "#15803d";
     box.innerHTML = html;
     box.style.opacity = "1";
+    box.style.pointerEvents = "auto";
     clearTimeout(box._hideTimer);
-    box._hideTimer = setTimeout(() => { box.style.opacity = "0"; }, 4500);
+    // Setelah memudar, pesan tidak boleh menghalangi tombol di bawahnya (penting di HP).
+    box._hideTimer = setTimeout(() => { box.style.opacity = "0"; box.style.pointerEvents = "none"; }, 4500);
 }
 
 // ---------- Fungsi utama ----------
 let lastSaveKey = null;
 
-window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null }) {
+window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null, packId = null, packName = null }) {
     correct = Math.round(Number(correct));
     total = Math.round(Number(total));
     if (!gameId || !Number.isFinite(total) || total <= 0 || !Number.isFinite(correct)) return;
     correct = Math.max(0, Math.min(correct, total));
 
     // Cegah simpan ganda jika fungsi "selesai" terpanggil dua kali beruntun.
-    const key = `${gameId}|${correct}|${total}|${points}`;
+    const key = `${gameId}|${correct}|${total}|${points}|${packId}`;
     if (key === lastSaveKey) return;
     lastSaveKey = key;
     setTimeout(() => { if (lastSaveKey === key) lastSaveKey = null; }, 3000);
@@ -114,12 +124,44 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     if (Number.isFinite(Number(points)) && points !== null) data.points = Math.round(Number(points));
     if (mode) data.mode = String(mode);
     if (currentLevel) data.level = currentLevel;
+    // Paket soal dari guru: hanya skor seperti ini yang dihitung di papan peringkat.
+    if (packId) {
+        data.packId = String(packId);
+        data.packName = String(packName || "Paket soal").slice(0, 80);
+    }
 
     try {
         await addDoc(collection(db, "gameScores"), data);
-        showToast(`Skor ${correct}/${total} tersimpan ke akunmu`);
+        showToast(packId
+            ? `Skor ${correct}/${total} tersimpan. Hasil terbaikmu di paket ini masuk papan peringkat.`
+            : `Skor ${correct}/${total} tersimpan sebagai latihan bebas (tidak menambah poin peringkat).`);
     } catch (e) {
         console.error("Gagal menyimpan skor:", e);
-        showToast("Skor gagal disimpan. Coba lagi nanti.", true);
+        showToast(packId && e?.code === "permission-denied"
+            ? "Skor gagal disimpan: paket soal ini sudah tidak aktif atau bukan untuk jenjangmu."
+            : "Skor gagal disimpan. Coba lagi nanti.", true);
+    }
+};
+
+// Paket soal aktif untuk jenjang siswa + paket "Semua jenjang".
+// Dua query terpisah agar sesuai aturan keamanan Firestore.
+window.loadQuestionPacks = async function (type) {
+    await authReady;
+    if (!currentUser) return { status: "login", packs: [] };
+    if (!hasProfile) return { status: "inactive", packs: [] };
+    try {
+        const levels = currentLevel ? [currentLevel, PACK_ALL_LEVELS] : [PACK_ALL_LEVELS];
+        const snaps = await Promise.all(levels.map((lvl) => getDocs(query(
+            collection(db, "questionPacks"),
+            where("active", "==", true),
+            where("level", "==", lvl),
+        ))));
+        const packs = snaps.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+            .filter((p) => !type || p.type === type)
+            .sort((a, b) => String(a.title).localeCompare(String(b.title), "id", { numeric: true }));
+        return { status: "ok", packs, level: currentLevel };
+    } catch (e) {
+        console.error("Gagal memuat paket soal:", e);
+        return { status: "error", packs: [], message: e?.message || String(e) };
     }
 };

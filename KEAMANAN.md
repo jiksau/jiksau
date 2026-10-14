@@ -10,7 +10,8 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 |---|---|---|---|---|
 | Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
-| Skor game (`gameScores`) | Nama, jenjang, game, nilai, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
+| Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, aktif/nonaktif | Membaca paket yang aktif | Semua | Tidak bisa |
+| Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
 
@@ -52,9 +53,20 @@ Data absensi, pendaftaran, kelas, dan guru tidak dipakai lagi. Untuk menghapusny
 
 Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana yang gagal.
 
+## Uji fitur paket soal (setelah memasang aturan terbaru)
+
+- [ ] Admin → tab **Paket Soal** → buat paket kosakata untuk satu jenjang → muncul di Daftar Paket Soal
+- [ ] Login sebagai siswa jenjang itu → Kosakata 2 → tab **Paket dari Guru** menampilkan paket tersebut
+- [ ] Main sampai selesai → muncul pesan "Hasil terbaikmu di paket ini masuk papan peringkat" → poin muncul di Papan Peringkat
+- [ ] Main lagi paket yang sama dengan nilai lebih rendah → poin di papan peringkat **tidak** bertambah
+- [ ] Tab **Kata Sendiri** → main → pesan "latihan bebas", poin tidak bertambah
+- [ ] Nonaktifkan paket di admin → paket hilang dari game siswa
+
+Jika game menampilkan "Paket soal gagal dimuat", kemungkinan aturan terbaru belum dipasang.
+
 ## Papan peringkat
 
-- Poin = jumlah jawaban benar dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB).
+- Poin = jumlah jawaban benar dari **paket soal guru** dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB). Satu paket yang dimainkan berkali-kali hanya dihitung hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.
 - Ada papan **Semua Jenjang** (tampilan awal) dan papan per jenjang.
 - Nama ditampilkan singkat (nama depan + inisial), misalnya "Aisyah P.".
 - Skor yang mencurigakan bisa dihapus admin di tab **Skor Game**; poinnya otomatis hilang dari peringkat.
