@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// =====================================================================
+//  Aturan keamanan Firestore - Extra Course (project: extra-course-d02c2)
+// ---------------------------------------------------------------------
+//  Prinsip:
+//   - Admin (admin@extracourse.com) boleh membaca & mengubah semua data.
+//   - Siswa hanya boleh melihat dan membuat data MILIKNYA SENDIRI.
+//   - Pengunjung yang belum login tidak bisa membaca/menulis apa pun.
+//   - Koleksi lain yang tidak disebut di bawah otomatis DITOLAK.
+//
+//  Jika email admin diganti, ubah juga di fungsi isAdmin() di bawah
+//  DAN di file admin.html, admin-registrations.html, admin-attendance.html.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Fungsi bantu ----------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'admin@extracourse.com';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ---------- Profil pengguna: users/{uid} ----------
+    // Dibuat saat sign up (index.html), dibaca di dashboard & absensi,
+    // lastLoginAt diperbarui oleh user-dashboard.html.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Siswa membuat profilnya sendiri, hanya dengan peran "Student".
+      allow create: if isAdmin()
+        || (isOwner(uid)
+            && request.resource.data.keys().hasOnly(['name', 'role', 'email'])
+            && request.resource.data.role == 'Student'
+            && request.resource.data.email == request.auth.token.email);
+
+      // Siswa hanya boleh memperbarui waktu login terakhir,
+      // tidak boleh mengubah peran (role), nama, atau email sendiri.
+      allow update: if isAdmin()
+        || (isOwner(uid)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['lastLoginAt']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Data pendaftaran ----------
+    // Jalur lama dipertahankan agar data yang sudah ada tetap muncul.
+    // Kata "public" di jalur ini hanya nama; aksesnya diatur di sini.
+    match /artifacts/{appId}/public/data/registrations/{regId} {
+      // Siswa yang login boleh mengirim pendaftaran atas namanya sendiri.
+      allow create: if isAdmin()
+        || (isSignedIn() && request.resource.data.userId == request.auth.uid);
+
+      // Siswa hanya melihat pendaftarannya sendiri (user-dashboard.html);
+      // admin melihat semuanya.
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Absensi & evaluasi: studentAttendance/{id} ----------
+    match /studentAttendance/{recordId} {
+      // Siswa mencatat absensinya sendiri (attendance.html).
+      allow create: if isAdmin()
+        || (isSignedIn()
+            && request.resource.data.studentId == request.auth.uid
+            && request.resource.data.recordedByUid == request.auth.uid);
+
+      // Siswa hanya melihat riwayat absensinya sendiri.
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.studentId == request.auth.uid);
+
+      // Hanya admin yang boleh mengoreksi atau menghapus absensi.
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Data kelas & guru (hanya dikelola admin) ----------
+    match /classes/{classId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /teachers/{teacherId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Semua koleksi lain: ditolak (default Firestore).
+  }
+}
