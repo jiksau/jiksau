@@ -1122,6 +1122,9 @@
                 maxScore = score;
             }
 
+            // Simpan skor ke akun siswa
+            window.saveGameScore?.({ gameId: "scramble", gameName: "Scramble Sentences", correct: correctCount, total: totalSentences, points: score, mode: currentGameMode });
+
             // Show results
             const accuracy = (correctCount / totalSentences * 100).toFixed(1);
             showAlert(`✅ ${correctCount}/${totalSentences} correct! Accuracy: ${accuracy}%`, "success");
@@ -1223,5 +1226,6 @@
         `;
         document.head.appendChild(style);
     </script>
+    <script type="module" src="game-scores.js"></script>
 </body>
 </html>

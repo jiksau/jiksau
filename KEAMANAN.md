@@ -13,6 +13,7 @@ Halaman admin (`admin.html`, `admin-registrations.html`, `admin-attendance.html`
 | Profil (`users`) | Lihat profil sendiri; buat profil saat daftar (peran otomatis "Student"); perbarui waktu login terakhir | Semua | Tidak bisa |
 | Pendaftaran | Kirim pendaftaran atas nama sendiri; lihat pendaftaran sendiri | Semua | Tidak bisa |
 | Absensi & evaluasi (`studentAttendance`) | Catat absensi sendiri; lihat riwayat sendiri | Semua, termasuk edit & hapus | Tidak bisa |
+| Skor game (`gameScores`) | Simpan skor sendiri (otomatis saat selesai bermain); lihat skor sendiri; tidak bisa mengubah skor | Semua, termasuk hapus | Tidak bisa |
 | Kelas (`classes`) & guru (`teachers`) | Tidak bisa | Semua | Tidak bisa |
 
 Siswa tidak bisa mengubah perannya sendiri menjadi admin, melihat data siswa lain, atau mengedit absensi yang sudah tercatat.

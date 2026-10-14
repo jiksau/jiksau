@@ -771,6 +771,9 @@
             clearInterval(questionCountdownInterval);
             clearInterval(quizOverallTimerInterval);
             finalScoreDisplay.textContent = `Anda menjawab ${score} dari ${verbsData.length} pertanyaan dengan benar.`;
+
+            // Simpan skor ke akun siswa
+            window.saveGameScore?.({ gameId: "kosakata-4", gameName: "Vocabulary Memorize part 4 (Verb Forms)", correct: score, total: verbsData.length });
             openModal(quizEndModal);
         }
 
@@ -848,5 +851,6 @@
         });
 
     </script>
+    <script type="module" src="game-scores.js"></script>
 </body>
 </html>

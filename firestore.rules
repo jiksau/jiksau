@@ -85,6 +85,28 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---------- Skor game: gameScores/{id} ----------
+    // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
+    match /gameScores/{scoreId} {
+      // Siswa hanya boleh menyimpan skor atas namanya sendiri,
+      // dengan angka yang masuk akal (benar tidak melebihi total).
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.correct is int
+        && request.resource.data.total is int
+        && request.resource.data.total > 0
+        && request.resource.data.total <= 1000
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= request.resource.data.total;
+
+      // Siswa melihat skornya sendiri; admin melihat semua.
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      // Skor tidak bisa diubah siswa; admin boleh menghapus.
+      allow update, delete: if isAdmin();
+    }
+
     // ---------- Data kelas & guru (hanya dikelola admin) ----------
     match /classes/{classId} {
       allow read, write: if isAdmin();

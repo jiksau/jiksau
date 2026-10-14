@@ -616,6 +616,9 @@
             `;
             summaryStatsEl.innerHTML = summaryText;
 
+            // Simpan skor ke akun siswa
+            window.saveGameScore?.({ gameId: "kosakata-3", gameName: "Vocabulary Memorize part 3", correct: correctCount, total: totalWords });
+
             // Determine message and icon based on performance
             let message = "";
             let icon = "";
@@ -720,5 +723,6 @@
         document.addEventListener("DOMContentLoaded", addRow);
     </script>
 
+    <script type="module" src="game-scores.js"></script>
 </body>
 </html>

@@ -583,6 +583,7 @@
         // reset quiz state
         currentIndex = 0;
         quizActive = true;
+        window.k5MistakeCount = 0;
         // pindah tampilan
         inputSection.style.display = 'none';
         quizSection.style.display = 'block';
@@ -608,6 +609,10 @@
             submitAnswerBtn.disabled = true;
             quizActive = false;
             quizProgress.innerText = `🏆 Tuntas! ${vocabulary.length}/${vocabulary.length}`;
+
+            // Simpan ke akun siswa: tuntas = semua kata benar berurutan.
+            // "points" berisi jumlah kesalahan sebelum tuntas.
+            window.saveGameScore?.({ gameId: "kosakata-5", gameName: "Kosakata 5 (Hafalan Tanpa Salah)", correct: vocabulary.length, total: vocabulary.length, points: window.k5MistakeCount || 0, mode: "jumlah-salah" });
             updateQuizWordPreviewBlur(); // tampilkan daftar setelah selesai
             return;
         }
@@ -675,6 +680,7 @@
             }
             setTimeout(() => answerField.focus(), 50);
         } else {
+            window.k5MistakeCount = (window.k5MistakeCount || 0) + 1;
             quizFeedback.innerHTML = `❌ SALAH! Jawaban yang benar adalah "${correctAnswer}". 🔄 Mengulang dari kata pertama...`;
             quizFeedback.className = 'feedback error';
             currentIndex = 0;
@@ -692,6 +698,7 @@
             return;
         }
         quizActive = true;
+        window.k5MistakeCount = 0;
         currentIndex = 0;
         answerField.disabled = false;
         submitAnswerBtn.disabled = false;
@@ -792,5 +799,6 @@
     renderPairInputs();
     updatePreview();
 </script>
+    <script type="module" src="game-scores.js"></script>
 </body>
 </html>

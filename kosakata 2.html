@@ -1184,6 +1184,9 @@
             score = correctCount;
             updateScore();
 
+            // Simpan skor ke akun siswa
+            window.saveGameScore?.({ gameId: "kosakata-2", gameName: "Vocabulary Memorize", correct: correctCount, total: quizWords.length, mode: quizMode });
+
             // Show feedback
             const percentage = (correctCount / quizWords.length * 100).toFixed(1);
             feedbackMessage.classList.remove('hidden');
@@ -1309,5 +1312,6 @@
             // importSampleData(); // Uncomment if you want sample data on load
         };
     </script>
+    <script type="module" src="game-scores.js"></script>
 </body>
 </html>

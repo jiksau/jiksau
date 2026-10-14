@@ -96,6 +96,7 @@
                 <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="attendance-history">Riwayat Absensi</button></li>
                 <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="class-management">Manajemen Kelas</button></li>
                 <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="teacher-management">Manajemen Pengajar</button></li>
+                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="game-scores">Skor Game</button></li>
             </ul>
         </nav>
 
@@ -178,6 +179,51 @@
                     </thead>
                     <tbody id="studentAttendanceTableBody" class="bg-white divide-y divide-gray-200">
                         </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="game-scores-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 class="text-2xl font-bold mb-2">Skor Latihan Game</h2>
+            <p class="text-sm text-gray-600 mb-6">Skor tersimpan otomatis setiap kali siswa yang sudah login menyelesaikan game. Data di bawah mencakup 500 latihan terakhir.</p>
+
+            <h3 class="text-lg font-semibold mb-3">Ringkasan per Siswa</h3>
+            <div class="overflow-x-auto mb-8">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Latihan</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">7 Hari Terakhir</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rata-rata Nilai</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latihan Terakhir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gameSummaryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
+                <h3 class="text-lg font-semibold">Riwayat Latihan</h3>
+                <div>
+                    <label for="gameScoreStudentFilter" class="block text-gray-700 text-sm font-bold mb-1">Filter Siswa:</label>
+                    <select id="gameScoreStudentFilter" class="block w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="all">Semua Siswa</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Game</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hasil</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gameScoresTableBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
         </section>
@@ -315,7 +361,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
         // Konfigurasi Firebase Anda
         const firebaseConfig = {
@@ -659,6 +705,114 @@
         });
 
 
+        // --- Skor Latihan Game ---
+        let gameScoresUnsubscribe = null;
+        let allGameScores = [];
+
+        function escapeHtmlAdmin(text) {
+            return String(text ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function gameScoreColor(percent) {
+            if (percent >= 80) return 'text-green-700';
+            if (percent >= 60) return 'text-yellow-700';
+            return 'text-red-700';
+        }
+
+        function gameScoreText(item) {
+            if (item.gameId === 'kosakata-5') {
+                const mistakes = item.points ?? 0;
+                return `Tuntas ${item.total} kata` + (mistakes > 0 ? ` (${mistakes}x salah)` : ' tanpa salah');
+            }
+            return `${item.correct}/${item.total} (${item.percent}%)` + (item.points ? ` · ${item.points} poin` : '');
+        }
+
+        function scoreTime(item) {
+            return item.timestamp?.toMillis?.() ?? 0;
+        }
+
+        function renderGameScoreTables() {
+            const summaryBody = document.getElementById('gameSummaryTableBody');
+            const historyBody = document.getElementById('gameScoresTableBody');
+            const filterEl = document.getElementById('gameScoreStudentFilter');
+
+            if (allGameScores.length === 0) {
+                summaryBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Belum ada skor game tersimpan.</td></tr>';
+                historyBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Belum ada skor game tersimpan.</td></tr>';
+                return;
+            }
+
+            // Ringkasan per siswa
+            const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const byStudent = {};
+            allGameScores.forEach((item) => {
+                const s = byStudent[item.userId] ||= { name: item.userName || item.userEmail || 'Siswa', count: 0, week: 0, sum: 0, last: 0 };
+                s.count++;
+                s.sum += item.percent || 0;
+                if (scoreTime(item) >= weekAgo) s.week++;
+                s.last = Math.max(s.last, scoreTime(item));
+            });
+            const students = Object.entries(byStudent).sort((a, b) => b[1].week - a[1].week || b[1].count - a[1].count);
+
+            summaryBody.innerHTML = students.map(([, s]) => {
+                const avg = Math.round(s.sum / s.count);
+                const last = s.last ? new Date(s.last).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+                return `<tr>
+                    <td class="px-4 py-3 whitespace-nowrap font-medium">${escapeHtmlAdmin(s.name)}</td>
+                    <td class="px-4 py-3">${s.count}</td>
+                    <td class="px-4 py-3">${s.week}</td>
+                    <td class="px-4 py-3 font-semibold ${gameScoreColor(avg)}">${avg}%</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${last}</td>
+                </tr>`;
+            }).join('');
+
+            // Isi pilihan filter siswa (pertahankan pilihan yang aktif)
+            const selected = filterEl.value;
+            filterEl.innerHTML = '<option value="all">Semua Siswa</option>' + students
+                .map(([uid, s]) => `<option value="${escapeHtmlAdmin(uid)}">${escapeHtmlAdmin(s.name)}</option>`)
+                .join('');
+            filterEl.value = byStudent[selected] ? selected : 'all';
+
+            // Riwayat latihan
+            const rows = filterEl.value === 'all' ? allGameScores : allGameScores.filter((i) => i.userId === filterEl.value);
+            historyBody.innerHTML = rows.slice(0, 200).map((item) => {
+                const when = item.timestamp ? item.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+                return `<tr>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${when}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${escapeHtmlAdmin(item.userName || item.userEmail)}</td>
+                    <td class="px-4 py-3">${escapeHtmlAdmin(item.gameName)}</td>
+                    <td class="px-4 py-3 font-semibold ${gameScoreColor(item.percent)}">${gameScoreText(item)}</td>
+                    <td class="px-4 py-3"><button onclick="deleteGameScore('${item.id}')" class="text-red-600 hover:text-red-900 rounded-md px-3 py-1">Hapus</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function loadGameScoresForAdmin() {
+            if (gameScoresUnsubscribe) return; // sudah berlangganan data secara live
+            const q = query(collection(db, "gameScores"), orderBy("timestamp", "desc"), limit(500));
+            gameScoresUnsubscribe = onSnapshot(q, (snapshot) => {
+                allGameScores = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+                renderGameScoreTables();
+            }, (error) => {
+                console.error("Error loading game scores:", error);
+                gameScoresUnsubscribe = null;
+                document.getElementById('gameScoresTableBody').innerHTML =
+                    `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Gagal memuat skor: ${escapeHtmlAdmin(error.message)}</td></tr>`;
+            });
+        }
+
+        document.getElementById('gameScoreStudentFilter').addEventListener('change', renderGameScoreTables);
+
+        window.deleteGameScore = async (docId) => {
+            if (!confirm('Hapus catatan skor ini?')) return;
+            try {
+                await deleteDoc(doc(db, "gameScores", docId));
+            } catch (e) {
+                console.error("Error deleting game score:", e);
+                alert('Gagal menghapus skor: ' + e.message);
+            }
+        };
+
         // --- Logika Navigasi ---
         const navTabs = document.querySelectorAll('.nav-tab');
         const sections = document.querySelectorAll('section');
@@ -694,6 +848,8 @@
                 classIdInputForm.value = '';
                 submitClassBtn.textContent = 'Tambah Kelas';
                 cancelClassEditBtn.classList.add('hidden');
+            } else if (sectionId === 'game-scores') {
+                loadGameScoresForAdmin();
             } else if (sectionId === 'teacher-management') {
                 loadTeachers();
                 teacherForm.reset();
