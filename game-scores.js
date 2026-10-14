@@ -18,15 +18,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
-    authDomain: "extra-course-d02c2.firebaseapp.com",
-    projectId: "extra-course-d02c2",
-    storageBucket: "extra-course-d02c2.firebasestorage.app",
-    messagingSenderId: "40624772967",
-    appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
-};
+import { firebaseConfig } from "./ec-common.js";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -35,16 +27,21 @@ const db = getFirestore(app);
 
 let currentUser = null;
 let currentName = null;
+let currentLevel = null;
 
 // Menunggu Firebase selesai memeriksa status login (sekali di awal).
 const authReady = new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         currentName = null;
+        currentLevel = null;
         if (user) {
             try {
                 const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) currentName = snap.data().name || null;
+                if (snap.exists()) {
+                    currentName = snap.data().name || null;
+                    currentLevel = snap.data().level || null;
+                }
             } catch (e) {
                 console.warn("Gagal memuat nama siswa:", e);
             }
@@ -108,6 +105,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     };
     if (Number.isFinite(Number(points)) && points !== null) data.points = Math.round(Number(points));
     if (mode) data.mode = String(mode);
+    if (currentLevel) data.level = currentLevel;
 
     try {
         await addDoc(collection(db, "gameScores"), data);

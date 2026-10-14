@@ -3,14 +3,18 @@ rules_version = '2';
 // =====================================================================
 //  Aturan keamanan Firestore - Extra Course (project: extra-course-d02c2)
 // ---------------------------------------------------------------------
+//  Website ini fokus pada permainan. Data administratif (absensi,
+//  pendaftaran lengkap) ada di spreadsheet, bukan di sini.
+//
 //  Prinsip:
 //   - Admin (admin@extracourse.com) boleh membaca & mengubah semua data.
-//   - Siswa hanya boleh melihat dan membuat data MILIKNYA SENDIRI.
-//   - Pengunjung yang belum login tidak bisa membaca/menulis apa pun.
-//   - Koleksi lain yang tidak disebut di bawah otomatis DITOLAK.
+//   - Siswa hanya boleh melihat data MILIKNYA SENDIRI.
+//   - Siswa baru wajib memakai kode kelas yang aktif.
+//   - Koleksi lain yang tidak disebut di bawah otomatis DITOLAK
+//     (termasuk data lama: studentAttendance, registrations, classes, teachers).
 //
-//  Jika email admin diganti, ubah juga di fungsi isAdmin() di bawah
-//  DAN di file admin.html, admin-registrations.html, admin-attendance.html.
+//  Jika email admin diganti, ubah juga isAdmin() di bawah DAN ADMIN_EMAIL
+//  di file ec-common.js.
 // =====================================================================
 
 service cloud.firestore {
@@ -30,21 +34,39 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // ---------- Profil pengguna: users/{uid} ----------
-    // Dibuat saat sign up (index.html), dibaca di dashboard & absensi,
-    // lastLoginAt diperbarui oleh user-dashboard.html.
+    function isValidLevel(level) {
+      return level in ['SD', 'SMP', 'SMA', 'S1', 'S2', 'UMUM'];
+    }
+
+    // Kode kelas ada, aktif, dan jenjangnya sama dengan yang dipakai siswa.
+    function isActiveCodeFor(code, level) {
+      let path = /databases/$(database)/documents/classCodes/$(code);
+      return code is string
+        && exists(path)
+        && get(path).data.active == true
+        && get(path).data.level == level;
+    }
+
+    // ---------- Profil siswa: users/{uid} ----------
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
-      // Siswa membuat profilnya sendiri, hanya dengan peran "Student".
+      // Siswa mendaftar sendiri (index.html) dengan kode kelas yang aktif.
+      // Akun tanpa email dibuat oleh admin (admin.html).
       allow create: if isAdmin()
         || (isOwner(uid)
-            && request.resource.data.keys().hasOnly(['name', 'role', 'email'])
+            && request.resource.data.keys().hasOnly(['name', 'role', 'email', 'level', 'classCode', 'loginType', 'createdAt'])
             && request.resource.data.role == 'Student'
-            && request.resource.data.email == request.auth.token.email);
+            && request.resource.data.email == request.auth.token.email
+            && request.resource.data.loginType == 'email'
+            && request.resource.data.name is string
+            && request.resource.data.name.size() > 0
+            && request.resource.data.name.size() <= 80
+            && isValidLevel(request.resource.data.level)
+            && isActiveCodeFor(request.resource.data.classCode, request.resource.data.level));
 
-      // Siswa hanya boleh memperbarui waktu login terakhir,
-      // tidak boleh mengubah peran (role), nama, atau email sendiri.
+      // Siswa hanya boleh memperbarui waktu masuk terakhir.
+      // Nama, jenjang, dan peran hanya bisa diubah admin.
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
@@ -53,43 +75,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ---------- Data pendaftaran ----------
-    // Jalur lama dipertahankan agar data yang sudah ada tetap muncul.
-    // Kata "public" di jalur ini hanya nama; aksesnya diatur di sini.
-    match /artifacts/{appId}/public/data/registrations/{regId} {
-      // Siswa yang login boleh mengirim pendaftaran atas namanya sendiri.
-      allow create: if isAdmin()
-        || (isSignedIn() && request.resource.data.userId == request.auth.uid);
-
-      // Siswa hanya melihat pendaftarannya sendiri (user-dashboard.html);
-      // admin melihat semuanya.
-      allow read: if isAdmin()
-        || (isSignedIn() && resource.data.userId == request.auth.uid);
-
-      allow update, delete: if isAdmin();
-    }
-
-    // ---------- Absensi & evaluasi: studentAttendance/{id} ----------
-    match /studentAttendance/{recordId} {
-      // Siswa mencatat absensinya sendiri (attendance.html).
-      allow create: if isAdmin()
-        || (isSignedIn()
-            && request.resource.data.studentId == request.auth.uid
-            && request.resource.data.recordedByUid == request.auth.uid);
-
-      // Siswa hanya melihat riwayat absensinya sendiri.
-      allow read: if isAdmin()
-        || (isSignedIn() && resource.data.studentId == request.auth.uid);
-
-      // Hanya admin yang boleh mengoreksi atau menghapus absensi.
-      allow update, delete: if isAdmin();
+    // ---------- Kode kelas: classCodes/{code} ----------
+    match /classCodes/{code} {
+      // Siapa pun boleh mengecek SATU kode yang ia ketahui (untuk form daftar),
+      // tetapi tidak boleh melihat daftar semua kode.
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     // ---------- Skor game: gameScores/{id} ----------
     // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
     match /gameScores/{scoreId} {
-      // Siswa hanya boleh menyimpan skor atas namanya sendiri,
-      // dengan angka yang masuk akal (benar tidak melebihi total).
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.correct is int
@@ -105,15 +102,6 @@ service cloud.firestore {
 
       // Skor tidak bisa diubah siswa; admin boleh menghapus.
       allow update, delete: if isAdmin();
-    }
-
-    // ---------- Data kelas & guru (hanya dikelola admin) ----------
-    match /classes/{classId} {
-      allow read, write: if isAdmin();
-    }
-
-    match /teachers/{teacherId} {
-      allow read, write: if isAdmin();
     }
 
     // Semua koleksi lain: ditolak (default Firestore).

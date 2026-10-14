@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExtraCourse User Dashboard</title>
+    <title>Dashboard Siswa - ExtraCourse</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for Inter font and general layout */
@@ -100,15 +100,6 @@
             background-color: #ec4899; /* Pink-500 */
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(236, 72, 153, 0.3);
-        }
-        #attendanceButton {
-            background-color: #34d399; /* Emerald-400 */
-            color: white;
-        }
-        #attendanceButton:hover {
-            background-color: #10b981; /* Emerald-500 */
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
         }
         #logoutButton {
             background-color: #ef4444; /* Red */
@@ -336,37 +327,21 @@
 <body>
     <div class="container">
         <header class="mb-8 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold flex-grow text-center">Dashboard Pengguna ExtraCourse</h1>
+            <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>! 👋</h1>
             <div class="header-buttons">
-                <button id="gamelistButton">Go to Gamelist</button>
-                <button id="attendanceButton">Catat Absensi</button>
-                <button id="logoutButton">Logout</button>
+                <button id="gamelistButton">🎮 Main Game</button>
+                <button id="logoutButton">Keluar</button>
             </div>
         </header>
 
         <section id="user-info-section">
-            <h2 class="text-2xl font-bold mb-4">Informasi Akun Anda</h2>
+            <h2 class="text-2xl font-bold mb-4">Akun Kamu</h2>
             <div class="info-card">
-                <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
-                <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
-                <p><strong>Nama:</strong> <span id="userName">Loading...</span></p>
-                <p><strong>Peran:</strong> <span id="userRole">Loading...</span></p>
-                <p><strong>Terakhir Login:</strong> <span id="lastLoginAt">Loading...</span></p>
+                <p><strong>Nama:</strong> <span id="userName">Memuat...</span></p>
+                <p><strong>Jenjang:</strong> <span id="userLevel">Memuat...</span></p>
+                <p><strong id="loginLabel">Email:</strong> <span id="userLogin">Memuat...</span></p>
+                <p><strong>Terakhir masuk:</strong> <span id="lastLoginAt">Memuat...</span></p>
             </div>
-        </section>
-
-        <section id="registration-status-section">
-            <h2 class="text-2xl font-bold mb-4">Status Pendaftaran Anda</h2>
-            <div class="info-card" id="registrationStatusCard">
-                <p>Mencari data pendaftaran Anda...</p>
-            </div>
-        </section>
-
-        <section id="attendance-history-section" class="mt-8">
-            <h2 class="text-2xl font-bold mb-4">Riwayat Absensi & Evaluasi Diri Anda</h2>
-            <div id="attendanceHistoryList">
-                <p class="text-gray-600 text-center">Memuat riwayat absensi...</p>
-                </div>
         </section>
 
         <section id="game-progress-section" class="mt-8">
@@ -380,268 +355,73 @@
         </section>
     </div>
 
-    <div id="messageBox" class="message-box">
-        <p id="messageText"></p>
-        <button onclick="hideMessageBox()">OK</button>
-    </div>
-    <div id="overlay" class="overlay"></div>
-
     <footer>
-        <p>2024 Property of ExtraCourse</p>
+        <p>© ExtraCourse · Teman Belajar</p>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-        // Your web app's Firebase configuration (hardcoded for static hosting)
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
-            authDomain: "extra-course-d02c2.firebaseapp.com",
-            projectId: "extra-course-d02c2",
-            storageBucket: "extra-course-d02c2.firebasestorage.app",
-            messagingSenderId: "40624772967",
-            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
-            measurementId: "G-YNRJKV8T45",
-        };
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const $ = (id) => document.getElementById(id);
 
-        // Extract appId from the config for collection path
-        const appId = firebaseConfig.appId;
-
-        // DOM Elements
-        const userEmailSpan = document.getElementById('userEmail');
-        const userIdSpan = document.getElementById('userId');
-        const userNameSpan = document.getElementById('userName');
-        const userRoleSpan = document.getElementById('userRole');
-        const lastLoginAtSpan = document.getElementById('lastLoginAt');
-        const logoutButton = document.getElementById('logoutButton');
-        const gamelistButton = document.getElementById('gamelistButton');
-        const attendanceButton = document.getElementById('attendanceButton');
-        const registrationStatusCard = document.getElementById('registrationStatusCard');
-        const attendanceHistoryList = document.getElementById('attendanceHistoryList');
-
-        // --- Message Box Functions (reused) ---
-        function showMessageBox(message, type) {
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
-            const overlay = document.getElementById('overlay');
-
-            messageText.textContent = message;
-            messageBox.className = 'message-box ' + type;
-            messageBox.style.display = 'block';
-            overlay.style.display = 'block';
-        }
-
-        window.hideMessageBox = function() {
-            const messageBox = document.getElementById('messageBox');
-            const overlay = document.getElementById('overlay');
-            messageBox.style.display = 'none';
-            overlay.style.display = 'none';
-        }
-
-        // --- Set Authentication Persistence ---
-        setPersistence(auth, browserLocalPersistence)
-            .then(() => {
-                console.log("Authentication persistence set to LOCAL.");
-            })
-            .catch((error) => {
-                console.error("Error setting persistence:", error);
-            });
-
-
-        // --- Authentication Check and Data Loading ---
-        // Flag to ensure we only redirect once after initial auth state is known
-        let initialAuthCheckDone = false; 
-
+        let started = false;
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in
-                userEmailSpan.textContent = user.email;
-                userIdSpan.textContent = user.uid;
-
-                // Load user profile data from Firestore (from 'users' collection)
-                try {
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userDocSnap = await getDoc(userDocRef);
-
-                    if (userDocSnap.exists()) {
-                        const userData = userDocSnap.data();
-                        userNameSpan.textContent = userData.name || 'N/A';
-                        userRoleSpan.textContent = userData.role || 'N/A';
-
-                        // Display last login time
-                        if (userData.lastLoginAt) {
-                            lastLoginAtSpan.textContent = userData.lastLoginAt.toDate().toLocaleString();
-                        } else {
-                            lastLoginAtSpan.textContent = 'Belum pernah login sebelumnya.';
-                        }
-                    } else {
-                        userNameSpan.textContent = 'Profil tidak ditemukan.';
-                        userRoleSpan.textContent = 'N/A';
-                        lastLoginAtSpan.textContent = 'N/A';
-                    }
-
-                    // Update lastLoginAt timestamp in Firestore
-                    await updateDoc(userDocRef, {
-                        lastLoginAt: serverTimestamp()
-                    });
-                    console.log("lastLoginAt updated for user:", user.uid);
-
-                } catch (error) {
-                    console.error("Error fetching or updating user profile:", error);
-                    userNameSpan.textContent = 'Gagal memuat nama.';
-                    userRoleSpan.textContent = 'Gagal memuat peran.';
-                    lastLoginAtSpan.textContent = 'Gagal memuat waktu login.';
-                }
-
-                // Load user's registration data
-                loadUserRegistration(user.uid);
-
-                // Load user's attendance data
-                loadStudentAttendance(user.uid);
-
-                // Load user's game practice scores
-                loadGameScores(user.uid);
-                
-                initialAuthCheckDone = true; // Mark initial check as complete
-                document.body.style.visibility = 'visible'; // Show content
-
-            } else {
-                // User is signed out, redirect to login page
-                // Only redirect if the initial auth check has completed and found no user
-                if (initialAuthCheckDone) {
-                    console.log("User signed out. Redirecting to login page.");
-                    window.location.href = "index.html"; // Redirect to your login/signup page
-                } else {
-                    // This is the initial load, and user is null. Wait for persistence to load.
-                    console.log("Initial auth check: No user found yet. Waiting for persistence to load or user to sign in.");
-                    // You might want to show a loading spinner here
-                }
+            if (!user) {
+                window.location.href = "index.html"; // Belum login → ke halaman masuk
+                return;
             }
-        });
+            if (user.email === ADMIN_EMAIL) {
+                window.location.href = "admin.html";
+                return;
+            }
+            if (started) return;
+            started = true;
 
-        // --- Logout Functionality ---
-        logoutButton.addEventListener('click', async () => {
+            const username = usernameFromEmail(user.email);
+            $('loginLabel').textContent = username ? 'Nama pengguna:' : 'Email:';
+            $('userLogin').textContent = username || user.email;
+
             try {
-                await signOut(auth);
-                // Redirect will happen via onAuthStateChanged
+                const userRef = doc(db, "users", user.uid);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    $('userName').textContent = data.name || '-';
+                    $('greetName').textContent = (data.name || 'Siswa').split(' ')[0];
+                    $('userLevel').textContent = levelLabel(data.level);
+                    $('lastLoginAt').textContent = data.lastLoginAt
+                        ? data.lastLoginAt.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+                        : 'Ini pertama kalinya 🎉';
+                    await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
+                } else {
+                    $('userName').textContent = 'Profil belum ada, hubungi admin.';
+                    $('userLevel').textContent = '-';
+                    $('lastLoginAt').textContent = '-';
+                }
             } catch (error) {
-                console.error("Logout failed:", error.message);
-                showMessageBox(`Logout gagal: ${error.message}`, 'error');
+                console.error("Error loading profile:", error);
+                $('userName').textContent = 'Gagal memuat profil.';
             }
+
+            loadGameScores(user.uid);
+            document.body.style.visibility = 'visible';
         });
 
-        // --- Gamelist Button Functionality ---
-        gamelistButton.addEventListener('click', () => {
-            window.location.href = "gamelist.html"; // Redirect to gamelist.html
+        $('logoutButton').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = "index.html";
         });
-
-        // --- Attendance Button Functionality ---
-        attendanceButton.addEventListener('click', () => {
-            window.location.href = "attendance.html"; // Redirect to attendance.html
+        $('gamelistButton').addEventListener('click', () => {
+            window.location.href = "gamelist.html";
         });
-
-        // --- Load User's Registration Data ---
-        function loadUserRegistration(currentUserId) {
-            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
-            const q = query(registrationsRef, where("userId", "==", currentUserId));
-
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    registrationStatusCard.innerHTML = '<p>Anda belum memiliki pendaftaran aktif.</p><p class="text-sm text-gray-600 mt-2">Silakan isi formulir pendaftaran untuk memulai.</p>';
-                    return;
-                }
-
-                let registrationHtml = '';
-                snapshot.forEach((doc) => {
-                    const reg = doc.data();
-                    const timestamp = reg.timestamp ? new Date(reg.timestamp.toDate()).toLocaleString() : 'N/A';
-                    const jenisKelas = Array.isArray(reg.jenis_kelas) ? reg.jenis_kelas.join(', ') : (reg.jenis_kelas || 'N/A');
-
-                    registrationHtml += `
-                        <div class="mb-4 p-4 border rounded-lg bg-white shadow-sm">
-                            <p><strong>Tanggal Daftar:</strong> ${timestamp}</p>
-                            <p><strong>Jenis Kelas:</strong> ${jenisKelas}</p>
-                            <p><strong>Metode:</strong> ${reg.metode || 'N/A'}</p>
-                            <p><strong>Jadwal Diinginkan:</strong> ${reg.jadwal_diinginkan || 'N/A'}</p>
-                            <p><strong>Target Belajar:</strong> ${reg.target_tujuan || 'N/A'}</p>
-                            <p class="text-sm text-gray-600 mt-2"><i>ID Pendaftaran: ${doc.id}</i></p>
-                        </div>
-                    `;
-                });
-                registrationStatusCard.innerHTML = registrationHtml;
-            }, (error) => {
-                console.error("Error fetching user registrations:", error);
-                registrationStatusCard.innerHTML = `<p class="text-red-500">Gagal memuat status pendaftaran: ${error.message}</p>`;
-            });
-        }
-
-        // --- Load Student Attendance History ---
-        function loadStudentAttendance(currentUserId) {
-            const attendanceRef = collection(db, "studentAttendance");
-            const q = query(attendanceRef, 
-                            where("studentId", "==", currentUserId),
-                            orderBy("date", "desc"),
-                            orderBy("timestamp", "desc")
-                           );
-
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    attendanceHistoryList.innerHTML = '<p class="text-gray-600 text-center">Anda belum mencatat absensi.</p>';
-                    return;
-                }
-
-                let historyHtml = '';
-                snapshot.forEach((doc) => {
-                    const record = doc.data();
-                    const attendanceDate = record.date || 'N/A';
-                    const meetingNumber = record.meetingNumber || 'N/A';
-                    const material = record.material || 'Tidak ada materi dicatat';
-                    const homework = record.homework || 'Tidak ada tugas dicatat';
-                    const timestampSubmitted = record.timestamp ? new Date(record.timestamp.toDate()).toLocaleString() : 'N/A';
-
-                    const evaluationScores = record.evaluation || {};
-                    const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][evaluationScores.mood - 1] || 'N/A';
-                    const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][evaluationScores.understood - 1] || 'N/A';
-                    const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][evaluationScores.easy - 1] || 'N/A';
-                    const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][evaluationScores.creativity - 1] || 'N/A';
-                    const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][evaluationScores.tired - 1] || 'N/A';
-
-
-                    historyHtml += `
-                        <div class="attendance-history-card">
-                            <p><strong>Tanggal:</strong> ${attendanceDate} (Pertemuan ke-${meetingNumber})</p>
-                            <p><strong>Materi Hari Ini:</strong> ${material}</p>
-                            <p><strong>Tugas Rumah:</strong> ${homework}</p>
-                            <div class="evaluation-scores">
-                                <p><strong>Evaluasi Diri:</strong></p>
-                                <span>Mood: ${moodLabel} (${evaluationScores.mood || 'N/A'})</span>
-                                <span>Pemahaman Materi: ${understoodLabel} (${evaluationScores.understood || 'N/A'})</span>
-                                <span>Materi Mudah: ${easyLabel} (${evaluationScores.easy || 'N/A'})</span>
-                                <span>Kreativitas: ${creativityLabel} (${evaluationScores.creativity || 'N/A'})</span>
-                                <span>Tingkat Kelelahan: ${tiredLabel} (${evaluationScores.tired || 'N/A'})</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 text-right">Dicatat pada: ${timestampSubmitted}</p>
-                        </div>
-                    `;
-                });
-                attendanceHistoryList.innerHTML = historyHtml;
-            }, (error) => {
-                console.error("Error fetching student attendance:", error);
-                attendanceHistoryList.innerHTML = `<p class="text-red-500 text-center">Gagal memuat riwayat absensi: ${error.message}</p>`;
-            });
-        }
 
         // --- Progres Latihan Game ---
-        function escapeHtml(text) {
-            return String(text ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
         function scoreColor(percent) {
             if (percent >= 80) return 'score-good';
             if (percent >= 60) return 'score-mid';

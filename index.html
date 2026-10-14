@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -17,7 +17,9 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* More vibrant gradient */
             color: white;
-            overflow: hidden; /* Prevent scrollbar from gradient */
+            overflow-x: hidden;
+            padding: 24px 0; /* Ruang atas-bawah agar formulir bisa digulir di HP */
+            box-sizing: border-box;
         }
 
         h1 {
@@ -104,7 +106,9 @@
         }
 
         .input-wrapper input {
+            box-sizing: border-box; /* Lebar termasuk padding agar tidak meluber */
             width: 100%;
+            height: 48px;
             padding: 12px 15px;
             font-size: 1rem;
             border: 1px solid #cbd5e0;
@@ -122,7 +126,8 @@
         }
 
         .error-message {
-            color: #ef4444; /* Tailwind red-500 */
+            color: #fef08a; /* Kuning muda: terbaca jelas di latar ungu */
+            font-weight: 600;
             font-size: 0.85rem;
             text-align: left;
             margin-top: 5px;
@@ -139,13 +144,22 @@
         /* Show password toggle */
         .password-toggle {
             position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+            right: 12px;
+            top: 0;
+            height: 48px; /* Sejajar dengan kolom password */
+            display: flex;
+            align-items: center;
             cursor: pointer;
             color: #4a5568; /* Tailwind gray-700 */
             font-size: 1.2rem;
             transition: color 0.2s;
+        }
+
+        .input-wrapper input[type="password"],
+        .input-wrapper input#signup-password,
+        .input-wrapper input#signup-confirm-password,
+        .input-wrapper input#signin-password {
+            padding-right: 44px; /* Ruang untuk ikon mata */
         }
 
         .password-toggle:hover {
@@ -227,6 +241,36 @@
         }
 
 
+        .input-wrapper label {
+            display: block;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .field-hint {
+            display: block;
+            text-align: left;
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 4px;
+        }
+        .input-wrapper input.code-input {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+        .code-ok {
+            color: #bbf7d0;
+            font-weight: 600;
+        }
+        #status {
+            min-height: 1.5em;
+        }
+        #status.error { color: #fee2e2; }
+        #status.ok { color: #dcfce7; }
+
         /* Responsive adjustments */
         @media (max-width: 600px) {
             h1 {
@@ -238,7 +282,7 @@
                 margin-bottom: 20px;
             }
             .container {
-                padding: 30px;
+                padding: 24px 18px;
                 border-radius: 15px;
             }
             .tabs button {
@@ -247,7 +291,7 @@
             }
             .input-wrapper input {
                 padding: 10px 12px;
-                font-size: 0.95rem;
+                font-size: 1rem; /* 16px mencegah iPhone memperbesar layar saat mengetik */
             }
             .form-group button {
                 padding: 12px;
@@ -262,317 +306,224 @@
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
             sendPasswordResetEmail,
-            onAuthStateChanged // Import onAuthStateChanged
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
             getFirestore,
             doc,
-            setDoc
+            getDoc,
+            setDoc,
+            serverTimestamp
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-        // Reverted to original hardcoded Firebase config as requested
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
-            authDomain: "extra-course-d02c2.firebaseapp.com",
-            projectId: "extra-course-d02c2",
-            storageBucket: "extra-course-d02c2.firebasestorage.app",
-            messagingSenderId: "40624772967",
-            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
-            measurementId: "G-YNRJKV8T45",
-        };
+        import {
+            firebaseConfig, ADMIN_EMAIL, levelLabel, loginIdToEmail, isUsernameEmail,
+            normalizeClassCode, CLASS_CODE_PATTERN, friendlyAuthError
+        } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Flag to prevent onAuthStateChanged from redirecting immediately after a fresh signup
-        let isSigningUp = false; 
+        // Mencegah pengalihan otomatis saat proses daftar masih berjalan
+        let isSigningUp = false;
 
         document.addEventListener("DOMContentLoaded", () => {
-            const signupButton = document.getElementById("signup-button");
-            const signinButton = document.getElementById("signin-button");
-            const signupTab = document.getElementById("signup-tab");
-            const signinTab = document.getElementById("signin-tab");
-            const signupForm = document.getElementById("signup-form");
-            const signinForm = document.getElementById("signin-form");
-            const forgotPasswordLink = document.getElementById("forgot-password");
-            const statusDiv = document.getElementById("status");
-            const adminDashboardButton = document.getElementById("admin-dashboard-button");
-            // const gamelistButton = document.getElementById("gamelist-button"); // Removed gamelistButton
+            const $ = (id) => document.getElementById(id);
+            const signupButton = $("signup-button");
+            const signinButton = $("signin-button");
+            const signupTab = $("signup-tab");
+            const signinTab = $("signin-tab");
+            const signupForm = $("signup-form");
+            const signinForm = $("signin-form");
+            const statusDiv = $("status");
 
-            // Signup form elements
-            const signupNameInput = document.getElementById("signup-name");
-            const signupEmailInput = document.getElementById("signup-email");
-            const signupPasswordInput = document.getElementById("signup-password");
-            const signupConfirmPasswordInput = document.getElementById("signup-confirm-password");
-
-            // Signin form elements
-            const signinEmailInput = document.getElementById("signin-email");
-            const signinPasswordInput = document.getElementById("signin-password");
-
-            // Error message elements for signup
-            const signupNameError = document.getElementById("signup-name-error");
-            const signupEmailError = document.getElementById("signup-email-error");
-            const signupPasswordError = document.getElementById("signup-password-error");
-            const signupConfirmPasswordError = document.getElementById("signup-confirm-password-error");
-
-            // Error message elements for signin
-            const signinEmailError = document.getElementById("signin-email-error");
-            const signinPasswordError = document.getElementById("signin-password-error");
+            const signupName = $("signup-name");
+            const signupEmail = $("signup-email");
+            const signupPassword = $("signup-password");
+            const signupConfirm = $("signup-confirm-password");
+            const signupCode = $("signup-code");
+            const signinId = $("signin-id");
+            const signinPassword = $("signin-password");
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-            // --- Initial Auth State Check ---
+            function setStatus(text, type = "") {
+                statusDiv.textContent = text;
+                statusDiv.className = type;
+            }
+
+            // --- Cek status login ---
             onAuthStateChanged(auth, (user) => {
-                // Only redirect if it's not a fresh signup attempt from this page load
-                if (user && !isSigningUp) { 
-                    console.log("User already logged in, redirecting to user-dashboard.html");
-                    window.location.href = "user-dashboard.html";
-                } else if (!user) { // Only show forms if no user is logged in
-                    signupForm.classList.add("active");
-                    signupTab.classList.add("active");
-                    validateSignupForm(); // Validate initially to disable button
+                if (user && !isSigningUp) {
+                    window.location.href = user.email === ADMIN_EMAIL ? "admin.html" : "user-dashboard.html";
                 }
-                // If user is logged in AND isSigningUp, then let the signup flow handle the redirect
             });
 
-            // --- Tab Switching Logic ---
-            signupTab.addEventListener("click", () => {
-                signupForm.classList.add("active");
-                signinForm.classList.remove("active");
-                signupTab.classList.add("active");
-                signinTab.classList.remove("active");
-                statusDiv.innerText = "";
-                resetFormValidation(signinForm); // Clear signin errors
-                validateSignupForm(); // Re-validate signup form
+            // --- Pindah tab ---
+            function showTab(which) {
+                const isSignup = which === "signup";
+                signupForm.classList.toggle("active", isSignup);
+                signinForm.classList.toggle("active", !isSignup);
+                signupTab.classList.toggle("active", isSignup);
+                signinTab.classList.toggle("active", !isSignup);
+                setStatus("");
+                isSignup ? validateSignupForm(false) : validateSigninForm(false);
+            }
+            signupTab.addEventListener("click", () => showTab("signup"));
+            signinTab.addEventListener("click", () => showTab("signin"));
+
+            // --- Validasi ---
+            function showError(id, message, show) {
+                const el = $(id);
+                el.textContent = show ? message : "";
+                el.classList.toggle("active", Boolean(show && message));
+            }
+
+            function validateSignupForm(showMessages = true) {
+                const checks = [
+                    ["signup-name-error", signupName, signupName.value.trim() !== "", "Nama wajib diisi."],
+                    ["signup-email-error", signupEmail, emailRegex.test(signupEmail.value.trim()), "Masukkan email yang valid."],
+                    ["signup-password-error", signupPassword, signupPassword.value.length >= 6, "Minimal 6 karakter."],
+                    ["signup-confirm-password-error", signupConfirm, signupConfirm.value === signupPassword.value && signupConfirm.value !== "", "Password tidak sama."],
+                    ["signup-code-error", signupCode, CLASS_CODE_PATTERN.test(normalizeClassCode(signupCode.value)), "Kode kelas 4–12 huruf/angka, minta ke guru."],
+                ];
+                let ok = true;
+                checks.forEach(([id, field, valid, msg]) => {
+                    const touched = showMessages && field.dataset.touched === "1";
+                    showError(id, msg, !valid && touched);
+                    if (!valid) ok = false;
+                });
+                signupButton.disabled = !ok;
+                return ok;
+            }
+
+            function validateSigninForm(showMessages = true) {
+                const idOk = signinId.value.trim() !== "";
+                const pwOk = signinPassword.value.length > 0;
+                showError("signin-id-error", "Isi email atau nama pengguna.", !idOk && showMessages && signinId.dataset.touched === "1");
+                showError("signin-password-error", "Password wajib diisi.", !pwOk && showMessages && signinPassword.dataset.touched === "1");
+                signinButton.disabled = !(idOk && pwOk);
+                return idOk && pwOk;
+            }
+
+            [signupName, signupEmail, signupPassword, signupConfirm, signupCode].forEach((el) => {
+                el.addEventListener("input", () => { el.dataset.touched = "1"; validateSignupForm(); });
+            });
+            [signinId, signinPassword].forEach((el) => {
+                el.addEventListener("input", () => { el.dataset.touched = "1"; validateSigninForm(); });
             });
 
-            signinTab.addEventListener("click", () => {
-                signinForm.classList.add("active");
-                signupForm.classList.remove("active");
-                signinTab.classList.add("active");
-                signupTab.classList.remove("active");
-                statusDiv.innerText = "";
-                resetFormValidation(signupForm); // Clear signup errors
-                validateSigninForm(); // Re-validate signin form
-            });
-
-            // --- Validation Functions ---
-            function showError(element, message) {
-                element.innerText = message;
-                element.classList.add("active");
-            }
-
-            function hideError(element) {
-                element.innerText = "";
-                element.classList.remove("active");
-            }
-
-            function validateEmail(email) {
-                return emailRegex.test(email);
-            }
-
-            function validatePassword(password) {
-                return password.length >= 6; // Minimum 6 characters
-            }
-
-            function validateSignupForm() {
-                let isValid = true;
-
-                // Name validation
-                if (signupNameInput.value.trim() === '') {
-                    showError(signupNameError, "Name cannot be empty.");
-                    isValid = false;
-                } else {
-                    hideError(signupNameError);
-                }
-
-                // Email validation
-                if (!validateEmail(signupEmailInput.value)) {
-                    showError(signupEmailError, "Enter a valid email.");
-                    isValid = false;
-                } else {
-                    hideError(signupEmailError);
-                }
-
-                // Password validation
-                if (!validatePassword(signupPasswordInput.value)) {
-                    showError(signupPasswordError, "Min 6 characters.");
-                    isValid = false;
-                } else {
-                    hideError(signupPasswordError);
-                }
-
-                // Confirm password validation
-                if (signupConfirmPasswordInput.value !== signupPasswordInput.value) {
-                    showError(signupConfirmPasswordError, "Passwords do not match.");
-                    isValid = false;
-                } else {
-                    hideError(signupConfirmPasswordError);
-                }
-
-                signupButton.disabled = !isValid;
-                return isValid;
-            }
-
-            function validateSigninForm() {
-                let isValid = true;
-
-                // Email validation
-                if (!validateEmail(signinEmailInput.value)) {
-                    showError(signinEmailError, "Enter a valid email.");
-                    isValid = false;
-                } else {
-                    hideError(signinEmailError);
-                }
-
-                // Password validation (can be basic for sign-in)
-                if (signinPasswordInput.value.length === 0) {
-                    showError(signinPasswordError, "Password cannot be empty.");
-                    isValid = false;
-                } else {
-                    hideError(signinPasswordError);
-                }
-
-                signinButton.disabled = !isValid;
-                return isValid;
-            }
-
-            function resetFormValidation(formElement) {
-                const errorMessages = formElement.querySelectorAll('.error-message');
-                errorMessages.forEach(errorSpan => hideError(errorSpan));
-                const buttons = formElement.querySelectorAll('button');
-                // Only re-enable buttons if form is valid after reset
-                if (formElement.id === 'signup-form') {
-                    validateSignupForm();
-                } else if (formElement.id === 'signin-form') {
-                    validateSigninForm();
-                }
-            }
-
-            // Add event listeners for real-time validation on signup form
-            signupNameInput.addEventListener("input", validateSignupForm);
-            signupEmailInput.addEventListener("input", validateSignupForm);
-            signupPasswordInput.addEventListener("input", validateSignupForm);
-            signupConfirmPasswordInput.addEventListener("input", validateSignupForm);
-            signupConfirmPasswordInput.addEventListener("blur", validateSignupForm);
-
-            // Add event listeners for real-time validation on signin form
-            signinEmailInput.addEventListener("input", validateSigninForm);
-            signinPasswordInput.addEventListener("input", validateSigninForm);
-
-            // --- Password Toggle Functionality ---
-            function setupPasswordToggle(inputId, toggleId) {
-                const passwordInput = document.getElementById(inputId);
-                const toggleIcon = document.getElementById(toggleId);
-
-                if (passwordInput && toggleIcon) {
-                    toggleIcon.addEventListener("click", () => {
-                        if (passwordInput.type === "password") {
-                            passwordInput.type = "text";
-                            toggleIcon.innerText = "🚫";
-                        } else {
-                            passwordInput.type = "password";
-                            toggleIcon.innerText = "👁️";
-                        }
+            // --- Tombol lihat password ---
+            [["signup-password", "signup-password-toggle"], ["signup-confirm-password", "signup-confirm-password-toggle"], ["signin-password", "signin-password-toggle"]]
+                .forEach(([inputId, toggleId]) => {
+                    $(toggleId).addEventListener("click", () => {
+                        const input = $(inputId);
+                        input.type = input.type === "password" ? "text" : "password";
+                        $(toggleId).textContent = input.type === "password" ? "👁️" : "🚫";
                     });
-                }
-            }
+                });
 
-            // Setup toggles for both signup and signin passwords
-            setupPasswordToggle("signup-password", "signup-password-toggle");
-            setupPasswordToggle("signup-confirm-password", "signup-confirm-password-toggle");
-            setupPasswordToggle("signin-password", "signin-password-toggle");
-
-
-            // --- Firebase Operations ---
+            // --- Daftar ---
             signupButton.addEventListener("click", async () => {
+                [signupName, signupEmail, signupPassword, signupConfirm, signupCode].forEach((el) => el.dataset.touched = "1");
                 if (!validateSignupForm()) {
-                    statusDiv.innerText = "Please fix the errors in the form.";
+                    setStatus("Periksa kembali isian yang masih salah.", "error");
+                    return;
+                }
+                const code = normalizeClassCode(signupCode.value);
+                signupButton.disabled = true;
+                setStatus("Memeriksa kode kelas...");
+
+                // 1) Pastikan kode kelas ada & aktif SEBELUM membuat akun
+                let codeData;
+                try {
+                    const snap = await getDoc(doc(db, "classCodes", code));
+                    if (!snap.exists() || snap.data().active !== true) {
+                        showError("signup-code-error", "Kode kelas tidak ditemukan atau sudah tidak aktif.", true);
+                        setStatus("Kode kelas tidak valid. Tanyakan kode yang benar ke guru.", "error");
+                        signupButton.disabled = false;
+                        return;
+                    }
+                    codeData = snap.data();
+                } catch (e) {
+                    console.error(e);
+                    setStatus("Gagal memeriksa kode kelas. Coba lagi.", "error");
+                    signupButton.disabled = false;
                     return;
                 }
 
-                statusDiv.innerText = "Signing up...";
-                signupButton.disabled = true;
-                const email = signupEmailInput.value;
-                const password = signupPasswordInput.value;
-                const name = signupNameInput.value;
-                isSigningUp = true; // Set flag when signup process starts
-
+                // 2) Buat akun lalu profil siswa
+                setStatus("Membuat akun...");
+                isSigningUp = true;
+                let user = null;
                 try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    await setDoc(doc(db, "users", user.uid), { name: name || "Anonymous", role: "Student", email: user.email });
-
-                    statusDiv.innerText = `Sign Up Successful! Welcome, ${user.email}`;
-                    // Redirect to pendaftaran.html after successful signup
-                    setTimeout(() => {
-                        isSigningUp = false; // Reset flag after redirect is initiated
-                        window.location.href = "pendaftaran.html";
-                    }, 2000);
+                    const cred = await createUserWithEmailAndPassword(auth, signupEmail.value.trim(), signupPassword.value);
+                    user = cred.user;
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: signupName.value.trim(),
+                        role: "Student",
+                        email: user.email,
+                        level: codeData.level,
+                        classCode: code,
+                        loginType: "email",
+                        createdAt: serverTimestamp(),
+                    });
+                    setStatus(`Berhasil! Selamat datang di jenjang ${levelLabel(codeData.level)} 🎉`, "ok");
+                    setTimeout(() => { window.location.href = "user-dashboard.html"; }, 1500);
                 } catch (error) {
-                    isSigningUp = false; // Reset flag on error
-                    statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign up error:", error);
-                } finally {
+                    // Profil gagal dibuat: hapus lagi akunnya agar bisa daftar ulang
+                    if (user) { try { await user.delete(); } catch (_) { /* abaikan */ } }
+                    isSigningUp = false;
+                    setStatus(friendlyAuthError(error), "error");
                     signupButton.disabled = false;
                 }
             });
 
+            // --- Masuk ---
             signinButton.addEventListener("click", async () => {
-                if (!validateSigninForm()) {
-                    statusDiv.innerText = "Please fix the errors in the form.";
-                    return;
-                }
-
-                statusDiv.innerText = "Signing in...";
+                [signinId, signinPassword].forEach((el) => el.dataset.touched = "1");
+                if (!validateSigninForm()) return;
                 signinButton.disabled = true;
-                const email = signinEmailInput.value;
-                const password = signinPasswordInput.value;
-
+                setStatus("Masuk...");
                 try {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-
-                    statusDiv.innerText = `Sign In Successful! Welcome back, ${user.email}`;
-                    // Redirect to user-dashboard.html after successful signin
-                    setTimeout(() => window.location.href = "user-dashboard.html", 2000);
+                    const cred = await signInWithEmailAndPassword(auth, loginIdToEmail(signinId.value), signinPassword.value);
+                    setStatus("Berhasil masuk!", "ok");
+                    // Pengalihan dilakukan oleh onAuthStateChanged
+                    if (cred.user.email === ADMIN_EMAIL) window.location.href = "admin.html";
                 } catch (error) {
-                    statusDiv.innerText = `Error: ${error.message}`;
                     console.error("Sign in error:", error);
-                } finally {
+                    setStatus(friendlyAuthError(error), "error");
                     signinButton.disabled = false;
                 }
             });
 
-            forgotPasswordLink.addEventListener("click", async (e) => {
+            // --- Lupa password ---
+            $("forgot-password").addEventListener("click", async (e) => {
                 e.preventDefault();
-                const email = signinEmailInput.value;
-
-                if (!validateEmail(email)) {
-                    statusDiv.innerText = "Please enter a valid email in the Sign In tab to reset password.";
+                const id = signinId.value.trim();
+                if (!id) {
+                    setStatus("Isi email Anda di kolom atas dulu, lalu klik Lupa Password.", "error");
                     return;
                 }
-
-                statusDiv.innerText = "Sending reset email...";
+                const email = loginIdToEmail(id);
+                if (isUsernameEmail(email)) {
+                    setStatus("Akun dengan nama pengguna tidak punya email. Minta guru/admin untuk mengatur ulang password.", "error");
+                    return;
+                }
                 try {
                     await sendPasswordResetEmail(auth, email);
-                    statusDiv.innerText = `Password reset email sent to ${email}. Please check your inbox.`;
+                    setStatus(`Link atur ulang password sudah dikirim ke ${email}. Cek kotak masuk/spam.`, "ok");
                 } catch (error) {
-                    statusDiv.innerText = `Error: ${error.message}`;
-                    console.error("Password reset error:", error);
+                    setStatus(friendlyAuthError(error), "error");
                 }
             });
 
-            // Admin Dashboard Button Event Listener
-            adminDashboardButton.addEventListener("click", () => {
-                window.location.href = "admin-login.html"; // Redirect to admin-login.html
+            $("admin-dashboard-button").addEventListener("click", () => {
+                window.location.href = "admin-login.html";
             });
 
-            // Gamelist Button Event Listener
-            // gamelistButton.addEventListener("click", () => {
-            //      window.location.href = "gamelist.html"; // Redirect to gamelist.html
-            // });
+            showTab("signin");
         });
     </script>
 </head>
@@ -580,49 +531,55 @@
     <div class="container">
         <h1>Special Extra Course</h1>
         <div class="tabs">
-            <button id="signup-tab">Sign Up</button>
-            <button id="signin-tab">Sign In</button>
+            <button id="signin-tab" type="button">Masuk</button>
+            <button id="signup-tab" type="button">Daftar</button>
+        </div>
+        <div id="signin-form" class="form-group">
+            <h2>Masuk</h2>
+            <div class="input-wrapper">
+                <input type="text" id="signin-id" placeholder="Email atau nama pengguna" autocomplete="username" autocapitalize="none" required>
+                <span id="signin-id-error" class="error-message"></span>
+            </div>
+            <div class="input-wrapper">
+                <input type="password" id="signin-password" placeholder="Password" autocomplete="current-password" required>
+                <span id="signin-password-toggle" class="password-toggle">👁️</span>
+                <span id="signin-password-error" class="error-message"></span>
+            </div>
+            <button id="signin-button" type="button">Masuk</button>
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="#" id="forgot-password" style="color:#fff">Lupa password?</a>
+            </p>
         </div>
         <div id="signup-form" class="form-group">
-            <h2>Sign Up</h2>
+            <h2>Daftar Akun Permainan</h2>
             <div class="input-wrapper">
-                <input type="text" id="signup-name" placeholder="Name" required>
+                <input type="text" id="signup-name" placeholder="Nama lengkap" autocomplete="name" required>
                 <span id="signup-name-error" class="error-message"></span>
             </div>
             <div class="input-wrapper">
-                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="email" id="signup-email" placeholder="Email" autocomplete="email" autocapitalize="none" required>
                 <span id="signup-email-error" class="error-message"></span>
             </div>
             <div class="input-wrapper">
-                <input type="password" id="signup-password" placeholder="Password" required>
+                <input type="password" id="signup-password" placeholder="Password (min. 6 karakter)" autocomplete="new-password" required>
                 <span id="signup-password-toggle" class="password-toggle">👁️</span>
                 <span id="signup-password-error" class="error-message"></span>
             </div>
             <div class="input-wrapper">
-                <input type="password" id="signup-confirm-password" placeholder="Confirm Password" required>
+                <input type="password" id="signup-confirm-password" placeholder="Ulangi password" autocomplete="new-password" required>
                 <span id="signup-confirm-password-toggle" class="password-toggle">👁️</span>
                 <span id="signup-confirm-password-error" class="error-message"></span>
             </div>
-            <button id="signup-button">Sign Up</button>
-        </div>
-        <div id="signin-form" class="form-group">
-            <h2>Sign In</h2>
             <div class="input-wrapper">
-                <input type="email" id="signin-email" placeholder="Email" required>
-                <span id="signin-email-error" class="error-message"></span>
+                <input type="text" id="signup-code" class="code-input" placeholder="KODE KELAS" maxlength="12" autocapitalize="characters" autocomplete="off" required>
+                <span id="signup-code-error" class="error-message"></span>
+                <span id="signup-code-info" class="field-hint">Kode kelas diberikan oleh guru ExtraCourse.</span>
             </div>
-            <div class="input-wrapper">
-                <input type="password" id="signin-password" placeholder="Password" required>
-                <span id="signin-password-toggle" class="password-toggle">👁️</span>
-                <span id="signin-password-error" class="error-message"></span>
-            </div>
-            <button id="signin-button">Sign In</button>
-            <p style="text-align: center; margin-top: 15px;">
-                <a href="#" id="forgot-password">Forgot Password?</a>
-            </p>
+            <button id="signup-button" type="button">Daftar</button>
+            <p class="field-hint" style="text-align:center;margin-top:12px">Tidak punya email? Minta guru membuatkan akun dengan nama pengguna.</p>
         </div>
         <div id="status"></div>
-        <button id="admin-dashboard-button">Go to Admin Dashboard</button>
-        </div>
+        <button id="admin-dashboard-button" type="button">Masuk sebagai Admin</button>
+    </div>
 </body>
 </html>

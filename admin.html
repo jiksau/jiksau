@@ -3,1485 +3,710 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Extra Course</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>Admin - Extra Course</title>
     <style>
-        /* Custom styles for modal scrollability */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex; /* Ensure flexbox for vertical centering and content distribution */
-            align-items: center; /* Center vertically */
-            justify-content: center; /* Center horizontally */
-            z-index: 50; /* Ensure it's above other content */
+        :root {
+            --indigo: #4338ca;
+            --indigo-dark: #3730a3;
+            --indigo-soft: #eef2ff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --bg: #f3f4f6;
+            --green: #15803d;
+            --yellow: #a16207;
+            --red: #b91c1c;
         }
-        .modal-content-wrapper { /* This is the white box that holds everything */
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 0.75rem; /* rounded-lg */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* shadow-xl */
-            width: 91.666667%; /* w-11/12 */
-            max-width: 32rem; /* md:w-1/2 lg:w-1/3 (approx. 512px) */
-            max-height: 90vh; /* Set maximum height for modal content, adjusted for better fit */
-            display: flex; /* Use flexbox for content inside modal */
-            flex-direction: column; /* Stack children vertically */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            visibility: hidden; /* Ditampilkan setelah login admin terverifikasi */
+            overflow-wrap: anywhere;
         }
-        .modal-body-scrollable { /* New div for scrollable content */
-            flex-grow: 1; /* Allows this section to take up available space */
-            overflow-y: auto; /* Enable vertical scrolling if content overflows */
-            padding-right: 1rem; /* Add some padding for scrollbar if present */
-            margin-bottom: 1rem; /* Space before footer */
+        header.topbar {
+            background: var(--indigo);
+            color: #fff;
+            padding: 14px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
         }
-        .modal-footer {
-            flex-shrink: 0; /* Prevent footer from shrinking */
-            padding-top: 1rem; /* Add padding above footer */
-            border-top: 1px solid #e5e7eb; /* Optional: add a separator line */
-        }
-        /* Style for modal input fields */
-        .modal-detail-item label {
-            display: block;
+        header.topbar h1 { font-size: 1.25rem; margin: 0; }
+        header.topbar .who { font-size: 0.85rem; opacity: 0.9; }
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 9px 16px;
             font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: var(--indigo);
+            color: #fff;
         }
-        .modal-detail-item input[type="text"],
-        .modal-detail-item input[type="email"],
-        .modal-detail-item input[type="date"],
-        .modal-detail-item input[type="number"],
-        .modal-detail-item textarea,
-        .modal-detail-item select {
+        .btn:hover { background: var(--indigo-dark); }
+        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn.light { background: #fff; color: var(--indigo); }
+        .btn.ghost { background: transparent; color: var(--indigo); padding: 6px 10px; }
+        .btn.ghost:hover { background: var(--indigo-soft); }
+        .btn.danger { background: transparent; color: var(--red); padding: 6px 10px; }
+        .btn.danger:hover { background: #fef2f2; }
+        nav.tabs {
+            display: flex;
+            gap: 6px;
+            padding: 12px 20px 0;
+            max-width: 1100px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+        nav.tabs button {
+            border: none;
+            background: #fff;
+            color: var(--indigo);
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        nav.tabs button.active { background: var(--indigo); color: #fff; }
+        main { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08);
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .card h2 { margin: 0 0 4px; font-size: 1.2rem; }
+        .card .desc { margin: 0 0 16px; color: var(--muted); font-size: 0.88rem; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+        label.field { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; }
+        label.field input, label.field select, .toolbar input, .toolbar select, td select {
+            display: block;
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 0.375rem; /* rounded-md */
-            box-sizing: border-box;
-            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            margin-top: 4px;
+            padding: 9px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            background: #fff;
+            color: var(--text);
         }
-        .modal-detail-item input:focus,
-        .modal-detail-item textarea:focus,
-        .modal-detail-item select:focus {
-            border-color: #6366f1; /* Indigo focus color */
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* Indigo shadow */
-            outline: none;
+        .field small { display: block; font-weight: 400; color: var(--muted); margin-top: 3px; }
+        .code-row { display: flex; gap: 6px; }
+        .code-row input { text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .code-row .btn { margin-top: 4px; white-space: nowrap; }
+        .form-msg { margin-top: 10px; font-size: 0.88rem; min-height: 1.2em; }
+        .form-msg.ok { color: var(--green); }
+        .form-msg.err { color: var(--red); }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
         }
-        .modal-detail-item input[type="checkbox"] {
-            width: auto; /* Override 100% width for checkboxes */
-            margin-right: 0.5rem;
+        .toolbar > * { flex: 1 1 180px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--muted);
+            background: #f9fafb;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+        }
+        td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+        td select { margin: 0; padding: 6px 8px; width: auto; min-width: 120px; }
+        .empty { text-align: center; color: var(--muted); padding: 18px; }
+        .pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 2px 10px;
+            background: var(--indigo-soft);
+            color: var(--indigo);
+        }
+        .pill.off { background: #f3f4f6; color: var(--muted); }
+        .pill.on { background: #dcfce7; color: var(--green); }
+        .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 1px; }
+        .sub { font-size: 0.78rem; color: var(--muted); }
+        .score-good { color: var(--green); font-weight: 700; }
+        .score-mid { color: var(--yellow); font-weight: 700; }
+        .score-low { color: var(--red); font-weight: 700; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .stat { background: var(--indigo-soft); border-radius: 10px; padding: 12px; text-align: center; }
+        .stat b { display: block; font-size: 1.5rem; color: var(--indigo); }
+        .stat span { font-size: 0.8rem; color: var(--muted); }
+        .note { font-size: 0.82rem; color: var(--muted); background: #f9fafb; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+
+        /* Tabel menjadi kartu di layar HP */
+        @media (max-width: 680px) {
+            header.topbar { padding: 12px 16px; }
+            nav.tabs, main { padding-left: 12px; padding-right: 12px; }
+            .card { padding: 16px; }
+            table.responsive thead { display: none; }
+            table.responsive, table.responsive tbody, table.responsive tr, table.responsive td { display: block; width: 100%; }
+            table.responsive tr { border: 1px solid var(--line); border-radius: 10px; padding: 6px 4px; margin-bottom: 10px; }
+            table.responsive td { border: none; padding: 6px 10px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+            table.responsive td::before {
+                content: attr(data-label);
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                color: var(--muted);
+                font-weight: 600;
+                flex-shrink: 0;
+            }
+            table.responsive td.empty { display: block; }
+            table.responsive td.empty::before { content: none; }
+            table.responsive td > :last-child { text-align: right; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-indigo-600 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold">Admin Dashboard</h1>
-            <div class="flex items-center space-x-4">
-                <span id="adminEmail" class="text-lg font-medium">Memuat...</span>
-                <button id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300">
-                    Logout
-                </button>
-            </div>
+<body>
+    <header class="topbar">
+        <div>
+            <h1>Admin ExtraCourse</h1>
+            <div class="who" id="adminEmail">Memuat...</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a href="gamelist.html" class="btn light" style="text-decoration:none">Lihat Game</a>
+            <button class="btn light" id="logoutButton">Keluar</button>
         </div>
     </header>
 
-    <div class="container mx-auto mt-8 flex-grow p-4">
-        <nav class="bg-white p-4 rounded-lg shadow-md mb-8">
-            <ul class="flex space-x-6 justify-center flex-wrap">
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="registrations">Pendaftaran Siswa</button></li>
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="attendance-logging">Catat Absensi</button></li>
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="attendance-history">Riwayat Absensi</button></li>
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="class-management">Manajemen Kelas</button></li>
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="teacher-management">Manajemen Pengajar</button></li>
-                <li><button class="nav-tab text-indigo-600 hover:text-indigo-800 font-semibold text-lg py-2 px-4 rounded-md transition duration-300" data-section="game-scores">Skor Game</button></li>
-            </ul>
-        </nav>
+    <nav class="tabs">
+        <button data-panel="students" class="active">Siswa</button>
+        <button data-panel="codes">Kode Kelas</button>
+        <button data-panel="scores">Skor Game</button>
+    </nav>
 
-        <div id="messageBox" class="hidden p-4 rounded-md mb-4 text-center"></div>
+    <main>
+        <!-- ================= SISWA ================= -->
+        <section class="panel active" id="panel-students">
+            <div class="card">
+                <h2>Buat Akun Siswa (tanpa email)</h2>
+                <p class="desc">Untuk siswa yang belum punya email. Siswa masuk di halaman depan dengan <b>nama pengguna</b> dan password ini.</p>
+                <form id="createStudentForm" class="form-grid" autocomplete="off">
+                    <label class="field">Nama lengkap
+                        <input type="text" id="newName" required>
+                    </label>
+                    <label class="field">Nama pengguna
+                        <input type="text" id="newUsername" placeholder="contoh: budi.smp" autocapitalize="none" required>
+                        <small>3–30 huruf kecil/angka, boleh titik & garis bawah</small>
+                    </label>
+                    <label class="field">Password
+                        <input type="text" id="newPassword" placeholder="min. 6 karakter" required>
+                        <small>Catat & berikan ke siswa</small>
+                    </label>
+                    <label class="field">Jenjang
+                        <select id="newLevel" required></select>
+                    </label>
+                    <button class="btn" type="submit" id="createStudentBtn">Buat Akun</button>
+                </form>
+                <div class="form-msg" id="createStudentMsg"></div>
+            </div>
 
-        <section id="registrations-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-6">Pendaftaran Siswa Baru</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="card">
+                <h2>Daftar Siswa</h2>
+                <p class="desc">Ubah jenjang langsung dari kolom Jenjang; perubahan tersimpan otomatis.</p>
+                <div class="toolbar">
+                    <input type="search" id="studentSearch" placeholder="Cari nama, email, atau nama pengguna...">
+                    <select id="studentLevelFilter"></select>
+                </div>
+                <div id="studentStats" class="stats" style="margin-bottom:14px"></div>
+                <table class="responsive">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lengkap</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. WhatsApp</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Kelas</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jadwal Diinginkan</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Daftar</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            <th>Nama</th>
+                            <th>Login</th>
+                            <th>Jenjang</th>
+                            <th>Daftar Lewat</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="registrationTableBody" class="bg-white divide-y divide-gray-200">
-                        </tbody>
+                    <tbody id="studentsBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
+                </table>
+                <p class="note">Password siswa yang memakai nama pengguna tidak bisa direset dari website. Jika lupa, buatkan akun baru dengan nama pengguna lain. Untuk menonaktifkan akun sepenuhnya, gunakan Firebase Console → Authentication.</p>
+            </div>
+        </section>
+
+        <!-- ================= KODE KELAS ================= -->
+        <section class="panel" id="panel-codes">
+            <div class="card">
+                <h2>Buat Kode Kelas</h2>
+                <p class="desc">Siswa memasukkan kode ini saat mendaftar. Jenjangnya otomatis mengikuti kode.</p>
+                <form id="codeForm" class="form-grid" autocomplete="off">
+                    <label class="field">Kode
+                        <span class="code-row">
+                            <input type="text" id="codeInput" maxlength="12" placeholder="SMP24" required>
+                            <button class="btn ghost" type="button" id="randomCodeBtn">Acak</button>
+                        </span>
+                        <small>4–12 huruf/angka</small>
+                    </label>
+                    <label class="field">Jenjang
+                        <select id="codeLevel" required></select>
+                    </label>
+                    <label class="field">Keterangan (opsional)
+                        <input type="text" id="codeNote" placeholder="contoh: SMP kelas Senin-Rabu">
+                    </label>
+                    <button class="btn" type="submit" id="codeSubmitBtn">Buat Kode</button>
+                </form>
+                <div class="form-msg" id="codeMsg"></div>
+            </div>
+            <div class="card">
+                <h2>Daftar Kode Kelas</h2>
+                <p class="desc">Nonaktifkan kode jika tidak ingin ada pendaftaran baru lewat kode itu. Siswa yang sudah terdaftar tidak terpengaruh.</p>
+                <table class="responsive">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Jenjang</th>
+                            <th>Keterangan</th>
+                            <th>Siswa</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="codesBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody>
                 </table>
             </div>
         </section>
 
-        <section id="attendance-logging-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-6">Catat Absensi Siswa</h2>
-            <form id="attendanceForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="studentSelect" class="block text-gray-700 text-sm font-bold mb-2">Pilih Siswa:</label>
-                    <select id="studentSelect" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                        <option value="">-- Pilih Siswa --</option>
-                        </select>
+        <!-- ================= SKOR GAME ================= -->
+        <section class="panel" id="panel-scores">
+            <div class="card">
+                <h2>Ringkasan per Siswa</h2>
+                <p class="desc">Dari 500 latihan terakhir. Diurutkan dari yang paling rajin minggu ini.</p>
+                <div class="toolbar">
+                    <select id="scoreLevelFilter"></select>
                 </div>
-                <div>
-                    <label for="classIdInput" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas/ID Kelas:</label>
-                    <input type="text" id="classIdInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Beginner A / Meeting 1" required>
-                </div>
-                <div>
-                    <label for="attendanceDate" class="block text-gray-700 text-sm font-bold mb-2">Tanggal Absensi:</label>
-                    <input type="date" id="attendanceDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-                <div>
-                    <label for="attendanceStatus" class="block text-gray-700 text-sm font-bold mb-2">Status Absensi:</label>
-                    <select id="attendanceStatus" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                        <option value="Hadir">Hadir</option>
-                        <option value="Absen">Absen</option>
-                        <option value="Terlambat">Terlambat</option>
-                        <option value="Izin">Izin</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
-                        Catat Absensi
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <section id="attendance-history-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-6">Riwayat Absensi Siswa</h2>
-            <div class="mb-4">
-                <label for="categoryFilter" class="block text-gray-700 text-sm font-bold mb-2">Filter Berdasarkan Kategori:</label>
-                <select id="categoryFilter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option value="all">Semua Kategori</option>
-                    <option value="Student">Hanya Siswa (Peran)</option>
-                    </select>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="responsive">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kelas</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dicatat Oleh</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            <th>Nama</th>
+                            <th>Jenjang</th>
+                            <th>Total Latihan</th>
+                            <th>7 Hari</th>
+                            <th>Rata-rata</th>
+                            <th>Terakhir</th>
                         </tr>
                     </thead>
-                    <tbody id="studentAttendanceTableBody" class="bg-white divide-y divide-gray-200">
-                        </tbody>
+                    <tbody id="gameSummaryBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h2>Riwayat Latihan</h2>
+                <div class="toolbar">
+                    <select id="scoreStudentFilter"></select>
+                </div>
+                <table class="responsive">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Nama</th>
+                            <th>Game</th>
+                            <th>Hasil</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gameScoresBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
                 </table>
             </div>
         </section>
-
-        <section id="game-scores-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-2">Skor Latihan Game</h2>
-            <p class="text-sm text-gray-600 mb-6">Skor tersimpan otomatis setiap kali siswa yang sudah login menyelesaikan game. Data di bawah mencakup 500 latihan terakhir.</p>
-
-            <h3 class="text-lg font-semibold mb-3">Ringkasan per Siswa</h3>
-            <div class="overflow-x-auto mb-8">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Latihan</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">7 Hari Terakhir</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rata-rata Nilai</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latihan Terakhir</th>
-                        </tr>
-                    </thead>
-                    <tbody id="gameSummaryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-3">
-                <h3 class="text-lg font-semibold">Riwayat Latihan</h3>
-                <div>
-                    <label for="gameScoreStudentFilter" class="block text-gray-700 text-sm font-bold mb-1">Filter Siswa:</label>
-                    <select id="gameScoreStudentFilter" class="block w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <option value="all">Semua Siswa</option>
-                    </select>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Game</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hasil</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="gameScoresTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="class-management-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-6">Manajemen Kelas</h2>
-            <form id="classForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <input type="hidden" id="classId">
-                <div>
-                    <label for="className" class="block text-gray-700 text-sm font-bold mb-2">Nama Kelas:</label>
-                    <input type="text" id="className" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-                <div>
-                    <label for="classLevel" class="block text-gray-700 text-sm font-bold mb-2">Level:</label>
-                    <input type="text" id="classLevel" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Basic, Intermediate" required>
-                </div>
-                <div class="md:col-span-2">
-                    <label for="classDescription" class="block text-gray-700 text-sm font-bold mb-2">Deskripsi:</label>
-                    <textarea id="classDescription" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Deskripsi singkat tentang kelas ini"></textarea>
-                </div>
-                <div>
-                    <label for="classCapacity" class="block text-gray-700 text-sm font-bold mb-2">Kapasitas Siswa:</label>
-                    <input type="number" id="classCapacity" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="1" required>
-                </div>
-                <div>
-                    <label for="classPrice" class="block text-gray-700 text-sm font-bold mb-2">Harga (IDR):</label>
-                    <input type="number" id="classPrice" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="0" required>
-                </div>
-                <div class="md:col-span-2 flex items-center">
-                    <input type="checkbox" id="classIsActive" class="mr-2 leading-tight">
-                    <label for="classIsActive" class="text-sm">Kelas Aktif</label>
-                </div>
-                <div class="md:col-span-2 flex space-x-4">
-                    <button type="submit" id="submitClassBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
-                        Tambah Kelas
-                    </button>
-                    <button type="button" id="cancelClassEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 hidden">
-                        Batal
-                    </button>
-                </div>
-            </form>
-
-            <h3 class="text-xl font-bold mb-4">Daftar Kelas</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Kelas</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kapasitas</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktif</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="classesTableBody" class="bg-white divide-y divide-gray-200">
-                        </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="teacher-management-section" class="info-card bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 class="text-2xl font-bold mb-6">Manajemen Pengajar</h2>
-            <form id="teacherForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <input type="hidden" id="teacherId">
-                <div>
-                    <label for="teacherName" class="block text-gray-700 text-sm font-bold mb-2">Nama Pengajar:</label>
-                    <input type="text" id="teacherName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-                <div>
-                    <label for="teacherEmail" class="block text-gray-700 text-sm font-bold mb-2">Email Pengajar:</label>
-                    <input type="email" id="teacherEmail" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-                <div>
-                    <label for="teacherSpecialization" class="block text-gray-700 text-sm font-bold mb-2">Spesialisasi (pisahkan dengan koma):</label>
-                    <input type="text" id="teacherSpecialization" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Contoh: Conversation, Grammar">
-                </div>
-                <div>
-                    <label for="teacherPhoneNumber" class="block text-gray-700 text-sm font-bold mb-2">Nomor Telepon:</label>
-                    <input type="text" id="teacherPhoneNumber" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="md:col-span-2 flex items-center">
-                    <input type="checkbox" id="teacherIsActive" class="mr-2 leading-tight">
-                    <label for="teacherIsActive" class="text-sm">Pengajar Aktif</label>
-                </div>
-                <div class="md:col-span-2">
-                    <label for="teacherUid" class="block text-gray-700 text-sm font-bold mb-2">Firebase UID (Jika sudah ada di Auth):</label>
-                    <input type="text" id="teacherUid" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Opsional, diisi jika sudah terdaftar di Auth">
-                </div>
-                <div class="md:col-span-2 flex space-x-4">
-                    <button type="submit" id="submitTeacherBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300">
-                        Tambah Pengajar
-                    </button>
-                    <button type="button" id="cancelTeacherEditBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2 hidden">
-                        Batal
-                    </button>
-                </div>
-            </form>
-
-            <h3 class="text-xl font-bold mb-4">Daftar Pengajar</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Spesialisasi</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktif</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teachersTableBody" class="bg-white divide-y divide-gray-200">
-                        </tbody>
-                </table>
-            </div>
-        </section>
-
-    </div>
-
-    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-1/3 modal-content-wrapper">
-            <h3 id="modalTitle" class="text-2xl font-bold mb-4 flex-shrink-0">Detail Data</h3>
-            <div id="modalBodyScrollable" class="flex-grow overflow-y-auto pr-4 mb-4">
-                <div id="modalContent" class="space-y-2">
-                    </div>
-            </div>
-            <div class="flex justify-end space-x-4 modal-footer">
-                <button id="modalCloseBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tutup</button>
-                <button id="modalSaveBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">Simpan Perubahan</button>
-            </div>
-        </div>
-    </div>
-
+    </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, where, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import {
+            getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword,
+            setPersistence, inMemoryPersistence
+        } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import {
+            getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc,
+            query, orderBy, limit, onSnapshot, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import {
+            firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
+            loginIdToEmail, usernameFromEmail, CLASS_CODE_PATTERN, normalizeClassCode,
+            escapeHtml, friendlyAuthError
+        } from "./ec-common.js";
 
-        // Konfigurasi Firebase Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-EoipgOVg9prfbYJ5VoYjA8rqk-RDW5U",
-            authDomain: "extra-course-d02c2.firebaseapp.com",
-            databaseURL: "https://extra-course-d02c2-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "extra-course-d02c2",
-            storageBucket: "extra-course-d02c2.firebasestorage.app",
-            messagingSenderId: "40624772967",
-            appId: "1:40624772967:web:d022eb7b2c2f4785a641c2",
-            measurementId: "G-YNRJKV8T45"
-        };
-
-        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const $ = (id) => document.getElementById(id);
 
-        const appId = firebaseConfig.appId; // Ambil appId dari konfigurasi Firebase
+        const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+        const levelOptions = (withAll, allLabel = 'Semua jenjang') =>
+            (withAll ? `<option value="all">${allLabel}</option>` : '')
+            + LEVELS.map((l) => `<option value="${l.value}">${l.label}</option>`).join('');
 
-        // --- Helper Functions (Moved to top for scope) ---
-        function formatFieldName(fieldName) {
-            return fieldName.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        $('newLevel').innerHTML = levelOptions(false);
+        $('codeLevel').innerHTML = levelOptions(false);
+        $('studentLevelFilter').innerHTML = levelOptions(true) + '<option value="none">Belum diatur</option>';
+        $('scoreLevelFilter').innerHTML = levelOptions(true);
+
+        function setMsg(id, text, ok) {
+            $(id).textContent = text;
+            $(id).className = 'form-msg ' + (ok ? 'ok' : 'err');
         }
 
-        function formatCollectionName(collectionPath) {
-            if (collectionPath.includes('artifacts')) {
-                return 'Pendaftaran Siswa'; // Simplified for this specific path
-            }
-            if (collectionPath === 'studentAttendance') {
-                return 'Absensi Siswa';
-            }
-            if (collectionPath === 'classes') {
-                return 'Kelas';
-            }
-            if (collectionPath === 'teachers') {
-                return 'Pengajar';
-            }
-            return collectionPath; // Fallback
-        }
+        // ---------- Tab ----------
+        document.querySelectorAll('nav.tabs button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('nav.tabs button').forEach((b) => b.classList.toggle('active', b === btn));
+                document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + btn.dataset.panel));
+                if (btn.dataset.panel === 'scores') startScores();
+            });
+        });
 
-        // --- DOM Elements ---
-        const adminEmailSpan = document.getElementById('adminEmail');
-        const logoutButton = document.getElementById('logoutButton');
-        const messageBox = document.getElementById('messageBox');
-
-        // Bagian Pendaftaran Siswa
-        const registrationTableBody = document.getElementById('registrationTableBody');
-
-        // Bagian Pencatatan Absensi
-        const attendanceForm = document.getElementById('attendanceForm');
-        const studentSelect = document.getElementById('studentSelect');
-        const classIdInput = document.getElementById('classIdInput');
-        const attendanceDateInput = document.getElementById('attendanceDate');
-        const attendanceStatusSelect = document.getElementById('attendanceStatus');
-
-        // Bagian Riwayat Absensi
-        const studentAttendanceTableBody = document.getElementById('studentAttendanceTableBody');
-        const categoryFilter = document.getElementById('categoryFilter');
-
-        // Bagian Manajemen Kelas
-        const classManagementSection = document.getElementById('class-management-section');
-        const classForm = document.getElementById('classForm');
-        const classIdInputForm = document.getElementById('classId');
-        const classNameInput = document.getElementById('className');
-        const classLevelInput = document.getElementById('classLevel');
-        const classDescriptionInput = document.getElementById('classDescription');
-        const classCapacityInput = document.getElementById('classCapacity');
-        const classPriceInput = document.getElementById('classPrice');
-        const classIsActiveInput = document.getElementById('classIsActive');
-        const submitClassBtn = document.getElementById('submitClassBtn');
-        const cancelClassEditBtn = document.getElementById('cancelClassEditBtn');
-        const classesTableBody = document.getElementById('classesTableBody');
-
-        // Bagian Manajemen Pengajar
-        const teacherManagementSection = document.getElementById('teacher-management-section');
-        const teacherForm = document.getElementById('teacherForm');
-        const teacherIdInputForm = document.getElementById('teacherId');
-        const teacherNameInput = document.getElementById('teacherName');
-        const teacherEmailInput = document.getElementById('teacherEmail');
-        const teacherSpecializationInput = document.getElementById('teacherSpecialization');
-        const teacherPhoneNumberInput = document.getElementById('teacherPhoneNumber');
-        const teacherIsActiveInput = document.getElementById('teacherIsActive');
-        const teacherUidInput = document.getElementById('teacherUid');
-        const submitTeacherBtn = document.getElementById('submitTeacherBtn');
-        const cancelTeacherEditBtn = document.getElementById('cancelTeacherEditBtn');
-        const teachersTableBody = document.getElementById('teachersTableBody');
-
-
-        // Elemen Modal
-        const editModal = document.getElementById('editModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBodyScrollable = document.getElementById('modalBodyScrollable'); // New element
-        const modalContent = document.getElementById('modalContent'); // Content will be inside modalBodyScrollable
-        const modalCloseBtn = document.getElementById('modalCloseBtn');
-        const modalSaveBtn = document.getElementById('modalSaveBtn');
-
-        let currentEditingDocId = null;
-        let currentEditingCollection = null;
-        let currentAdminUser = null;
-
-        // --- Fungsi Utilitas ---
-        function showMessageBox(message, type = 'info') {
-            messageBox.textContent = message;
-            messageBox.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'bg-yellow-100', 'text-green-800', 'text-red-800', 'text-yellow-800');
-            if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'text-green-800');
-            } else if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'text-red-800');
-            } else {
-                messageBox.classList.add('bg-yellow-100', 'text-yellow-800');
-            }
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 3000);
-        }
-
-        // --- Fungsi Modal ---
-        async function openEditModal(docId, collectionName, mode) {
-            editModal.classList.remove('hidden');
-            modalSaveBtn.classList.add('hidden'); // Sembunyikan tombol simpan secara default
-
-            currentEditingDocId = docId;
-            currentEditingCollection = collectionName;
-
-            try {
-                const docRef = doc(db, collectionName, docId);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    modalTitle.textContent = `Detail Data ${formatCollectionName(collectionName)}`;
-                    let htmlContent = '';
-
-                    // Define editable fields for different collections
-                    const collectionEditableFields = {
-                        [`artifacts/${appId}/public/data/registrations`]: [ // For registrations
-                            'nama_lengkap', 'tanggal_lahir', 'sekolah_instansi', 'kelas_jurusan',
-                            'nama_ortu_wali', 'nomor_whatsapp', 'email', 'alamat_rumah',
-                            'jadwal_diinginkan', 'target_tujuan', 'catatan_tambahan',
-                            'pengetahuan_awal', 'kursus_sebelumnya', 'tujuan_utama', 'fokus_aspek',
-                            'bagian_tersulit', 'tantangan_lain', 'cara_belajar_suka',
-                            'belajar_preferensi', 'kendala_teknis', 'waktu_cocok',
-                            'frekuensi_belajar', 'motivasi_belajar',
-                            // Fields that might be select/radio but need to be handled in modal
-                            'jenis_kelamin', 'metode', 'jumlah_pertemuan', 'penempatan_level', 'jenis_kelas', 'setuju_ketentuan'
-                        ],
-                        'studentAttendance': [ // For studentAttendance
-                            'classId', 'date', 'meetingNumber', 'material', 'homework', 'status'
-                        ],
-                        'classes': [ // For classes (from class management)
-                            'className', 'level', 'description', 'capacity', 'price', 'isActive'
-                        ],
-                        'teachers': [ // For teachers (from teacher management)
-                            'name', 'email', 'specialization', 'phoneNumber', 'isActive', 'uid'
-                        ]
-                    };
-
-                    const currentEditableFields = collectionEditableFields[collectionName] || [];
-
-
-                    for (const key in data) {
-                        let value = data[key];
-                        let isEditable = currentEditableFields.includes(key);
-                        let inputTag = '';
-                        let displayValue = value; // Initialize displayValue here
-
-                        // Handle special display formats before checking edit mode
-                        if (key === 'timestamp' && value && typeof value.toDate === 'function') {
-                            displayValue = value.toDate().toLocaleString();
-                        } else if (Array.isArray(value)) {
-                            displayValue = value.join(', ');
-                        } else if (typeof value === 'boolean') {
-                            displayValue = value ? 'Ya' : 'Tidak';
-                        } else if (key === 'evaluation' && collectionName === 'studentAttendance' && typeof value === 'object' && value !== null) {
-                            const moodLabel = ['Sangat Tidak Mood', 'Tidak Mood', 'Biasa Saja', 'Mood', 'Sangat Mood'][value.mood - 1] || 'N/A';
-                            const understoodLabel = ['Tidak Paham', 'Kurang Paham', 'Cukup Paham', 'Paham', 'Sangat Paham'][value.understood - 1] || 'N/A';
-                            const easyLabel = ['Sangat Sulit', 'Sulit', 'Cukup Mudah', 'Mudah', 'Sangat Mudah'][value.easy - 1] || 'N/A';
-                            const creativityLabel = ['Tidak Sama Sekali', 'Kurang', 'Cukup', 'Baik', 'Sangat Baik'][value.creativity - 1] || 'N/A';
-                            const tiredLabel = ['Sangat Lelah', 'Lelah', 'Cukup Baik', 'Segar', 'Sangat Segar'][value.tired - 1] || 'N/A';
-                            displayValue = `
-                                <div class="evaluation-scores">
-                                    <p>Mood: ${moodLabel} (${value.mood || 'N/A'})</p>
-                                    <p>Pemahaman Materi: ${understoodLabel} (${value.understood || 'N/A'})</p>
-                                    <p>Materi Mudah: ${easyLabel} (${value.easy || 'N/A'})</p>
-                                    <p>Kreativitas: ${creativityLabel} (${value.creativity || 'N/A'})</p>
-                                    <p>Tingkat Kelelahan: ${tiredLabel} (${value.tired || 'N/A'})</p>
-                                </div>
-                            `;
-                        }
-
-
-                        if (mode === 'edit' && isEditable) {
-                            // Determine input type based on key and collection
-                            if (key === 'tanggal_lahir' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                const dateValue = data[key] instanceof Date ? data[key].toISOString().split('T')[0] : data[key];
-                                inputTag = `<input type="date" id="modal-${key}" name="${key}" value="${dateValue || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key === 'date' && collectionName === 'studentAttendance') {
-                                inputTag = `<input type="date" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key === 'meetingNumber' && collectionName === 'studentAttendance') {
-                                inputTag = `<input type="number" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key === 'status' && collectionName === 'studentAttendance') {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="Hadir" ${value === 'Hadir' ? 'selected' : ''}>Hadir</option>
-                                        <option value="Absen" ${value === 'Absen' ? 'selected' : ''}>Absen</option>
-                                        <option value="Terlambat" ${value === 'Terlambat' ? 'selected' : ''}>Terlambat</option>
-                                        <option value="Izin" ${value === 'Izin' ? 'selected' : ''}>Izin</option>
-                                    </select>
-                                `;
-                            } else if (key.includes('alamat') || key.includes('catatan') || key === 'description' || key === 'material' || key === 'homework' || key.includes('tujuan') || key.includes('motivasi') || key.includes('pengetahuan') || key.includes('kendala') || key.includes('tantangan') || key.includes('preferensi')) {
-                                inputTag = `<textarea id="modal-${key}" name="${key}" rows="3" class="w-full p-2 border rounded">${data[key] || ''}</textarea>`;
-                            } else if ((key === 'capacity' || key === 'price') && collectionName === 'classes') {
-                                inputTag = `<input type="number" id="modal-${key}" name="${key}" value="${value || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key === 'isActive' && (collectionName === 'classes' || collectionName === 'teachers')) {
-                                inputTag = `<input type="checkbox" id="modal-${key}" name="${key}" ${value ? 'checked' : ''} class="mr-2 leading-tight">`;
-                            } else if (key === 'specialization' && collectionName === 'teachers') {
-                                inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${Array.isArray(data[key]) ? data[key].join(', ') : data[key] || ''}" class="w-full p-2 border rounded">`;
-                            } else if (key === 'jenis_kelamin' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="Laki-laki" ${value === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
-                                        <option value="Perempuan" ${value === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
-                                    </select>
-                                `;
-                            } else if (key === 'metode' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="Online" ${value === 'Online' ? 'selected' : ''}>Online</option>
-                                        <option value="Offline" ${value === 'Offline' ? 'selected' : ''}>Offline</option>
-                                    </select>
-                                `;
-                            } else if (key === 'jumlah_pertemuan' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="1x/minggu" ${value === '1x/minggu' ? 'selected' : ''}>1x/minggu</option>
-                                        <option value="2x/minggu" ${value === '2x/minggu' ? 'selected' : ''}>2x/minggu</option>
-                                        <option value="3x/minggu" ${value === '3x/minggu' ? 'selected' : ''}>3x/minggu</option>
-                                    </select>
-                                `;
-                            } else if (key === 'penempatan_level' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="Pre-A1 (Beginner)" ${value === 'Pre-A1 (Beginner)' ? 'selected' : ''}>Pre-A1 (Beginner)</option>
-                                        <option value="A1 (Elementary)" ${value === 'A1 (Elementary)' ? 'selected' : ''}>A1 (Elementary)</option>
-                                        <option value="A2 (Pre-Intermediate)" ${value === 'A2 (Pre-Intermediate)' ? 'selected' : ''}>A2 (Pre-Intermediate)</option>
-                                        <option value="B1 (Intermediate)" ${value === 'B1 (Intermediate)' ? 'selected' : ''}>B1 (Intermediate)</option>
-                                        <option value="B2 (Upper-Intermediate)" ${value === 'B2 (Upper-Intermediate)' ? 'selected' : ''}>B2 (Upper-Intermediate)</option>
-                                        <option value="C1 (Advanced)" ${value === 'C1 (Advanced)' ? 'selected' : ''}>C1 (Advanced)</option>
-                                    </select>
-                                `;
-                            } else if (key === 'jenis_kelas' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `
-                                    <select id="modal-${key}" name="${key}" class="w-full p-2 border rounded">
-                                        <option value="Private Class" ${value === 'Private Class' ? 'selected' : ''}>Private Class</option>
-                                        <option value="Group Class" ${value === 'Group Class' ? 'selected' : ''}>Group Class</option>
-                                    </select>
-                                `;
-                            } else if (key === 'setuju_ketentuan' && collectionName === `artifacts/${appId}/public/data/registrations`) {
-                                inputTag = `<input type="checkbox" id="modal-${key}" name="${key}" ${value ? 'checked' : ''} class="mr-2 leading-tight">`;
-                            }
-                            else {
-                                inputTag = `<input type="text" id="modal-${key}" name="${key}" value="${data[key] || ''}" class="w-full p-2 border rounded">`;
-                            }
-                            htmlContent += `
-                                <div class="modal-detail-item">
-                                    <label for="modal-${key}">${formatFieldName(key)}:</label>
-                                    ${inputTag}
-                                </div>
-                            `;
-                        } else {
-                            // For display-only fields, use the pre-formatted displayValue
-                            htmlContent += `
-                                <div class="modal-detail-item">
-                                    <strong>${formatFieldName(key)}:</strong>
-                                    <span class="display-value">${displayValue || '-'}</span>
-                                    ${mode === 'edit' && !isEditable && (key === 'evaluation' || key === 'studentId' || key === 'studentEmail' || key === 'studentName' || key === 'recordedByUid' || key === 'recordedByEmail' || key === 'timestamp' || key === 'createdAt' || key === 'measurementId' || key === 'appId' || key === 'authDomain' || key === 'databaseURL' || key === 'messagingSenderId' || key === 'projectId' || key === 'storageBucket' || key === 'apiKey') ? '<p class="text-xs text-gray-500 mt-1"><i>Informasi ini tidak dapat diedit langsung.</i></p>' : ''}
-                                </div>
-                            `;
-                        }
-                    }
-
-                    modalContent.innerHTML = htmlContent;
-                    editModal.classList.remove('hidden');
-                    if (mode === 'edit') {
-                        modalSaveBtn.classList.remove('hidden');
-                    }
-                } else {
-                    showMessageBox("Dokumen tidak ditemukan.", 'error');
-                }
-            } catch (error) {
-                console.error("Error fetching document details:", error);
-                showMessageBox(`Gagal mengambil detail: ${error.message}`, 'error');
-            }
-        }
-
-        function closeEditModal() {
-            editModal.classList.add('hidden');
-            modalContent.innerHTML = '';
-            currentEditingDocId = null;
-            currentEditingCollection = null;
-            modalSaveBtn.classList.add('hidden'); // Ensure save button is hidden on close
-        }
-
-        modalCloseBtn.addEventListener('click', closeEditModal);
-
-        modalSaveBtn.addEventListener('click', async () => {
-            if (!currentEditingDocId || !currentEditingCollection) {
-                showMessageBox("Tidak ada dokumen atau koleksi yang dipilih untuk diedit.", 'error');
+        // ---------- Login admin ----------
+        onAuthStateChanged(auth, (user) => {
+            if (!user || user.email !== ADMIN_EMAIL) {
+                if (user) signOut(auth);
+                window.location.href = 'admin-login.html';
                 return;
             }
+            $('adminEmail').textContent = user.email;
+            document.body.style.visibility = 'visible';
+            startStudents();
+            startCodes();
+        });
+        $('logoutButton').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
 
-            const updatedData = {};
-            const formInputs = modalContent.querySelectorAll('input, textarea, select');
-            formInputs.forEach(input => {
-                let value;
-                if (input.type === 'checkbox') {
-                    value = input.checked;
-                } else if (input.type === 'number') {
-                    value = parseFloat(input.value);
-                } else if (input.name === 'specialization' && currentEditingCollection === 'teachers') { // Specific handling for specialization array
-                    value = input.value.split(',').map(s => s.trim()).filter(s => s !== '');
-                } else if (input.name === 'jenis_kelas' && currentEditingCollection === `artifacts/${appId}/public/data/registrations`) {
-                    value = input.value; // Assuming it's a single string from select
-                }
-                else {
-                    value = input.value;
-                }
-                updatedData[input.name] = value;
+        // ================= SISWA =================
+        let students = [];       // [{id, ...data}]
+        let codes = [];          // [{id, ...data}]
+        let studentsStarted = false;
+
+        function startStudents() {
+            if (studentsStarted) return;
+            studentsStarted = true;
+            onSnapshot(collection(db, 'users'), (snap) => {
+                students = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+                    .filter((u) => u.role === 'Student')
+                    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'id'));
+                renderStudents();
+                renderCodes();
+                renderScores();
+            }, (e) => {
+                console.error(e);
+                $('studentsBody').innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat siswa: ${escapeHtml(e.message)}</td></tr>`;
+            });
+        }
+
+        function loginLabel(u) {
+            const username = usernameFromEmail(u.email);
+            return username
+                ? `<span><span class="pill">nama pengguna</span><br><span class="mono" style="font-size:.85rem">${escapeHtml(username)}</span></span>`
+                : `<span>${escapeHtml(u.email || '-')}</span>`;
+        }
+
+        function renderStudents() {
+            const term = $('studentSearch').value.trim().toLowerCase();
+            const lvl = $('studentLevelFilter').value;
+            const rows = students.filter((u) => {
+                if (lvl === 'none' && u.level) return false;
+                if (lvl !== 'all' && lvl !== 'none' && u.level !== lvl) return false;
+                if (!term) return true;
+                return [u.name, u.email].some((v) => String(v || '').toLowerCase().includes(term));
             });
 
+            // Statistik per jenjang
+            const counts = {};
+            students.forEach((u) => { counts[u.level || 'none'] = (counts[u.level || 'none'] || 0) + 1; });
+            $('studentStats').innerHTML = `<div class="stat"><b>${students.length}</b><span>Total siswa</span></div>`
+                + LEVELS.filter((l) => counts[l.value]).map((l) => `<div class="stat"><b>${counts[l.value]}</b><span>${l.label}</span></div>`).join('')
+                + (counts.none ? `<div class="stat"><b>${counts.none}</b><span>Belum diatur</span></div>` : '');
+
+            if (rows.length === 0) {
+                $('studentsBody').innerHTML = `<tr><td colspan="5" class="empty">${students.length ? 'Tidak ada siswa yang cocok.' : 'Belum ada siswa terdaftar.'}</td></tr>`;
+                return;
+            }
+            $('studentsBody').innerHTML = rows.map((u) => `
+                <tr>
+                    <td data-label="Nama"><b>${escapeHtml(u.name || '(tanpa nama)')}</b></td>
+                    <td data-label="Login">${loginLabel(u)}</td>
+                    <td data-label="Jenjang">
+                        <select data-level-for="${u.id}">
+                            ${u.level ? '' : '<option value="" selected>Belum diatur</option>'}
+                            ${LEVELS.map((l) => `<option value="${l.value}" ${l.value === u.level ? 'selected' : ''}>${l.label}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td data-label="Daftar lewat"><span>${u.classCode ? `kode <span class="mono">${escapeHtml(u.classCode)}</span>` : (u.loginType === 'username' ? 'dibuat admin' : 'akun lama')}${u.createdAt ? `<br><span class="sub">${fmtDate(u.createdAt)}</span>` : ''}</span></td>
+                    <td data-label="Aksi"><button class="btn ghost" data-rename="${u.id}">Ubah nama</button></td>
+                </tr>`).join('');
+        }
+
+        $('studentSearch').addEventListener('input', renderStudents);
+        $('studentLevelFilter').addEventListener('change', renderStudents);
+
+        // Ubah jenjang & nama (event delegation)
+        $('studentsBody').addEventListener('change', async (e) => {
+            const uid = e.target.dataset.levelFor;
+            if (!uid || !e.target.value) return;
+            e.target.disabled = true;
             try {
-                const docRef = doc(db, currentEditingCollection, currentEditingDocId);
-                await updateDoc(docRef, updatedData);
-                showMessageBox("Perubahan berhasil disimpan!", 'success');
-                closeEditModal();
-            } catch (error) {
-                console.error("Error updating document:", error);
-                showMessageBox(`Gagal menyimpan perubahan: ${error.message}`, 'error');
+                await updateDoc(doc(db, 'users', uid), { level: e.target.value });
+            } catch (err) {
+                alert('Gagal mengubah jenjang: ' + err.message);
+            } finally {
+                e.target.disabled = false;
+            }
+        });
+        $('studentsBody').addEventListener('click', async (e) => {
+            const uid = e.target.dataset.rename;
+            if (!uid) return;
+            const current = students.find((s) => s.id === uid)?.name || '';
+            const name = prompt('Nama baru siswa:', current);
+            if (!name || !name.trim() || name.trim() === current) return;
+            try {
+                await updateDoc(doc(db, 'users', uid), { name: name.trim() });
+            } catch (err) {
+                alert('Gagal mengubah nama: ' + err.message);
             }
         });
 
-
-        // --- Skor Latihan Game ---
-        let gameScoresUnsubscribe = null;
-        let allGameScores = [];
-
-        function escapeHtmlAdmin(text) {
-            return String(text ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        }
-
-        function gameScoreColor(percent) {
-            if (percent >= 80) return 'text-green-700';
-            if (percent >= 60) return 'text-yellow-700';
-            return 'text-red-700';
-        }
-
-        function gameScoreText(item) {
-            if (item.gameId === 'kosakata-5') {
-                const mistakes = item.points ?? 0;
-                return `Tuntas ${item.total} kata` + (mistakes > 0 ? ` (${mistakes}x salah)` : ' tanpa salah');
+        // Buat akun tanpa email. Memakai "app kedua" agar admin tidak ikut ter-logout.
+        let secondaryAuth = null;
+        async function getSecondaryAuth() {
+            if (!secondaryAuth) {
+                const secondaryApp = initializeApp(firebaseConfig, 'admin-create-user');
+                secondaryAuth = getAuth(secondaryApp);
+                await setPersistence(secondaryAuth, inMemoryPersistence);
             }
-            return `${item.correct}/${item.total} (${item.percent}%)` + (item.points ? ` · ${item.points} poin` : '');
+            return secondaryAuth;
         }
 
-        function scoreTime(item) {
-            return item.timestamp?.toMillis?.() ?? 0;
+        $('createStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = $('newName').value.trim();
+            const username = normalizeUsername($('newUsername').value);
+            const password = $('newPassword').value;
+            const level = $('newLevel').value;
+            if (!name) return setMsg('createStudentMsg', 'Nama wajib diisi.', false);
+            if (!USERNAME_PATTERN.test(username)) return setMsg('createStudentMsg', 'Nama pengguna 3–30 karakter: huruf kecil, angka, titik, atau garis bawah (diawali huruf/angka).', false);
+            if (password.length < 6) return setMsg('createStudentMsg', 'Password minimal 6 karakter.', false);
+
+            $('createStudentBtn').disabled = true;
+            setMsg('createStudentMsg', 'Membuat akun...', true);
+            try {
+                const sAuth = await getSecondaryAuth();
+                const cred = await createUserWithEmailAndPassword(sAuth, loginIdToEmail(username), password);
+                await setDoc(doc(db, 'users', cred.user.uid), {
+                    name, role: 'Student', email: cred.user.email, level,
+                    loginType: 'username', createdAt: serverTimestamp(),
+                });
+                await signOut(sAuth);
+                setMsg('createStudentMsg', `Akun dibuat ✓  Nama pengguna: ${username}  ·  Password: ${password}  (catat dan berikan ke siswa)`, true);
+                $('newName').value = '';
+                $('newUsername').value = '';
+                $('newPassword').value = '';
+            } catch (err) {
+                console.error(err);
+                setMsg('createStudentMsg', friendlyAuthError(err), false);
+            } finally {
+                $('createStudentBtn').disabled = false;
+            }
+        });
+
+        // ================= KODE KELAS =================
+        let codesStarted = false;
+        function startCodes() {
+            if (codesStarted) return;
+            codesStarted = true;
+            onSnapshot(collection(db, 'classCodes'), (snap) => {
+                codes = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.toMillis?.() ?? Date.now()) - (a.createdAt?.toMillis?.() ?? Date.now()));
+                renderCodes();
+            }, (e) => {
+                console.error(e);
+                $('codesBody').innerHTML = `<tr><td colspan="6" class="empty">Gagal memuat kode: ${escapeHtml(e.message)}</td></tr>`;
+            });
         }
 
-        function renderGameScoreTables() {
-            const summaryBody = document.getElementById('gameSummaryTableBody');
-            const historyBody = document.getElementById('gameScoresTableBody');
-            const filterEl = document.getElementById('gameScoreStudentFilter');
+        function renderCodes() {
+            if (!codesStarted) return;
+            if (codes.length === 0) {
+                $('codesBody').innerHTML = '<tr><td colspan="6" class="empty">Belum ada kode kelas. Buat satu di atas, lalu bagikan ke siswa.</td></tr>';
+                return;
+            }
+            $('codesBody').innerHTML = codes.map((c) => {
+                const count = students.filter((s) => s.classCode === c.id).length;
+                return `
+                <tr>
+                    <td data-label="Kode"><span class="mono">${escapeHtml(c.id)}</span></td>
+                    <td data-label="Jenjang">${escapeHtml(levelLabel(c.level))}</td>
+                    <td data-label="Keterangan">${escapeHtml(c.note || '-')}</td>
+                    <td data-label="Siswa">${count}</td>
+                    <td data-label="Status"><span class="pill ${c.active ? 'on' : 'off'}">${c.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Aksi"><span>
+                        <button class="btn ghost" data-toggle-code="${escapeHtml(c.id)}">${c.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                        <button class="btn danger" data-delete-code="${escapeHtml(c.id)}">Hapus</button>
+                    </span></td>
+                </tr>`;
+            }).join('');
+        }
 
-            if (allGameScores.length === 0) {
-                summaryBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Belum ada skor game tersimpan.</td></tr>';
-                historyBody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Belum ada skor game tersimpan.</td></tr>';
+        $('randomCodeBtn').addEventListener('click', () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // tanpa O/0/I/1 agar tidak tertukar
+            const prefix = $('codeLevel').value === 'UMUM' ? 'UM' : $('codeLevel').value.slice(0, 3);
+            let rand = '';
+            for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+            $('codeInput').value = prefix + rand;
+        });
+
+        $('codeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = normalizeClassCode($('codeInput').value);
+            if (!CLASS_CODE_PATTERN.test(code)) return setMsg('codeMsg', 'Kode harus 4–12 huruf/angka tanpa spasi.', false);
+            $('codeSubmitBtn').disabled = true;
+            try {
+                const ref = doc(db, 'classCodes', code);
+                if ((await getDoc(ref)).exists()) {
+                    setMsg('codeMsg', `Kode ${code} sudah ada. Pakai kode lain.`, false);
+                    return;
+                }
+                await setDoc(ref, {
+                    level: $('codeLevel').value,
+                    note: $('codeNote').value.trim(),
+                    active: true,
+                    createdAt: serverTimestamp(),
+                });
+                setMsg('codeMsg', `Kode ${code} dibuat untuk jenjang ${levelLabel($('codeLevel').value)}. Bagikan ke siswa.`, true);
+                $('codeInput').value = '';
+                $('codeNote').value = '';
+            } catch (err) {
+                console.error(err);
+                setMsg('codeMsg', 'Gagal membuat kode: ' + err.message, false);
+            } finally {
+                $('codeSubmitBtn').disabled = false;
+            }
+        });
+
+        $('codesBody').addEventListener('click', async (e) => {
+            const toggleId = e.target.dataset.toggleCode;
+            const deleteId = e.target.dataset.deleteCode;
+            try {
+                if (toggleId) {
+                    const c = codes.find((x) => x.id === toggleId);
+                    await updateDoc(doc(db, 'classCodes', toggleId), { active: !c.active });
+                } else if (deleteId) {
+                    if (!confirm(`Hapus kode ${deleteId}? Siswa yang sudah terdaftar tidak terpengaruh.`)) return;
+                    await deleteDoc(doc(db, 'classCodes', deleteId));
+                }
+            } catch (err) {
+                alert('Gagal: ' + err.message);
+            }
+        });
+
+        // ================= SKOR GAME =================
+        let scores = [];
+        let scoresStarted = false;
+
+        const scoreClass = (p) => p >= 80 ? 'score-good' : p >= 60 ? 'score-mid' : 'score-low';
+        const scoreText = (item) => item.gameId === 'kosakata-5'
+            ? `Tuntas ${item.total} kata` + ((item.points ?? 0) > 0 ? ` (${item.points}x salah)` : ' tanpa salah')
+            : `${item.correct}/${item.total} (${item.percent}%)` + (item.points ? ` · ${item.points} poin` : '');
+        const scoreTime = (i) => i.timestamp?.toMillis?.() ?? 0;
+        // Jenjang siswa: pakai data profil terbaru, jika tidak ada pakai yang tersimpan di skor
+        const levelOf = (uid, fallback) => students.find((s) => s.id === uid)?.level || fallback || null;
+
+        function startScores() {
+            if (scoresStarted) return;
+            scoresStarted = true;
+            const q = query(collection(db, 'gameScores'), orderBy('timestamp', 'desc'), limit(500));
+            onSnapshot(q, (snap) => {
+                scores = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                renderScores();
+            }, (e) => {
+                console.error(e);
+                scoresStarted = false;
+                $('gameScoresBody').innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat skor: ${escapeHtml(e.message)}</td></tr>`;
+            });
+        }
+
+        function renderScores() {
+            if (!scoresStarted) return;
+            const lvl = $('scoreLevelFilter').value;
+            const inLevel = scores.filter((s) => lvl === 'all' || levelOf(s.userId, s.level) === lvl);
+
+            if (inLevel.length === 0) {
+                const msg = scores.length ? 'Belum ada skor di jenjang ini.' : 'Belum ada skor game tersimpan.';
+                $('gameSummaryBody').innerHTML = `<tr><td colspan="6" class="empty">${msg}</td></tr>`;
+                $('gameScoresBody').innerHTML = `<tr><td colspan="5" class="empty">${msg}</td></tr>`;
+                $('scoreStudentFilter').innerHTML = '<option value="all">Semua siswa</option>';
                 return;
             }
 
-            // Ringkasan per siswa
-            const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            const byStudent = {};
-            allGameScores.forEach((item) => {
-                const s = byStudent[item.userId] ||= { name: item.userName || item.userEmail || 'Siswa', count: 0, week: 0, sum: 0, last: 0 };
+            const weekAgo = Date.now() - 7 * 864e5;
+            const by = {};
+            inLevel.forEach((i) => {
+                const s = by[i.userId] ||= { name: students.find((x) => x.id === i.userId)?.name || i.userName || 'Siswa', level: levelOf(i.userId, i.level), count: 0, week: 0, sum: 0, last: 0 };
                 s.count++;
-                s.sum += item.percent || 0;
-                if (scoreTime(item) >= weekAgo) s.week++;
-                s.last = Math.max(s.last, scoreTime(item));
+                s.sum += i.percent || 0;
+                if (scoreTime(i) >= weekAgo) s.week++;
+                s.last = Math.max(s.last, scoreTime(i));
             });
-            const students = Object.entries(byStudent).sort((a, b) => b[1].week - a[1].week || b[1].count - a[1].count);
+            const list = Object.entries(by).sort((a, b) => b[1].week - a[1].week || b[1].count - a[1].count);
 
-            summaryBody.innerHTML = students.map(([, s]) => {
+            $('gameSummaryBody').innerHTML = list.map(([, s]) => {
                 const avg = Math.round(s.sum / s.count);
-                const last = s.last ? new Date(s.last).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
                 return `<tr>
-                    <td class="px-4 py-3 whitespace-nowrap font-medium">${escapeHtmlAdmin(s.name)}</td>
-                    <td class="px-4 py-3">${s.count}</td>
-                    <td class="px-4 py-3">${s.week}</td>
-                    <td class="px-4 py-3 font-semibold ${gameScoreColor(avg)}">${avg}%</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${last}</td>
+                    <td data-label="Nama"><b>${escapeHtml(s.name)}</b></td>
+                    <td data-label="Jenjang">${escapeHtml(levelLabel(s.level))}</td>
+                    <td data-label="Total latihan">${s.count}</td>
+                    <td data-label="7 hari">${s.week}</td>
+                    <td data-label="Rata-rata"><span class="${scoreClass(avg)}">${avg}%</span></td>
+                    <td data-label="Terakhir">${s.last ? new Date(s.last).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-'}</td>
                 </tr>`;
             }).join('');
 
-            // Isi pilihan filter siswa (pertahankan pilihan yang aktif)
-            const selected = filterEl.value;
-            filterEl.innerHTML = '<option value="all">Semua Siswa</option>' + students
-                .map(([uid, s]) => `<option value="${escapeHtmlAdmin(uid)}">${escapeHtmlAdmin(s.name)}</option>`)
-                .join('');
-            filterEl.value = byStudent[selected] ? selected : 'all';
+            const filter = $('scoreStudentFilter');
+            const selected = filter.value;
+            filter.innerHTML = '<option value="all">Semua siswa</option>'
+                + list.map(([uid, s]) => `<option value="${escapeHtml(uid)}">${escapeHtml(s.name)}</option>`).join('');
+            filter.value = by[selected] ? selected : 'all';
 
-            // Riwayat latihan
-            const rows = filterEl.value === 'all' ? allGameScores : allGameScores.filter((i) => i.userId === filterEl.value);
-            historyBody.innerHTML = rows.slice(0, 200).map((item) => {
-                const when = item.timestamp ? item.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
-                return `<tr>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${when}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${escapeHtmlAdmin(item.userName || item.userEmail)}</td>
-                    <td class="px-4 py-3">${escapeHtmlAdmin(item.gameName)}</td>
-                    <td class="px-4 py-3 font-semibold ${gameScoreColor(item.percent)}">${gameScoreText(item)}</td>
-                    <td class="px-4 py-3"><button onclick="deleteGameScore('${item.id}')" class="text-red-600 hover:text-red-900 rounded-md px-3 py-1">Hapus</button></td>
-                </tr>`;
-            }).join('');
+            const rows = filter.value === 'all' ? inLevel : inLevel.filter((i) => i.userId === filter.value);
+            $('gameScoresBody').innerHTML = rows.slice(0, 200).map((i) => `<tr>
+                    <td data-label="Waktu">${fmtDate(i.timestamp)}</td>
+                    <td data-label="Nama">${escapeHtml(by[i.userId]?.name || i.userName)}</td>
+                    <td data-label="Game">${escapeHtml(i.gameName)}</td>
+                    <td data-label="Hasil"><span class="${scoreClass(i.percent)}">${scoreText(i)}</span></td>
+                    <td data-label="Aksi"><button class="btn danger" data-delete-score="${i.id}">Hapus</button></td>
+                </tr>`).join('');
         }
 
-        function loadGameScoresForAdmin() {
-            if (gameScoresUnsubscribe) return; // sudah berlangganan data secara live
-            const q = query(collection(db, "gameScores"), orderBy("timestamp", "desc"), limit(500));
-            gameScoresUnsubscribe = onSnapshot(q, (snapshot) => {
-                allGameScores = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-                renderGameScoreTables();
-            }, (error) => {
-                console.error("Error loading game scores:", error);
-                gameScoresUnsubscribe = null;
-                document.getElementById('gameScoresTableBody').innerHTML =
-                    `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Gagal memuat skor: ${escapeHtmlAdmin(error.message)}</td></tr>`;
-            });
-        }
-
-        document.getElementById('gameScoreStudentFilter').addEventListener('change', renderGameScoreTables);
-
-        window.deleteGameScore = async (docId) => {
-            if (!confirm('Hapus catatan skor ini?')) return;
+        $('scoreLevelFilter').addEventListener('change', renderScores);
+        $('scoreStudentFilter').addEventListener('change', renderScores);
+        $('gameScoresBody').addEventListener('click', async (e) => {
+            const id = e.target.dataset.deleteScore;
+            if (!id || !confirm('Hapus catatan skor ini?')) return;
             try {
-                await deleteDoc(doc(db, "gameScores", docId));
-            } catch (e) {
-                console.error("Error deleting game score:", e);
-                alert('Gagal menghapus skor: ' + e.message);
-            }
-        };
-
-        // --- Logika Navigasi ---
-        const navTabs = document.querySelectorAll('.nav-tab');
-        const sections = document.querySelectorAll('section');
-
-        function showSection(sectionId) {
-            sections.forEach(section => {
-                section.classList.add('hidden');
-            });
-            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
-
-            navTabs.forEach(tab => {
-                tab.classList.remove('bg-indigo-700', 'text-white');
-                tab.classList.add('text-indigo-600', 'hover:text-indigo-800');
-                if (tab.dataset.section === sectionId) {
-                    tab.classList.add('bg-indigo-700', 'text-white');
-                    tab.classList.remove('text-indigo-600', 'hover:text-indigo-800');
-                }
-            });
-
-            // Muat data spesifik saat bagian ditampilkan
-            if (sectionId === 'registrations') {
-                loadRegistrations();
-            } else if (sectionId === 'attendance-logging') {
-                loadStudentsForAttendance(); // Memuat siswa untuk dropdown "Pilih Siswa"
-                // Bersihkan formulir saat beralih ke tab logging
-                attendanceForm.reset();
-                attendanceDateInput.valueAsDate = new Date(); // Atur tanggal hari ini
-            } else if (sectionId === 'attendance-history') {
-                loadStudentAttendanceRecordsForAdmin(categoryFilter.value);
-            } else if (sectionId === 'class-management') {
-                loadClasses();
-                classForm.reset();
-                classIdInputForm.value = '';
-                submitClassBtn.textContent = 'Tambah Kelas';
-                cancelClassEditBtn.classList.add('hidden');
-            } else if (sectionId === 'game-scores') {
-                loadGameScoresForAdmin();
-            } else if (sectionId === 'teacher-management') {
-                loadTeachers();
-                teacherForm.reset();
-                teacherIdInputForm.value = '';
-                submitTeacherBtn.textContent = 'Tambah Pengajar';
-                cancelTeacherEditBtn.classList.add('hidden');
-            }
-        }
-
-        navTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                showSection(tab.dataset.section);
-            });
-        });
-
-        // --- Authentication Check and Initial Data Loading ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const authorizedAdminEmail = "admin@extracourse.com"; // GANTI DENGAN EMAIL ADMIN ANDA
-                if (user.email === authorizedAdminEmail) {
-                    currentAdminUser = { uid: user.uid, email: user.email };
-                    adminEmailSpan.textContent = user.email;
-                    showSection('registrations'); // Bagian default saat login
-                    document.body.style.visibility = 'visible'; // Tampilkan konten setelah autentikasi
-                    console.log("Admin login:", user.email, user.uid);
-                } else {
-                    signOut(auth);
-                    showMessageBox("Akses ditolak. Anda bukan admin yang terotorisasi.", 'error');
-                    setTimeout(() => { window.location.href = "admin-login.html"; }, 2000); // Redirect ke halaman login admin
-                }
-            } else {
-                console.log("Tidak login. Mengarahkan ke admin-login.html");
-                showMessageBox("Silakan login sebagai admin.", 'error');
-                setTimeout(() => { window.location.href = "admin-login.html"; }, 2000); // Redirect ke halaman login admin
+                await deleteDoc(doc(db, 'gameScores', id));
+            } catch (err) {
+                alert('Gagal menghapus skor: ' + err.message);
             }
         });
-
-        logoutButton.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                showMessageBox("Anda telah logout.", 'success');
-                setTimeout(() => { window.location.href = "admin-login.html"; }, 1500); // Redirect ke halaman login admin
-            } catch (error) {
-                console.error("Error saat logout:", error);
-                showMessageBox("Gagal logout: " + error.message, 'error');
-            }
-        });
-
-        // --- Pendaftaran Siswa (Logika yang DIPERBARUI untuk mengambil dari koleksi yang benar) ---
-        function loadRegistrations() {
-            // Mengambil dari koleksi yang benar: artifacts/{appId}/public/data/registrations
-            const registrationsRef = collection(db, `artifacts/${appId}/public/data/registrations`);
-            const q = query(registrationsRef, orderBy('timestamp', 'desc')); // Urutkan berdasarkan timestamp pendaftaran
-
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    registrationTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada pendaftaran baru.</td></tr>';
-                    return;
-                }
-
-                let html = '';
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    // Pastikan nama_lengkap, nomor_whatsapp, jenis_kelas, jadwal_diinginkan ada di dokumen pendaftaran Anda
-                    const namaLengkap = data.nama_lengkap || 'N/A';
-                    const nomorWhatsapp = data.nomor_whatsapp || 'N/A';
-                    const jenisKelas = Array.isArray(data.jenis_kelas) ? data.jenis_kelas.join(', ') : (data.jenis_kelas || 'N/A');
-                    const jadwalDiinginkan = data.jadwal_diinginkan || 'N/A';
-                    const tanggalDaftar = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'N/A';
-
-                    html += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${namaLengkap}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${nomorWhatsapp}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jenisKelas}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${jadwalDiinginkan}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tanggalDaftar}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
-                                <button onclick="openEditModal('${doc.id}', 'artifacts/${appId}/public/data/registrations', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
-                                <button onclick="deleteRegistration('${doc.id}', 'artifacts/${appId}/public/data/registrations')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                registrationTableBody.innerHTML = html;
-            }, (error) => {
-                console.error("Error fetching registrations:", error);
-                registrationTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat pendaftaran: ${error.message}</td></tr>`;
-            });
-        }
-
-        async function deleteRegistration(docId, collectionName) {
-            const userConfirmed = await new Promise(resolve => {
-                const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-                confirmationModal.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="mb-4">Apakah Anda yakin ingin menghapus pendaftaran ini?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
-                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmationModal);
-
-                document.getElementById('confirmYes').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(true);
-                };
-                document.getElementById('confirmNo').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(false);
-                };
-            });
-
-            if (userConfirmed) {
-                try {
-                    await deleteDoc(doc(db, collectionName, docId));
-                    showMessageBox("Pendaftaran berhasil dihapus.", "success");
-                } catch (error) {
-                    console.error("Error menghapus pendaftaran:", error);
-                    showMessageBox("Gagal menghapus pendaftaran: " + error.message, "error");
-                }
-            }
-        }
-
-        // --- Absensi Siswa (Logika yang DIPERBAIKI untuk menggunakan 'name' dan 'email' dari koleksi 'users') ---
-        async function loadStudentsForAttendance() {
-            studentSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>'; // Reset dropdown
-            try {
-                const usersRef = collection(db, "users");
-                // Mengubah orderBy("fullName") menjadi orderBy("name")
-                const q = query(usersRef, where("role", "==", "Student"), orderBy("name"));
-                const querySnapshot = await getDocs(q);
-
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id; // UID Siswa
-                    // Menggunakan data.name alih-alih data.fullName
-                    option.textContent = `${data.name || data.email} (${data.email})`;
-                    studentSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Error memuat siswa untuk absensi:", error);
-                showMessageBox("Gagal memuat daftar siswa: " + error.message, "error");
-            }
-        }
-
-        attendanceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const studentId = studentSelect.value;
-            const classId = classIdInput.value.trim();
-            const date = attendanceDateInput.value;
-            const status = attendanceStatusSelect.value;
-
-            if (!studentId || !classId || !date || !status) {
-                showMessageBox("Semua bidang harus diisi.", "error");
-                return;
-            }
-
-            try {
-                const studentDocRef = doc(db, "users", studentId);
-                const studentDocSnap = await getDoc(studentDocRef);
-
-                if (!studentDocSnap.exists()) {
-                    showMessageBox("Siswa tidak ditemukan.", "error");
-                    return;
-                }
-
-                const studentData = studentDocSnap.data();
-
-                await addDoc(collection(db, "studentAttendance"), {
-                    studentId: studentId,
-                    studentName: studentData.name || studentData.email, // Menggunakan studentData.name
-                    studentEmail: studentData.email,
-                    classId: classId,
-                    date: date,
-                    status: status,
-                    recordedByUid: currentAdminUser.uid,
-                    recordedByEmail: currentAdminUser.email,
-                    timestamp: new Date()
-                });
-
-                showMessageBox("Absensi berhasil dicatat!", "success");
-                attendanceForm.reset();
-                attendanceDateInput.valueAsDate = new Date(); // Reset ke tanggal hari ini
-            } catch (error) {
-                console.error("Error menambahkan absensi:", error);
-                showMessageBox("Gagal mencatat absensi: " + error.message, "error");
-            }
-        });
-
-        // --- Riwayat Absensi Siswa (Logika yang Sudah Ada) ---
-        categoryFilter.addEventListener('change', () => {
-            loadStudentAttendanceRecordsForAdmin(categoryFilter.value);
-        });
-
-        async function loadStudentAttendanceRecordsForAdmin(filterCategory = 'all') {
-            const attendanceRef = collection(db, "studentAttendance");
-            let q;
-
-            try {
-                if (filterCategory === 'all') {
-                    q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc"));
-                } else if (filterCategory === 'Student') { // Asumsi 'Student' mengacu pada peran di 'users'
-                    const usersRef = collection(db, "users");
-                    const studentUsersQuery = query(usersRef, where("role", "==", "Student"));
-                    const studentUsersSnapshot = await getDocs(studentUsersQuery);
-
-                    const studentIds = [];
-                    studentUsersSnapshot.forEach(userDoc => {
-                        studentIds.push(userDoc.id);
-                    });
-
-                    if (studentIds.length > 0) {
-                        if (studentIds.length > 10) {
-                             console.warn("Lebih dari 10 siswa dengan peran 'Student'. Pemfilteran dengan operator 'in' mungkin terbatas. Menampilkan semua untuk saat ini.");
-                             q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
-                        } else {
-                            q = query(attendanceRef, where("studentId", "in", studentIds), orderBy("date", "desc"), orderBy("timestamp", "desc"));
-                        }
-                    } else {
-                        studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada absensi untuk kategori ini.</td></tr>';
-                        return;
-                    }
-                } else {
-                    console.warn(`Kategori filter '${filterCategory}' belum sepenuhnya diimplementasikan untuk kueri langsung pada catatan absensi.`);
-                    q = query(attendanceRef, orderBy("date", "desc"), orderBy("timestamp", "desc")); // Kembali ke semua
-                }
-
-                onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        studentAttendanceTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada riwayat absensi siswa untuk kategori ini.</td></tr>';
-                        return;
-                    }
-
-                    let html = '';
-                    snapshot.forEach((doc) => {
-                        const record = doc.data();
-                        const attendanceDate = record.date || 'N/A';
-                        const studentName = record.studentName || record.studentEmail || 'N/A';
-                        const classId = record.classId || 'N/A';
-                        const status = record.status || 'N/A';
-                        const recordedBy = record.recordedByEmail || 'N/A';
-                        const docId = doc.id;
-
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${studentName}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${classId}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${attendanceDate}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${status}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${recordedBy}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openEditModal('${docId}', 'studentAttendance', 'view')" class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-3 py-1">Lihat</button>
-                                    <button onclick="openEditModal('${docId}', 'studentAttendance', 'edit')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Edit</button>
-                                    <button onclick="deleteAttendanceRecord('${docId}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    studentAttendanceTableBody.innerHTML = html;
-                }, (error) => {
-                    console.error("Error mengambil catatan absensi siswa untuk admin:", error);
-                    studentAttendanceTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat riwayat absensi siswa: ${error.message}</td></tr>`;
-                });
-            } catch (error) {
-                console.error("Error di loadStudentAttendanceRecordsForAdmin (pra-kueri):", error);
-                studentAttendanceTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Terjadi kesalahan: ${error.message}</td></tr>`;
-            }
-        }
-
-        async function deleteAttendanceRecord(docId) {
-            const userConfirmed = await new Promise(resolve => {
-                const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-                confirmationModal.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="mb-4">Apakah Anda yakin ingin menghapus catatan absensi ini?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
-                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmationModal);
-
-                document.getElementById('confirmYes').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(true);
-                };
-                document.getElementById('confirmNo').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(false);
-                };
-            });
-
-            if (userConfirmed) {
-                try {
-                    await deleteDoc(doc(db, "studentAttendance", docId));
-                    showMessageBox("Catatan absensi berhasil dihapus.", "success");
-                } catch (error) {
-                    console.error("Error menghapus catatan absensi:", error);
-                    showMessageBox("Gagal menghapus catatan absensi: " + error.message, "error");
-                }
-            }
-        }
-
-        // --- Fungsi Manajemen Kelas ---
-        let editingClassId = null;
-
-        classForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const className = classNameInput.value.trim();
-            const classLevel = classLevelInput.value.trim();
-            const classDescription = classDescriptionInput.value.trim();
-            const classCapacity = parseInt(classCapacityInput.value);
-            const classPrice = parseInt(classPriceInput.value);
-            const classIsActive = classIsActiveInput.checked;
-
-            if (!className || !classLevel || isNaN(classCapacity) || isNaN(classPrice)) {
-                showMessageBox("Pastikan Nama Kelas, Level, Kapasitas, dan Harga terisi dengan benar.", "error");
-                return;
-            }
-
-            try {
-                if (editingClassId) {
-                    const classRef = doc(db, "classes", editingClassId);
-                    await updateDoc(classRef, {
-                        className,
-                        level: classLevel,
-                        description: classDescription,
-                        capacity: classCapacity,
-                        price: classPrice,
-                        isActive: classIsActive
-                    });
-                    showMessageBox("Kelas berhasil diperbarui!", "success");
-                } else {
-                    await addDoc(collection(db, "classes"), {
-                        className,
-                        level: classLevel,
-                        description: classDescription,
-                        capacity: classCapacity,
-                        price: classPrice,
-                        isActive: classIsActive,
-                        createdAt: new Date()
-                    });
-                    showMessageBox("Kelas berhasil ditambahkan!", "success");
-                }
-                classForm.reset();
-                editingClassId = null;
-                submitClassBtn.textContent = 'Tambah Kelas';
-                cancelClassEditBtn.classList.add('hidden');
-                loadClasses();
-            } catch (error) {
-                console.error("Error menyimpan kelas:", error);
-                showMessageBox("Gagal menyimpan kelas: " + error.message, "error");
-            }
-        });
-
-        async function loadClasses() {
-            classesTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Memuat kelas...</td></tr>';
-            try {
-                const q = query(collection(db, "classes"), orderBy("className"));
-                onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        classesTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Belum ada kelas yang ditambahkan.</td></tr>';
-                        return;
-                    }
-                    let html = '';
-                    snapshot.forEach((doc) => {
-                        const cls = doc.data();
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${cls.className}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.level}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.capacity}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp ${cls.price.toLocaleString('id-ID')}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.isActive ? '<i class="fas fa-check-circle text-green-500"></i> Ya' : '<i class="fas fa-times-circle text-red-500"></i> Tidak'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="populateEditClassForm('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">Edit</button>
-                                    <button onclick="deleteClass('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    classesTableBody.innerHTML = html;
-                });
-            } catch (error) {
-                console.error("Error memuat kelas:", error);
-                classesTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Gagal memuat kelas: ${error.message}</td></tr>`;
-            }
-        }
-
-        async function populateEditClassForm(classId) {
-            try {
-                const classDocRef = doc(db, "classes", classId);
-                const classDocSnap = await getDoc(classDocRef);
-                if (classDocSnap.exists()) {
-                    const cls = classDocSnap.data();
-                    editingClassId = classId;
-                    classNameInput.value = cls.className || '';
-                    classLevelInput.value = cls.level || '';
-                    classDescriptionInput.value = cls.description || '';
-                    classCapacityInput.value = cls.capacity || '';
-                    classPriceInput.value = cls.price || '';
-                    classIsActiveInput.checked = cls.isActive || false;
-
-                    submitClassBtn.textContent = 'Perbarui Kelas';
-                    cancelClassEditBtn.classList.remove('hidden');
-                    classManagementSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    showMessageBox("Kelas tidak ditemukan.", "error");
-                }
-            } catch (error) {
-                console.error("Error mengisi formulir kelas:", error);
-                showMessageBox("Gagal memuat data kelas untuk edit: " + error.message, "error");
-            }
-        }
-
-        cancelClassEditBtn.addEventListener('click', () => {
-            classForm.reset();
-            editingClassId = null;
-            submitClassBtn.textContent = 'Tambah Kelas';
-            cancelClassEditBtn.classList.add('hidden');
-        });
-
-        async function deleteClass(classId) {
-            const userConfirmed = await new Promise(resolve => {
-                const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-                confirmationModal.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="mb-4">Apakah Anda yakin ingin menghapus kelas ini?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
-                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmationModal);
-
-                document.getElementById('confirmYes').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(true);
-                };
-                document.getElementById('confirmNo').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(false);
-                };
-            });
-
-            if (userConfirmed) {
-                try {
-                    await deleteDoc(doc(db, "classes", classId));
-                    showMessageBox("Kelas berhasil dihapus.", "success");
-                    loadClasses();
-                } catch (error) {
-                    console.error("Error menghapus kelas:", error);
-                    showMessageBox("Gagal menghapus kelas: " + error.message, "error");
-                }
-            }
-        }
-
-        // --- Fungsi Manajemen Pengajar ---
-        let editingTeacherId = null;
-
-        teacherForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const teacherName = teacherNameInput.value.trim();
-            const teacherEmail = teacherEmailInput.value.trim();
-            const teacherSpecialization = teacherSpecializationInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
-            const teacherPhoneNumber = teacherPhoneNumberInput.value.trim();
-            const teacherIsActive = teacherIsActiveInput.checked;
-            const teacherUid = teacherUidInput.value.trim();
-
-            if (!teacherName || !teacherEmail) {
-                showMessageBox("Nama dan Email Pengajar harus diisi.", "error");
-                return;
-            }
-
-            try {
-                if (editingTeacherId) {
-                    const teacherRef = doc(db, "teachers", editingTeacherId);
-                    await updateDoc(teacherRef, {
-                        name: teacherName,
-                        email: teacherEmail,
-                        specialization: teacherSpecialization,
-                        phoneNumber: teacherPhoneNumber,
-                        isActive: teacherIsActive,
-                        uid: teacherUid || null
-                    });
-                    showMessageBox("Data pengajar berhasil diperbarui!", "success");
-                } else {
-                    await addDoc(collection(db, "teachers"), {
-                        name: teacherName,
-                        email: teacherEmail,
-                        specialization: teacherSpecialization,
-                        phoneNumber: teacherPhoneNumber,
-                        isActive: teacherIsActive,
-                        uid: teacherUid || null,
-                        createdAt: new Date()
-                    });
-                    showMessageBox("Pengajar berhasil ditambahkan!", "success");
-                }
-                teacherForm.reset();
-                editingTeacherId = null;
-                submitTeacherBtn.textContent = 'Tambah Pengajar';
-                cancelTeacherEditBtn.classList.add('hidden');
-                loadTeachers();
-            } catch (error) {
-                console.error("Error menyimpan pengajar:", error);
-                showMessageBox("Gagal menyimpan pengajar: " + error.message, "error");
-            }
-        });
-
-        async function loadTeachers() {
-            teachersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Memuat pengajar...</td></tr>';
-            try {
-                const q = query(collection(db, "teachers"), orderBy("name"));
-                onSnapshot(q, (snapshot) => {
-                    if (snapshot.empty) {
-                        teachersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Belum ada pengajar yang ditambahkan.</td></tr>';
-                        return;
-                    }
-                    let html = '';
-                    snapshot.forEach((doc) => {
-                        const teacher = doc.data();
-                        html += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${teacher.name}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.email}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.specialization.join(', ')}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${teacher.isActive ? '<i class="fas fa-check-circle text-green-500"></i> Ya' : '<i class="fas fa-times-circle text-red-500"></i> Tidak'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="populateEditTeacherForm('${doc.id}')" class="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-3 py-1">Edit</button>
-                                    <button onclick="deleteTeacher('${doc.id}')" class="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-md px-3 py-1 ml-2">Hapus</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    teachersTableBody.innerHTML = html;
-                });
-            } catch (error) {
-                console.error("Error memuat pengajar:", error);
-                teachersTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Gagal memuat pengajar: ${error.message}</td></tr>`;
-            }
-        }
-
-        async function populateEditTeacherForm(teacherId) {
-            try {
-                const teacherDocRef = doc(db, "teachers", teacherId);
-                const teacherDocSnap = await getDoc(teacherDocRef);
-                if (teacherDocSnap.exists()) {
-                    const teacher = teacherDocSnap.data();
-                    editingTeacherId = teacherId;
-                    teacherNameInput.value = teacher.name || '';
-                    teacherEmailInput.value = teacher.email || '';
-                    teacherSpecializationInput.value = (teacher.specialization || []).join(', ');
-                    teacherPhoneNumberInput.value = teacher.phoneNumber || '';
-                    teacherIsActiveInput.checked = teacher.isActive || false;
-                    teacherUidInput.value = teacher.uid || '';
-
-                    submitTeacherBtn.textContent = 'Perbarui Pengajar';
-                    cancelTeacherEditBtn.classList.remove('hidden');
-                    teacherManagementSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    showMessageBox("Pengajar tidak ditemukan.", "error");
-                }
-            } catch (error) {
-                console.error("Error mengisi formulir pengajar:", error);
-                showMessageBox("Gagal memuat data pengajar untuk edit: " + error.message, "error");
-            }
-        }
-
-        cancelTeacherEditBtn.addEventListener('click', () => {
-            teacherForm.reset();
-            editingTeacherId = null;
-            submitTeacherBtn.textContent = 'Tambah Pengajar';
-            cancelTeacherEditBtn.classList.add('hidden');
-        });
-
-        async function deleteTeacher(teacherId) {
-            const userConfirmed = await new Promise(resolve => {
-                const confirmationModal = document.createElement('div');
-                confirmationModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-                confirmationModal.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl">
-                        <p class="mb-4">Apakah Anda yakin ingin menghapus pengajar ini?</p>
-                        <div class="flex justify-end space-x-4">
-                            <button id="confirmYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Ya</button>
-                            <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Tidak</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(confirmationModal);
-
-                document.getElementById('confirmYes').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(true);
-                };
-                document.getElementById('confirmNo').onclick = () => {
-                    confirmationModal.remove();
-                    resolve(false);
-                };
-            });
-
-            if (userConfirmed) {
-                try {
-                    await deleteDoc(doc(db, "teachers", teacherId));
-                    showMessageBox("Pengajar berhasil dihapus.", "success");
-                    loadTeachers();
-                } catch (error) {
-                    console.error("Error menghapus pengajar:", error);
-                    showMessageBox("Gagal menghapus pengajar: " + error.message, "error");
-                }
-            }
-        }
-
-        // Expose functions to global scope for onclick attributes
-        window.openEditModal = openEditModal;
-        window.deleteRegistration = deleteRegistration; // Now accepts collectionName
-        window.deleteAttendanceRecord = deleteAttendanceRecord;
-        window.populateEditClassForm = populateEditClassForm;
-        window.deleteClass = deleteClass;
-        window.populateEditTeacherForm = populateEditTeacherForm;
-        window.deleteTeacher = deleteTeacher;
-
     </script>
 </body>
 </html>

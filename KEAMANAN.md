@@ -1,48 +1,62 @@
-# Keamanan Data Extra Course (Firestore)
+# Keamanan Data ExtraCourse (Firestore)
 
-File `firestore.rules` berisi aturan yang menentukan **siapa boleh membaca dan mengubah data** di database Firebase `extra-course-d02c2`.
+Website ini fokus pada **permainan dan aktivitas belajar**. Data administratif (absensi, data pendaftaran lengkap, laporan orang tua) dikelola di spreadsheet, **bukan** di website.
 
-## Kenapa perlu?
+File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di database Firebase `extra-course-d02c2`.
 
-Halaman admin (`admin.html`, `admin-registrations.html`, `admin-attendance.html`) memang mengecek email admin, tetapi pengecekan itu hanya berjalan di browser. Orang yang sudah mendaftar akun bisa langsung mengakses database tanpa melewati halaman admin. Satu-satunya pengaman yang sebenarnya adalah aturan di server Firebase.
+## Data yang disimpan website
 
-## Siapa boleh apa
+| Data | Isi | Siswa | Admin | Belum login |
+|---|---|---|---|---|
+| Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
+| Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
+| Skor game (`gameScores`) | Game, nilai, waktu | Simpan & lihat skor sendiri, tidak bisa mengubah | Semua, termasuk hapus | Tidak bisa |
 
-| Data | Siswa (sudah login) | Admin | Belum login |
-|---|---|---|---|
-| Profil (`users`) | Lihat profil sendiri; buat profil saat daftar (peran otomatis "Student"); perbarui waktu login terakhir | Semua | Tidak bisa |
-| Pendaftaran | Kirim pendaftaran atas nama sendiri; lihat pendaftaran sendiri | Semua | Tidak bisa |
-| Absensi & evaluasi (`studentAttendance`) | Catat absensi sendiri; lihat riwayat sendiri | Semua, termasuk edit & hapus | Tidak bisa |
-| Skor game (`gameScores`) | Simpan skor sendiri (otomatis saat selesai bermain); lihat skor sendiri; tidak bisa mengubah skor | Semua, termasuk hapus | Tidak bisa |
-| Kelas (`classes`) & guru (`teachers`) | Tidak bisa | Semua | Tidak bisa |
+Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
 
-Siswa tidak bisa mengubah perannya sendiri menjadi admin, melihat data siswa lain, atau mengedit absensi yang sudah tercatat.
+Siswa tidak bisa mengubah jenjang atau perannya sendiri, melihat data siswa lain, atau mendaftar tanpa kode kelas yang aktif.
 
-Catatan: jalur data pendaftaran (`artifacts/.../public/data/registrations`) sengaja **tidak dipindah** supaya pendaftaran lama tetap tampil di panel admin. Kata "public" di jalur itu hanya nama; yang menentukan akses adalah aturan ini.
+## Memasang aturan
 
-## Cara memasang (±5 menit)
+1. Buka https://console.firebase.google.com → project **extra-course-d02c2**.
+2. **Firestore Database → tab Rules**.
+3. Hapus isi editor, tempel seluruh isi `firestore.rules`, klik **Publish**.
 
-1. Buka https://console.firebase.google.com dan pilih project **extra-course-d02c2**.
-2. Menu kiri: **Firestore Database → tab Rules**.
-3. **Simpan cadangan:** salin aturan lama ke Notepad dulu, untuk berjaga-jaga.
-4. Hapus isi editor, tempel seluruh isi `firestore.rules`, lalu klik **Publish**.
+## Menghapus data lama
 
-Aturan berlaku dalam 1–2 menit.
+Data absensi, pendaftaran, kelas, dan guru tidak dipakai lagi. Untuk menghapusnya:
+
+1. **Firestore Database → tab Data**.
+2. Pada setiap koleksi berikut, klik **⋮** di samping namanya → **Delete collection**, lalu ketik nama koleksinya untuk konfirmasi:
+   - `studentAttendance`
+   - `artifacts` (berisi data pendaftaran lama)
+   - `classes`
+   - `teachers`
+3. **Jangan hapus** `users`, `gameScores`, dan `classCodes`.
+
+## Langkah pertama setelah dipasang
+
+1. Login admin → tab **Kode Kelas** → buat kode untuk setiap jenjang atau kelompok, misalnya `SMP24` untuk SMP.
+2. Bagikan kode itu ke siswa. Siswa mendaftar di halaman depan dengan nama, email, password, dan kode kelas.
+3. Untuk siswa tanpa email: tab **Siswa** → **Buat Akun Siswa**. Catat nama pengguna dan password, lalu berikan ke siswa.
+4. Siswa lama yang sudah punya akun belum punya jenjang. Atur jenjangnya di tab **Siswa** (kolom Jenjang).
 
 ## Uji setelah memasang
 
-Coba di website, sebaiknya di jendela penyamaran (incognito):
+- [ ] Daftar dengan kode kelas yang benar → berhasil, masuk ke dashboard, jenjang tampil
+- [ ] Daftar dengan kode salah/nonaktif → ditolak dengan pesan jelas
+- [ ] Admin membuat akun nama pengguna → siswa bisa masuk dengan nama pengguna & password itu
+- [ ] Mainkan satu game sampai selesai → skor muncul di dashboard siswa dan tab Skor Game admin
+- [ ] Admin bisa mengubah jenjang siswa
+- [ ] Login sebagai siswa lalu buka `admin.html` → diarahkan keluar
 
-- [ ] Daftar akun siswa baru → diarahkan ke form pendaftaran
-- [ ] Kirim form pendaftaran → berhasil, masuk ke dashboard
-- [ ] Dashboard siswa menampilkan nama, status pendaftaran, dan riwayat absensi
-- [ ] Siswa mencatat absensi & evaluasi → berhasil
-- [ ] Login sebagai `admin@extracourse.com` → semua menu admin tampil: pendaftaran, absensi, kelas, guru
-- [ ] Admin bisa mengedit dan menghapus data
-- [ ] Login sebagai siswa lalu buka `admin.html` → ditolak
+Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana yang gagal.
 
-Kalau ada yang gagal (pesan "Missing or insufficient permissions"), tempel kembali aturan lama dari cadangan, lalu kabari bagian mana yang gagal.
+## Keterbatasan
+
+- **Password akun nama pengguna** tidak bisa direset dari website, karena Firebase versi gratis tidak mengizinkannya tanpa server. Jika siswa lupa, buatkan akun baru. Siswa yang memakai email bisa memakai tombol "Lupa password".
+- Akun yang dihapus profilnya masih bisa login sampai dinonaktifkan di **Firebase Console → Authentication**.
 
 ## Kalau email admin diganti
 
-Ubah email di fungsi `isAdmin()` dalam `firestore.rules`, **dan** di tiga halaman admin (cari `authorizedAdminEmail`).
+Ubah di fungsi `isAdmin()` dalam `firestore.rules` **dan** `ADMIN_EMAIL` di `ec-common.js`. Halaman `admin-login.html` juga masih menyebut email ini; cari `authorizedAdminEmail`.
