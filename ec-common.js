@@ -144,9 +144,9 @@ export const PACK_TYPES = [
     },
     {
         value: "verb", label: "Kata kerja (V1, V2, V3 = arti)",
-        hint: "Satu kata kerja per baris: V1, V2, V3 = arti.",
-        example: "eat, ate, eaten = makan\ngo, went, gone = pergi",
-        games: "",
+        hint: "Satu kata kerja per baris: V1, V2, V3 = arti. Jika ada dua bentuk benar, pisahkan dengan / (contoh: learn, learnt / learned, learnt / learned = belajar).",
+        example: "eat, ate, eaten = makan\ngo, went, gone = pergi\nlearn, learnt / learned, learnt / learned = belajar",
+        games: "Kata Kerja V1-V2-V3",
     },
     {
         value: "kalimat", label: "Kalimat (untuk susun kalimat)",

@@ -56,10 +56,35 @@ function tagsHtml(pack) {
     }).join("");
 }
 
+// Tabel daftar kata (pratinjau & hasil). fields = PACK_FIELDS[...]
+export function wordTableHtml(words, fields) {
+    const head = fields.length > 2
+        ? `<thead><tr><th></th>${fields.map((f) => `<th>${f.label}</th>`).join("")}</tr></thead>` : "";
+    return `<table class="word-table${fields.length > 2 ? " cols" : ""}">${head}<tbody>${words.map((w, i) =>
+        `<tr><td>${i + 1}</td>${fields.map((f) => `<td>${escapeHtml(w[f.key])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+// Kolom tiap jenis paket (urutan = urutan isian & pratinjau)
+export const PACK_FIELDS = {
+    kosakata: [
+        { key: "q", label: "Kata", example: "apple" },
+        { key: "a", label: "Arti", example: "apel" },
+    ],
+    verb: [
+        { key: "arti", label: "Arti", example: "makan" },
+        { key: "v1", label: "V1", example: "eat" },
+        { key: "v2", label: "V2", example: "ate" },
+        { key: "v3", label: "V3", example: "eaten" },
+    ],
+};
+
 // =====================================================================
 //  Pilih soal
 // =====================================================================
-export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null, onChange = () => {} }) {
+export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100, previewEl = null, onChange = () => {} }) {
+    const FIELDS = PACK_FIELDS[type];
+    const unit = type === "verb" ? "kata kerja" : "kata";
+    const isComplete = (w) => FIELDS.every((f) => typeof w?.[f.key] === "string" && w[f.key].trim());
     const KEY = `ec-${gameKey}`;
     const saved = store.get(KEY) || {};
     const state = {
@@ -71,7 +96,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
         search: "",
         scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"
         tier: "all",
-        own: Array.isArray(saved.own) ? saved.own.filter((w) => w && typeof w.q === "string").slice(0, maxOwn) : [],
+        own: Array.isArray(saved.own) ? saved.own.filter(isComplete).slice(0, maxOwn) : [],
     };
 
     root.innerHTML = `
@@ -90,7 +115,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
             <div class="pack-count" data-pack-count></div>
         </div>
         <div data-own-area>
-            <div class="word-head"><span>Kata</span><span>Arti</span><span></span></div>
+            <div class="word-head f${FIELDS.length}">${FIELDS.map((f) => `<span>${f.label}</span>`).join("")}<span></span></div>
             <div class="word-rows" data-rows style="margin-top:6px"></div>
             <div class="word-tools">
                 <button type="button" class="btn ghost" data-add-row>+ Tambah baris</button>
@@ -168,7 +193,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
             box.innerHTML = list.map((p) => `
                 <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
                     <span class="info"><span class="t">${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}</span></span>
-                    <span class="n">${p.itemCount} kata</span>
+                    <span class="n">${p.itemCount} ${unit}</span>
                 </button>`).join("");
         }
         if (list.length !== state.packs.length) $("[data-pack-count]").textContent = `${list.length} dari ${state.packs.length} paket`;
@@ -190,35 +215,33 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
         previewEl.innerHTML = `
             <div class="preview-head">
                 <div><h2>${escapeHtml(p.title)}</h2><div class="tags">${tagsHtml(p)}</div></div>
-                <span class="n">${p.itemCount} kata</span>
+                <span class="n">${p.itemCount} ${unit}</span>
             </div>
-            <div class="word-scroll"><table class="word-table"><tbody>${api.words().map((w, i) =>
-                `<tr><td>${i + 1}</td><td>${escapeHtml(w.q)}</td><td>${escapeHtml(w.a)}</td></tr>`).join("")}</tbody></table></div>`;
+            <div class="word-scroll">${wordTableHtml(api.words(), FIELDS)}</div>`;
     }
 
     // ---------- Kata sendiri ----------
     // Contoh isian hanya di baris pertama
-    function rowHtml(w = { q: "", a: "" }, first = false) {
-        return `<div class="word-row">
-            <input class="input" data-q placeholder="${first ? "contoh: apple" : ""}" value="${escapeHtml(w.q)}" autocomplete="off" aria-label="Kata">
-            <input class="input" data-a placeholder="${first ? "contoh: apel" : ""}" value="${escapeHtml(w.a)}" autocomplete="off" aria-label="Arti">
+    function rowHtml(w = {}, first = false) {
+        return `<div class="word-row f${FIELDS.length}">
+            ${FIELDS.map((f) => `<input class="input" data-f="${f.key}" placeholder="${FIELDS.length > 2 ? f.label + (first ? ": " + f.example : "") : first ? "contoh: " + f.example : ""}" value="${escapeHtml(w[f.key] || "")}" autocomplete="off" autocapitalize="none" aria-label="${f.label}">`).join("")}
             <button type="button" class="icon-btn" data-remove aria-label="Hapus baris">&times;</button>
         </div>`;
     }
     function renderRows() {
-        const rows = state.own.length ? state.own : [{ q: "", a: "" }];
+        const rows = state.own.length ? state.own : [{}];
         $("[data-rows]").innerHTML = rows.map((w, i) => rowHtml(w, i === 0)).join("");
         updateCount();
     }
     function readRows() {
         state.own = [...root.querySelectorAll(".word-row")]
-            .map((r) => ({ q: r.querySelector("[data-q]").value.trim(), a: r.querySelector("[data-a]").value.trim() }))
-            .filter((w) => w.q && w.a)
+            .map((r) => Object.fromEntries(FIELDS.map((f) => [f.key, r.querySelector(`[data-f="${f.key}"]`).value.trim()])))
+            .filter(isComplete)
             .slice(0, maxOwn);
     }
     function updateCount() {
         const rows = root.querySelectorAll(".word-row").length;
-        $("[data-count]").textContent = `${state.own.length} kata` + (maxOwn < 100 ? ` (maks. ${maxOwn})` : "");
+        $("[data-count]").textContent = `${state.own.length} ${unit}` + (maxOwn < 100 ? ` (maks. ${maxOwn})` : "");
         $("[data-add-row]").disabled = rows >= maxOwn;
     }
 
@@ -234,16 +257,18 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
         if (root.querySelectorAll(".word-row").length >= maxOwn) return;
         $("[data-rows]").insertAdjacentHTML("beforeend", rowHtml());
         updateCount();
-        root.querySelector(".word-row:last-child [data-q]").focus();
+        root.querySelector(".word-row:last-child input").focus();
     });
-    // Enter: Kata → Arti → baris berikutnya (baris baru jika di akhir)
+    // Enter: pindah ke kolom berikutnya, lalu baris berikutnya (baris baru jika di akhir)
     $("[data-rows]").addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
+        if (e.key !== "Enter" || !e.target.matches("input")) return;
         e.preventDefault();
         const row = e.target.closest(".word-row");
-        if (e.target.matches("[data-q]")) { row.querySelector("[data-a]").focus(); return; }
+        const inputs = [...row.querySelectorAll("input")];
+        const i = inputs.indexOf(e.target);
+        if (i < inputs.length - 1) { inputs[i + 1].focus(); return; }
         const next = row.nextElementSibling;
-        if (next) next.querySelector("[data-q]").focus();
+        if (next) next.querySelector("input").focus();
         else $("[data-add-row]").click();
     });
 
@@ -271,15 +296,15 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
         get mode() { return state.mode; },
         get pack() { return state.mode === "pack" ? state.pack : null; },
         words() {
-            if (state.mode === "own") return state.own.map((w) => ({ ...w }));
-            return (state.pack?.items || []).map((it) => ({ q: it.q, a: it.a }));
+            const list = state.mode === "own" ? state.own : (state.pack?.items || []);
+            return list.map((it) => Object.fromEntries(FIELDS.map((f) => [f.key, it[f.key] || ""])));
         },
         title() { return api.pack ? api.pack.title : "Kata sendiri"; },
         scoreInfo() { return api.pack ? { packId: api.pack.id, packName: api.pack.title } : {}; },
         // Pesan jika belum bisa mulai (null = siap)
         problem() {
             if (state.mode === "pack" && !state.pack) return "Pilih paket soal dulu.";
-            if (!api.words().length) return "Isi minimal satu pasang kata dan arti.";
+            if (!api.words().length) return FIELDS.length > 2 ? "Isi minimal satu baris lengkap." : "Isi minimal satu pasang kata dan arti.";
             return null;
         },
     };
@@ -287,7 +312,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
     renderRows();
     render();
 
-    window.loadQuestionPacks("kosakata").then((res) => {
+    window.loadQuestionPacks(type).then((res) => {
         state.packStatus = res.status;
         // Urutan: level paling mudah dulu, lalu judul
         state.packs = (res.packs || []).sort((a, b) => (a.tier || 0) - (b.tier || 0)
@@ -306,7 +331,9 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null,
 // =====================================================================
 //  secondsPerWord: dasar waktu saran. Saran = jumlah kata x detik,
 //  dibulatkan ke atas ke menit (1-30 menit).
-export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDefault = true, count = () => 0 }) {
+const DEFAULT_DIRECTIONS = ["Kata → Arti", "Arti → Kata"];
+
+export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDefault = true, count = () => 0, directions = DEFAULT_DIRECTIONS }) {
     const KEY = `ec-${gameKey}-settings`;
     const saved = store.get(KEY) || {};
     const state = {
@@ -321,8 +348,8 @@ export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDef
         <div class="opts">
             <label class="field">Arah soal
                 <select class="input" data-dir>
-                    <option value="qa">Kata → Arti</option>
-                    <option value="aq">Arti → Kata</option>
+                    <option value="qa">${directions[0]}</option>
+                    <option value="aq">${directions[1]}</option>
                 </select>
             </label>
             <div class="opt-row">

@@ -218,6 +218,9 @@ body {
 .word-rows { display: grid; gap: 8px; }
 .word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--control-h); gap: 8px; }
 .word-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--control-h); gap: 8px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+/* Kata kerja: Arti, V1, V2, V3 */
+.word-row.f4, .word-head.f4 { grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)) var(--control-h); }
+
 .word-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; }
 .word-tools .count { color: var(--muted); font-size: 0.85rem; }
 
@@ -227,6 +230,9 @@ body {
 .word-table tr:last-child td { border-bottom: 0; }
 .word-table td:first-child { width: 2.2em; color: var(--muted); font-size: 0.85rem; }
 .word-table td:nth-child(2) { font-weight: 600; width: 45%; }
+.word-table th { padding: 8px 4px; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; }
+.word-table.cols td:nth-child(2) { width: auto; }
+.word-table.cols td { overflow-wrap: anywhere; }
 .word-scroll { max-height: 280px; overflow-y: auto; margin-top: 12px; border-top: 1px solid var(--line); }
 
 /* ---------- Saat bermain ---------- */
@@ -272,6 +278,12 @@ body {
 .quiz-item { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 12px; align-items: center; }
 .quiz-item .q { font-weight: 600; overflow-wrap: anywhere; }
 .quiz-item .key { grid-column: 2; margin-top: -6px; font-size: 0.85rem; color: var(--bad); }
+
+/* Isian V1 V2 V3 saat bermain */
+.verb-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.verb-fields .field { font-size: 0.8rem; }
+.verb-fields .key { min-height: 1.2em; font-size: 0.85rem; font-weight: 600; color: var(--bad); }
+.prompt-hint { margin: -10px 0 16px; text-align: center; color: var(--muted); font-size: 0.9rem; }
 
 /* Hasil akhir */
 .result { text-align: center; }
@@ -337,4 +349,10 @@ body {
     .quiz-item .key { grid-column: 1; margin-top: 0; }
     .prompt-word { font-size: 1.6rem; }
     .pack-list.scroll { max-height: 300px; }
+    /* Kata kerja di HP: Arti satu baris penuh, lalu V1 V2 V3 */
+    .word-head.f4 { display: none; }
+    .word-row.f4 { grid-template-columns: repeat(3, minmax(0, 1fr)) var(--control-h); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    .word-row.f4 [data-f="arti"] { grid-column: 1 / 4; }
+    .word-row.f4 .icon-btn { grid-column: 4; grid-row: 1; }
+    .verb-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 }
