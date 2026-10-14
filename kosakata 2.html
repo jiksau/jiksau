@@ -1,1442 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Memorization - Blue Edition</title>
-    <style>
-        /* General Styles */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 50%, #38bdf8 100%);
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(2, 84, 123, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #fff, #bae6fd);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 2px 10px rgba(2, 132, 199, 0.3);
-        }
-
-        h2 {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 30px;
-            font-weight: normal;
-        }
-
-        h3 {
-            color: #bae6fd;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-
-        .input-section {
-            background: rgba(2, 84, 123, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .input-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .input-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .input-group label {
-            display: block;
-            text-align: left;
-            margin-bottom: 5px;
-            color: #bae6fd;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid rgba(56, 189, 248, 0.3);
-            border-radius: 10px;
-            font-size: 1rem;
-            background: rgba(255, 255, 255, 0.95);
-            transition: all 0.3s ease;
-            color: #0c4a6e;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #38bdf8;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
-        }
-
-        select {
-            cursor: pointer;
-            color: #0c4a6e;
-        }
-
-        select option {
-            background: white;
-            color: #0c4a6e;
-        }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: linear-gradient(135deg, #0284c7, #38bdf8);
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
-            background: linear-gradient(135deg, #0369a1, #0284c7);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button.secondary {
-            background: linear-gradient(135deg, #0c4a6e, #0369a1);
-        }
-
-        button.success {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9);
-        }
-
-        button.warning {
-            background: linear-gradient(135deg, #b45309, #d97706);
-        }
-
-        .word-list-container {
-            background: rgba(2, 84, 123, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .word-list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .word-stats {
-            color: #bae6fd;
-            font-size: 0.9rem;
-            background: rgba(2, 132, 199, 0.3);
-            padding: 5px 10px;
-            border-radius: 20px;
-        }
-
-        .word-items {
-            max-height: 250px;
-            overflow-y: auto;
-            border-radius: 10px;
-        }
-
-        .word-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(2, 132, 199, 0.2);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            animation: slideIn 0.3s ease;
-            transition: all 0.3s ease;
-        }
-
-        .word-item:hover {
-            background: rgba(56, 189, 248, 0.3);
-            transform: translateX(5px);
-            border-color: #38bdf8;
-        }
-
-        .word-pair {
-            display: flex;
-            gap: 20px;
-            flex: 1;
-        }
-
-        .word-english {
-            font-weight: bold;
-            color: #fff;
-            min-width: 120px;
-        }
-
-        .word-translation {
-            color: #bae6fd;
-        }
-
-        .word-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .word-actions button {
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: none;
-            min-width: 40px;
-        }
-
-        .word-actions button:hover {
-            background: rgba(56, 189, 248, 0.8);
-            transform: translateY(-2px);
-        }
-
-        .word-actions button.warning:hover {
-            background: #dc2626;
-        }
-
-        .timer-section {
-            background: rgba(2, 84, 123, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .timer-display {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #fff;
-            text-align: center;
-            margin: 10px 0;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 20px #38bdf8;
-        }
-
-        .timer-display.warning {
-            color: #fbbf24;
-            animation: pulse 1s infinite;
-        }
-
-        .timer-display.danger {
-            color: #f87171;
-            animation: pulse 0.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .progress-container {
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #0284c7, #38bdf8);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-
-        .quiz-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .score-badge {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
-        }
-
-        .quiz-item {
-            background: rgba(2, 84, 123, 0.3);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            animation: slideIn 0.3s ease;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .quiz-item:hover {
-            background: rgba(56, 189, 248, 0.2);
-            border-color: #38bdf8;
-        }
-
-        .quiz-word {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #fff;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .quiz-input {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .quiz-input input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .quiz-feedback {
-            font-size: 1rem;
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .correct {
-            color: #4ade80;
-        }
-
-        .incorrect {
-            color: #f87171;
-        }
-
-        .correct-bg {
-            background: rgba(74, 222, 128, 0.1);
-            border-left: 4px solid #4ade80;
-        }
-
-        .incorrect-bg {
-            background: rgba(248, 113, 113, 0.1);
-            border-left: 4px solid #f87171;
-        }
-
-        .feedback-message {
-            font-size: 1.5rem;
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #0284c7, #0ea5e9);
-            animation: slideIn 0.5s ease;
-            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(2, 132, 199, 0.1);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #0284c7;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #38bdf8;
-        }
-
-        /* Mobile Responsive */
-        /* Sumber soal: paket guru / kata sendiri */
-        .source-section { margin-bottom: 20px; text-align: left; }
-        .word-stats { white-space: nowrap; }
-        .source-tabs { display: flex; gap: 6px; background: rgba(2, 84, 123, 0.35); padding: 5px; border-radius: 12px; }
-        .source-tabs button { flex: 1; padding: 10px 12px; background: transparent; box-shadow: none; font-size: 0.95rem; }
-        .source-tabs button:hover { transform: none; box-shadow: none; background: rgba(255, 255, 255, 0.1); }
-        .source-tabs button.active { background: #fff; color: #0c4a6e; }
-        .source-note { margin: 12px 2px 10px; font-size: 0.9rem; color: #e0f2fe; line-height: 1.45; }
-        .pack-list { display: grid; gap: 8px; }
-        .pack-item {
-            display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%;
-            padding: 12px 14px; text-align: left; background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.15); box-shadow: none; border-radius: 12px;
-        }
-        .pack-item:hover { transform: none; background: rgba(255, 255, 255, 0.2); box-shadow: none; }
-        .pack-item.selected { border-color: #fff; background: rgba(255, 255, 255, 0.25); }
-        .pack-item .pack-title { font-weight: 700; }
-        .pack-item .pack-meta { font-size: 0.82rem; font-weight: 400; opacity: 0.85; white-space: nowrap; }
-        .pack-empty { padding: 14px; border-radius: 12px; background: rgba(2, 84, 123, 0.3); font-size: 0.92rem; line-height: 1.5; }
-        .pack-empty a { color: #fff; font-weight: 700; }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .input-row {
-                flex-direction: column;
-            }
-
-            .input-group {
-                min-width: 100%;
-            }
-
-            .word-item {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .word-pair {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .word-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .quiz-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .timer-display {
-                font-size: 2.5rem;
-            }
-
-            .button-group button {
-                width: 100%;
-            }
-        }
-
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.6);
-            font-style: italic;
-        }
-
-        /* Tooltip */
-        [data-tooltip] {
-            position: relative;
-            cursor: help;
-        }
-
-        [data-tooltip]:before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 5px 10px;
-            background: #0369a1;
-            color: white;
-            font-size: 0.8rem;
-            border-radius: 5px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            border: 1px solid #38bdf8;
-        }
-
-        [data-tooltip]:hover:before {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Message Notifications */
-        .message-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 10px;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            animation: slideInRight 0.3s ease;
-            z-index: 10000;
-            border-left: 4px solid white;
-        }
-
-        .message-success {
-            background: linear-gradient(135deg, #0284c7, #0ea5e9);
-        }
-
-        .message-warning {
-            background: linear-gradient(135deg, #b45309, #d97706);
-        }
-
-        .message-info {
-            background: linear-gradient(135deg, #0c4a6e, #0369a1);
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        @keyframes fall {
-            to {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Custom Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 20000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1e4b6e, #0c4a6e);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 400px;
-            width: 90%;
-            border: 2px solid #38bdf8;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            animation: modalSlideIn 0.3s ease;
-        }
-
-        .modal-content h3 {
-            color: #fff;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-
-        .modal-content p {
-            color: #bae6fd;
-            margin-bottom: 25px;
-            font-size: 1.1rem;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-        }
-
-        .modal-buttons button {
-            min-width: 100px;
-        }
-
-        .modal-buttons .cancel-btn {
-            background: linear-gradient(135deg, #4b5563, #6b7280);
-        }
-
-        .modal-buttons .confirm-btn {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    </style>
+    <title>Kuis Kosakata - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
 </head>
 <body>
-    <div id="settingsPage" class="container">
-        <h1>📚 Vocabulary Memorization</h1>
-        <h2>Master your vocabulary with interactive quizzes!</h2>
-
-        <div class="source-section">
-            <div class="source-tabs" role="tablist">
-                <button type="button" id="srcPackBtn" class="active" onclick="setSource('pack')">Paket dari Guru</button>
-                <button type="button" id="srcOwnBtn" onclick="setSource('own')">Kata Sendiri</button>
-            </div>
-            <div id="packSection">
-                <p class="source-note">Pilih paket soal dari guru. Hanya permainan dengan paket yang menambah poin di papan peringkat, dan setiap minggu yang dihitung adalah hasil terbaikmu per paket.</p>
-                <div id="packList" class="pack-list"><div class="pack-empty">Memuat paket soal...</div></div>
-            </div>
-            <p id="ownNote" class="source-note hidden">Latihan bebas dengan kata pilihanmu sendiri. Skornya tersimpan sebagai latihan, tetapi tidak menambah poin di papan peringkat.</p>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="gamelist.html">← Game</a>
+            <h1>Kuis Kosakata</h1>
         </div>
+    </header>
 
-        <div class="input-section hidden" id="ownInputSection">
-            <div class="input-row">
-                <div class="input-group">
-                    <label for="wordInput">📝 English Word</label>
-                    <input type="text" id="wordInput" placeholder="e.g., apple" />
+    <main class="app">
+        <!-- ===== Persiapan ===== -->
+        <section id="setup" class="stack">
+            <div class="card">
+                <h2>Pilih soal</h2>
+                <div id="source"></div>
+            </div>
+            <div class="card">
+                <div class="settings">
+                    <label class="field wide">Arah soal
+                        <select id="direction" class="input">
+                            <option value="qa">Kata → Arti</option>
+                            <option value="aq">Arti → Kata</option>
+                        </select>
+                    </label>
+                    <label class="field">Waktu (menit)
+                        <input type="number" id="minutes" class="input" min="1" max="30" value="2" inputmode="numeric">
+                    </label>
+                    <label class="check"><input type="checkbox" id="shuffle"> Acak urutan</label>
                 </div>
-                <div class="input-group">
-                    <label for="translationInput">🌍 Translation</label>
-                    <input type="text" id="translationInput" placeholder="e.g., apel" />
+                <div id="setupMsg" class="feedback bad"></div>
+                <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+            </div>
+        </section>
+
+        <!-- ===== Bermain ===== -->
+        <section id="play" class="stack" hidden>
+            <div class="card result" id="resultCard" hidden>
+                <div class="big" id="resultScore">0/0</div>
+                <p class="sub" id="resultSub"></p>
+                <div class="actions" style="margin-top:16px">
+                    <button type="button" class="btn" id="againBtn">Main lagi</button>
+                    <button type="button" class="btn secondary" id="backBtn">Ganti soal</button>
                 </div>
             </div>
-            
-            <div class="button-group">
-                <button onclick="addWord()" class="success">➕ Add Word Pair</button>
-                <button onclick="importSampleData()" class="secondary">📋 Add Samples</button>
+            <div class="card">
+                <div class="play-head">
+                    <span class="badge" id="answeredBadge">0 / 0</span>
+                    <span class="badge" id="timer">00:00</span>
+                </div>
+                <div class="progress"><span id="bar"></span></div>
+                <div class="quiz-list" id="quizList"></div>
+                <div class="actions" style="margin-top:16px" id="playActions">
+                    <button type="button" class="btn secondary" id="pauseBtn">Jeda</button>
+                    <button type="button" class="btn" id="submitBtn">Periksa</button>
+                </div>
             </div>
-        </div>
+        </section>
+    </main>
 
-        <div id="wordListContainer" class="word-list-container hidden">
-            <div class="word-list-header">
-                <h3 id="wordListTitle">Your Vocabulary List</h3>
-                <div class="word-stats" id="wordStats">0 words</div>
-            </div>
-            <div id="wordItems" class="word-items"></div>
-            
-            <div class="button-group">
-                <button onclick="showClearAllConfirmation()" class="warning" id="clearAllBtn">🗑️ Clear All</button>
-            </div>
-        </div>
+    <script type="module">
+        import { mountWordSource, isAnswerCorrect, shuffled } from "./word-source.js";
+        import { escapeHtml } from "./ec-common.js";
 
-        <div class="timer-section">
-            <h3>⏰ Quiz Settings</h3>
-            <div class="input-group">
-                <label for="timeInput">Time Limit (minutes):</label>
-                <input type="number" id="timeInput" min="1" max="30" value="2" placeholder="Enter minutes" />
-            </div>
-            
-            <div class="input-group">
-                <label for="quizMode">🎮 Quiz Mode:</label>
-                <select id="quizMode">
-                    <option value="normal">Normal (English → Translation)</option>
-                    <option value="shuffle">Shuffle (Random order)</option>
-                    <option value="reverse">Reverse (Translation → English)</option>
-                </select>
-            </div>
-        </div>
+        const $ = (id) => document.getElementById(id);
 
-        <div class="button-group">
-            <button onclick="startQuiz()" class="success" id="startBtn">🚀 Start Quiz</button>
-        </div>
-    </div>
-
-    <div id="quizPage" class="container hidden">
-        <h1>📝 Vocabulary Quiz</h1>
-        
-        <div class="quiz-header">
-            <div class="timer-display" id="timer">02:00</div>
-            <div class="score-badge" id="scoreDisplay">🏆 0/0</div>
-        </div>
-
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressBar"></div>
-            </div>
-        </div>
-
-        <div id="quizContainer"></div>
-
-        <div class="button-group">
-            <button onclick="submitQuiz()" class="success" id="submitBtn">✅ Submit Answers</button>
-            <button onclick="pauseTimer()" class="secondary" id="pauseBtn">⏸️ Pause</button>
-        </div>
-
-        <div id="feedbackContainer">
-            <div id="feedbackMessage" class="feedback-message hidden"></div>
-            
-            <div class="button-group">
-                <button onclick="retryQuiz()" class="warning" id="retryButton">🔄 Try Again</button>
-                <button onclick="backToSettings()" class="secondary" id="backBtn">🏠 Back to Menu</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Modal for Confirmations -->
-    <div id="confirmationModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 id="modalTitle">Confirm Action</h3>
-            <p id="modalMessage">Are you sure?</p>
-            <div class="modal-buttons">
-                <button onclick="closeModal()" class="cancel-btn">Cancel</button>
-                <button id="modalConfirmBtn" class="confirm-btn">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // State Management
-        let words = [];
-        let quizWords = [];
-        let timerInterval;
-        let remainingTime = 0;
-        let totalTime = 120; // 2 minutes default
-        let isPaused = false;
-        let score = 0;
-        let answeredCount = 0;
-        let quizMode = 'normal';
-        let correctAnswers = [];
-
-        // Sumber soal: 'pack' = paket dari guru (berpoin), 'own' = kata sendiri (tanpa poin)
-        let sourceMode = 'pack';
-        let activePack = null;   // paket yang sedang dipilih
-        let lastPack = null;     // diingat saat siswa pindah ke tab Kata Sendiri
-        let ownWords = [];       // kata sendiri disimpan saat siswa membuka tab paket
-        let availablePacks = [];
-        
-        // Modal state
-        let pendingAction = null;
-        let pendingIndex = null;
-
-        // DOM Elements
-        const settingsPage = document.getElementById('settingsPage');
-        const quizPage = document.getElementById('quizPage');
-        const wordListContainer = document.getElementById('wordListContainer');
-        const wordItems = document.getElementById('wordItems');
-        const wordStats = document.getElementById('wordStats');
-        const timerDisplay = document.getElementById('timer');
-        const progressBar = document.getElementById('progressBar');
-        const quizContainer = document.getElementById('quizContainer');
-        const feedbackMessage = document.getElementById('feedbackMessage');
-        const retryButton = document.getElementById('retryButton');
-        const backBtn = document.getElementById('backBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const startBtn = document.getElementById('startBtn');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        
-        // Modal elements
-        const modalOverlay = document.getElementById('confirmationModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalMessage = document.getElementById('modalMessage');
-        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-
-        // ============= MODAL FUNCTIONS =============
-        
-        function showModal(title, message, onConfirm) {
-            modalTitle.textContent = title;
-            modalMessage.textContent = message;
-            modalOverlay.classList.remove('hidden');
-            
-            // Remove previous event listener and add new one
-            const newConfirmBtn = modalConfirmBtn.cloneNode(true);
-            modalConfirmBtn.parentNode.replaceChild(newConfirmBtn, modalConfirmBtn);
-            newConfirmBtn.addEventListener('click', () => {
-                onConfirm();
-                closeModal();
-            });
-        }
-
-        function closeModal() {
-            modalOverlay.classList.add('hidden');
-        }
-
-        // Close modal when clicking outside
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) {
-                closeModal();
-            }
+        const source = mountWordSource($("source"), {
+            gameKey: "k2",
+            onChange: () => { $("setupMsg").textContent = ""; },
         });
 
-        // ============= HELPER FUNCTIONS =============
-        
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        let words = [];
+        let reverse = false;
+        let timerId = null;
+        let secondsLeft = 0;
+        let paused = false;
+        let submitted = false;
+
+        const inputs = () => [...document.querySelectorAll("#quizList input")];
+
+        function show(section) {
+            ["setup", "play"].forEach((id) => { $(id).hidden = id !== section; });
+            window.scrollTo(0, 0);
         }
 
-        // Show Message
-        function showMessage(text, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message-notification message-${type}`;
-            messageDiv.textContent = text;
-            
-            document.body.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => {
-                    document.body.removeChild(messageDiv);
-                }, 300);
-            }, 3000);
+        function start() {
+            const problem = source.problem();
+            if (problem) { $("setupMsg").textContent = problem; return; }
+            const minutes = Math.min(30, Math.max(1, parseInt($("minutes").value, 10) || 2));
+            $("minutes").value = minutes;
+            words = $("shuffle").checked ? shuffled(source.words()) : source.words();
+            reverse = $("direction").value === "aq";
+            secondsLeft = minutes * 60;
+            paused = false;
+            submitted = false;
+
+            $("quizList").innerHTML = words.map((w, i) => `
+                <div class="quiz-item">
+                    <label class="q" for="ans-${i}">${escapeHtml(reverse ? w.a : w.q)}</label>
+                    <input class="input" id="ans-${i}" data-i="${i}" placeholder="${reverse ? "Kata" : "Arti"}" autocomplete="off" autocapitalize="none" spellcheck="false">
+                    <div class="key" id="key-${i}" hidden></div>
+                </div>`).join("");
+            $("resultCard").hidden = true;
+            $("playActions").hidden = false;
+            $("pauseBtn").textContent = "Jeda";
+            updateAnswered();
+            show("play");
+            startTimer();
+            inputs()[0]?.focus();
         }
 
-        // Update Word List Display
-        function updateWordList() {
-            if (words.length === 0) {
-                wordListContainer.classList.add('hidden');
-                return;
-            }
-
-            wordListContainer.classList.remove('hidden');
-            const readOnly = !!activePack;
-            document.getElementById('wordListTitle').textContent = readOnly ? `Paket: ${activePack.title}` : 'Your Vocabulary List';
-            clearAllBtn.classList.toggle('hidden', readOnly);
-            wordStats.textContent = readOnly ? `${words.length} kata` : `${words.length} word${words.length > 1 ? 's' : ''}`;
-
-            wordItems.innerHTML = '';
-            words.forEach((item, index) => {
-                const wordItem = document.createElement('div');
-                wordItem.className = 'word-item';
-                wordItem.innerHTML = `
-                    <div class="word-pair">
-                        <span class="word-english">${escapeHtml(item.word)}</span>
-                        <span class="word-translation">→ ${escapeHtml(item.translation)}</span>
-                    </div>
-                    ${readOnly ? '' : `<div class="word-actions">
-                        <button onclick="editWord(${index})" class="secondary" data-tooltip="Edit">✏️</button>
-                        <button onclick="showDeleteConfirmation(${index})" class="warning" data-tooltip="Delete">🗑️</button>
-                    </div>`}
-                `;
-                wordItems.appendChild(wordItem);
-            });
-        }
-
-        // ============= WORD MANAGEMENT FUNCTIONS =============
-        
-        // Add Word Function
-        function addWord() {
-            const wordInput = document.getElementById('wordInput');
-            const translationInput = document.getElementById('translationInput');
-            
-            const word = wordInput.value.trim();
-            const translation = translationInput.value.trim();
-
-            if (!word || !translation) {
-                showMessage('Please fill in both fields!', 'warning');
-                return;
-            }
-
-            if (word.length > 50 || translation.length > 50) {
-                showMessage('Words too long! Maximum 50 characters.', 'warning');
-                return;
-            }
-
-            // Check for duplicates
-            const exists = words.some(w => 
-                w.word.toLowerCase() === word.toLowerCase() || 
-                w.translation.toLowerCase() === translation.toLowerCase()
-            );
-
-            if (exists) {
-                showMessage('This word pair already exists!', 'warning');
-                return;
-            }
-
-            words.push({ 
-                word, 
-                translation,
-                id: Date.now() + Math.random()
-            });
-            
-            wordInput.value = '';
-            translationInput.value = '';
-            
-            updateWordList();
-            showMessage('Word added successfully!', 'success');
-        }
-
-        // Edit Word
-        function editWord(index) {
-            const word = words[index];
-            const newWord = prompt('Edit English word:', word.word);
-            if (newWord === null) return;
-            
-            const newTranslation = prompt('Edit translation:', word.translation);
-            if (newTranslation === null) return;
-            
-            if (newWord.trim() && newTranslation.trim()) {
-                words[index] = { 
-                    ...word, 
-                    word: newWord.trim(), 
-                    translation: newTranslation.trim() 
-                };
-                updateWordList();
-                showMessage('Word updated!', 'success');
-            } else {
-                showMessage('Both fields must be filled!', 'warning');
-            }
-        }
-
-        // Show Delete Confirmation
-        function showDeleteConfirmation(index) {
-            const word = words[index];
-            showModal(
-                'Delete Word',
-                `Are you sure you want to delete "${word.word}"?`,
-                () => deleteWord(index)
-            );
-        }
-
-        // Delete Word
-        function deleteWord(index) {
-            const deletedWord = words[index];
-            words.splice(index, 1);
-            updateWordList();
-            showMessage(`"${deletedWord.word}" deleted!`, 'info');
-            
-            if (words.length === 0) {
-                wordListContainer.classList.add('hidden');
-            }
-        }
-
-        // Show Clear All Confirmation
-        function showClearAllConfirmation() {
-            if (words.length === 0) {
-                showMessage('No words to clear!', 'warning');
-                return;
-            }
-            
-            showModal(
-                'Clear All Words',
-                `Are you sure you want to clear all ${words.length} words?`,
-                clearAllWords
-            );
-        }
-
-        // Clear All Words
-        function clearAllWords() {
-            words = [];
-            updateWordList();
-            wordListContainer.classList.add('hidden');
-            showMessage('All words cleared!', 'success');
-        }
-
-        // Import Sample Data
-        function importSampleData() {
-            const sampleWords = [
-                { word: 'apple', translation: 'apel' },
-                { word: 'book', translation: 'buku' },
-                { word: 'car', translation: 'mobil' },
-                { word: 'dog', translation: 'anjing' },
-                { word: 'eat', translation: 'makan' },
-                { word: 'house', translation: 'rumah' },
-                { word: 'water', translation: 'air' },
-                { word: 'fire', translation: 'api' }
-            ];
-            
-            // Filter duplicates
-            const newWords = sampleWords.filter(sample => 
-                !words.some(w => w.word.toLowerCase() === sample.word.toLowerCase())
-            );
-            
-            if (newWords.length === 0) {
-                showMessage('No new words to add!', 'info');
-                return;
-            }
-            
-            words = [...words, ...newWords];
-            updateWordList();
-            showMessage(`Added ${newWords.length} sample words!`, 'success');
-        }
-
-        // ============= SUMBER SOAL (PAKET GURU / KATA SENDIRI) =============
-
-        function setSource(mode) {
-            if (mode === sourceMode) return;
-            if (mode === 'pack') {
-                ownWords = words;
-                activePack = lastPack;
-                words = activePack ? packToWords(activePack) : [];
-                renderPackList();
-            } else {
-                words = ownWords;
-                lastPack = activePack;
-                activePack = null;
-            }
-            sourceMode = mode;
-            document.getElementById('srcPackBtn').classList.toggle('active', mode === 'pack');
-            document.getElementById('srcOwnBtn').classList.toggle('active', mode === 'own');
-            document.getElementById('packSection').classList.toggle('hidden', mode !== 'pack');
-            document.getElementById('ownNote').classList.toggle('hidden', mode !== 'own');
-            document.getElementById('ownInputSection').classList.toggle('hidden', mode !== 'own');
-            updateWordList();
-        }
-
-        function packToWords(pack) {
-            return (pack.items || []).map((it, i) => ({ word: it.q, translation: it.a, id: i }));
-        }
-
-        function selectPack(id) {
-            activePack = availablePacks.find((p) => p.id === id) || null;
-            words = activePack ? packToWords(activePack) : [];
-            renderPackList();
-            updateWordList();
-        }
-
-        // Dipanggil dari skrip modul di bawah setelah paket dimuat.
-        let packStatus = 'loading';
-        function showPackResult(result) {
-            packStatus = result.status;
-            availablePacks = result.packs || [];
-            renderPackList();
-        }
-
-        function renderPackList() {
-            const box = document.getElementById('packList');
-            const messages = {
-                loading: 'Memuat paket soal...',
-                login: 'Masuk dulu untuk memakai paket soal dari guru. <a href="index.html">Masuk di sini</a>. Tanpa masuk, kamu tetap bisa latihan di tab Kata Sendiri.',
-                inactive: 'Akun ini tidak aktif. Hubungi guru atau admin.',
-                error: 'Paket soal gagal dimuat. Periksa internet lalu muat ulang halaman.',
-                empty: 'Belum ada paket soal untuk jenjangmu. Sementara itu, kamu bisa latihan di tab Kata Sendiri.',
-            };
-            const status = packStatus === 'ok' && !availablePacks.length ? 'empty' : packStatus;
-            if (status !== 'ok') {
-                box.innerHTML = `<div class="pack-empty">${messages[status] || messages.error}</div>`;
-                return;
-            }
-            box.innerHTML = availablePacks.map((p) => `
-                <button type="button" class="pack-item ${activePack?.id === p.id ? 'selected' : ''}" onclick="selectPack('${p.id}')">
-                    <span class="pack-title">${escapeHtml(p.title)}</span>
-                    <span class="pack-meta">${p.itemCount} kata</span>
-                </button>`).join('');
-        }
-
-        // Cocokkan jawaban: abaikan huruf besar/kecil & spasi berlebih.
-        // Jika kunci berisi beberapa jawaban dipisah "/", salah satunya cukup.
-        function normalizeAnswer(text) {
-            return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');
-        }
-        function isAnswerCorrect(userAnswer, key) {
-            const answer = normalizeAnswer(userAnswer);
-            if (!answer) return false;
-            return answer === normalizeAnswer(key)
-                || key.split('/').map(normalizeAnswer).filter(Boolean).includes(answer);
-        }
-
-        // ============= QUIZ FUNCTIONS =============
-        
-        // Render Quiz
-        function renderQuiz() {
-            quizContainer.innerHTML = '';
-
-            quizWords.forEach((item, index) => {
-                const quizItem = document.createElement('div');
-                quizItem.className = 'quiz-item';
-                quizItem.id = `quiz-item-${index}`;
-
-                const isReverse = quizMode === 'reverse';
-                
-                quizItem.innerHTML = `
-                    <div class="quiz-word">${isReverse ? item.translation : item.word}</div>
-                    <div class="quiz-input">
-                        <input type="text" 
-                               id="answer-${index}" 
-                               placeholder="Type the ${isReverse ? 'english' : 'translation'}..." 
-                               oninput="checkLiveProgress()"
-                               onkeypress="handleEnter(event, ${index})">
-                    </div>
-                    <div id="feedback-${index}" class="quiz-feedback hidden"></div>
-                `;
-
-                quizContainer.appendChild(quizItem);
-            });
-
-            // Focus on first input
-            setTimeout(() => {
-                document.getElementById('answer-0')?.focus();
-            }, 100);
-        }
-
-        // Handle Enter Key
-        function handleEnter(event, index) {
-            if (event.key === 'Enter') {
-                if (index === quizWords.length - 1) {
-                    submitQuiz();
-                } else {
-                    document.getElementById(`answer-${index + 1}`).focus();
-                }
-            }
-        }
-
-        // Update Timer Display
-        function updateTimerDisplay() {
-            const minutes = Math.floor(remainingTime / 60);
-            const seconds = remainingTime % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Update timer color
-            timerDisplay.classList.remove('warning', 'danger');
-            if (remainingTime <= 30) {
-                timerDisplay.classList.add('danger');
-            } else if (remainingTime <= 60) {
-                timerDisplay.classList.add('warning');
-            }
-
-            // Update progress bar
-            const progress = ((totalTime - remainingTime) / totalTime) * 100;
-            progressBar.style.width = `${progress}%`;
-        }
-
-        // Start Timer
         function startTimer() {
-            updateTimerDisplay();
-            
-            timerInterval = setInterval(() => {
-                if (!isPaused) {
-                    remainingTime--;
-                    updateTimerDisplay();
-                    
-                    if (remainingTime <= 0) {
-                        clearInterval(timerInterval);
-                        submitQuiz();
-                    }
-                }
+            clearInterval(timerId);
+            renderTimer();
+            timerId = setInterval(() => {
+                if (paused) return;
+                secondsLeft--;
+                renderTimer();
+                if (secondsLeft <= 0) submit(true);
             }, 1000);
         }
 
-        // Pause Timer
-        function pauseTimer() {
-            isPaused = !isPaused;
-            pauseBtn.innerHTML = isPaused ? '▶️ Resume' : '⏸️ Pause';
-            showMessage(isPaused ? 'Quiz paused!' : 'Quiz resumed!', 'info');
+        function renderTimer() {
+            const s = Math.max(0, secondsLeft);
+            $("timer").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+            $("timer").className = "badge" + (s <= 30 ? " bad" : s <= 60 ? " warn" : "");
         }
 
-        // Check Live Progress
-        function checkLiveProgress() {
-            let answered = 0;
-            quizWords.forEach((_, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                if (input && input.value.trim() !== '') {
-                    answered++;
-                }
-            });
-            answeredCount = answered;
+        function updateAnswered() {
+            const done = inputs().filter((i) => i.value.trim()).length;
+            $("answeredBadge").textContent = `${done} / ${words.length} terjawab`;
+            $("bar").style.width = `${words.length ? (done / words.length) * 100 : 0}%`;
         }
 
-        // Update Score Display
-        function updateScore() {
-            scoreDisplay.textContent = `🏆 ${score}/${quizWords.length}`;
+        function togglePause() {
+            if (submitted) return;
+            paused = !paused;
+            $("pauseBtn").textContent = paused ? "Lanjut" : "Jeda";
+            // Selama jeda, isian dikunci agar waktu tetap adil
+            inputs().forEach((i) => { i.disabled = paused; });
+            if (!paused) inputs().find((i) => !i.value.trim())?.focus();
         }
 
-        // Simple Confetti Effect
-        function confetti() {
-            for (let i = 0; i < 15; i++) {
-                setTimeout(() => {
-                    const colors = ['#0284c7', '#38bdf8', '#0ea5e9', '#7dd3fc', '#bae6fd'];
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    
-                    const confetti = document.createElement('div');
-                    confetti.style.cssText = `
-                        position: fixed;
-                        top: -10px;
-                        left: ${Math.random() * 100}%;
-                        width: 12px;
-                        height: 12px;
-                        background: ${color};
-                        border-radius: 50%;
-                        animation: fall ${Math.random() * 2 + 2}s linear forwards;
-                        z-index: 10000;
-                        box-shadow: 0 0 10px ${color};
-                    `;
-                    
-                    document.body.appendChild(confetti);
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(confetti);
-                    }, 4000);
-                }, i * 150);
-            }
-        }
-
-        // Submit Quiz
-        function submitQuiz() {
-            clearInterval(timerInterval);
-            
-            let correctCount = 0;
-            
-            quizWords.forEach((item, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                const feedback = document.getElementById(`feedback-${index}`);
-                const quizItem = document.getElementById(`quiz-item-${index}`);
-                
-                if (!input || !feedback) return;
-                
-                const isReverse = quizMode === 'reverse';
-                const correctAnswer = isReverse ? item.word : item.translation;
-                
-                // Remove existing classes
-                quizItem.classList.remove('correct-bg', 'incorrect-bg');
-                
-                if (isAnswerCorrect(input.value, correctAnswer)) {
-                    feedback.innerHTML = '✅ Correct!';
-                    feedback.className = 'quiz-feedback correct';
-                    quizItem.classList.add('correct-bg');
-                    correctCount++;
-                } else {
-                    feedback.innerHTML = `❌ Incorrect! Correct answer: "${escapeHtml(correctAnswer)}"`;
-                    feedback.className = 'quiz-feedback incorrect';
-                    quizItem.classList.add('incorrect-bg');
-                }
-                
-                feedback.classList.remove('hidden');
+        function submit(timeUp = false) {
+            if (submitted) return;
+            submitted = true;
+            clearInterval(timerId);
+            let correct = 0;
+            words.forEach((w, i) => {
+                const input = $(`ans-${i}`);
+                const key = reverse ? w.q : w.a;
+                const ok = isAnswerCorrect(input.value, key);
+                if (ok) correct++;
                 input.disabled = true;
+                input.className = "input " + (ok ? "is-ok" : "is-bad");
+                if (!ok) {
+                    $(`key-${i}`).textContent = `Jawaban: ${key}`;
+                    $(`key-${i}`).hidden = false;
+                }
             });
-
-            // Calculate score
-            score = correctCount;
-            updateScore();
-
-            // Simpan skor ke akun siswa
+            $("playActions").hidden = true;
+            $("resultScore").textContent = `${correct}/${words.length}`;
+            $("resultSub").textContent = `benar · ${Math.round((correct / words.length) * 100)}%${timeUp ? " · waktu habis" : ""}`;
+            $("resultCard").hidden = false;
+            window.scrollTo(0, 0);
             window.saveGameScore?.({
-                gameId: "kosakata-2", gameName: "Vocabulary Memorize", correct: correctCount, total: quizWords.length, mode: quizMode,
-                ...(activePack ? { packId: activePack.id, packName: activePack.title } : {}),
+                gameId: "kosakata-2", gameName: "Kuis Kosakata",
+                correct, total: words.length, mode: reverse ? "arti-ke-kata" : "kata-ke-arti",
+                ...source.scoreInfo(),
             });
-
-            // Show feedback
-            const percentage = (correctCount / quizWords.length * 100).toFixed(1);
-            feedbackMessage.classList.remove('hidden');
-            
-            if (correctCount === quizWords.length) {
-                feedbackMessage.innerHTML = '🎉 Perfect Score! Excellent work! 🌟';
-                confetti();
-            } else if (correctCount >= quizWords.length * 0.7) {
-                feedbackMessage.innerHTML = `👍 Good job! You got ${correctCount}/${quizWords.length} (${percentage}%)`;
-            } else {
-                feedbackMessage.innerHTML = `💪 Keep practicing! You got ${correctCount}/${quizWords.length} (${percentage}%)`;
-            }
-            
-            // Show retry button
-            retryButton.classList.remove('hidden');
         }
 
-        // Retry Quiz
-        function retryQuiz() {
-            // Reset quiz state
-            remainingTime = totalTime;
-            isPaused = false;
-            pauseBtn.innerHTML = '⏸️ Pause';
-            
-            // Hide feedback
-            feedbackMessage.classList.add('hidden');
-            retryButton.classList.add('hidden');
-            
-            // Clear all feedback and enable inputs
-            quizWords.forEach((_, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                const feedback = document.getElementById(`feedback-${index}`);
-                const quizItem = document.getElementById(`quiz-item-${index}`);
-                
-                if (input) {
-                    input.value = '';
-                    input.disabled = false;
-                }
-                if (feedback) {
-                    feedback.classList.add('hidden');
-                }
-                if (quizItem) {
-                    quizItem.classList.remove('correct-bg', 'incorrect-bg');
-                }
-            });
-            
-            // Shuffle if needed
-            if (quizMode === 'shuffle') {
-                quizWords = [...words].sort(() => Math.random() - 0.5);
-                renderQuiz();
-            }
-            
-            // Reset timer
-            startTimer();
-            
-            // Reset score
-            score = 0;
-            answeredCount = 0;
-            updateScore();
-            
-            showMessage('Quiz restarted! Good luck!', 'success');
-            
-            // Focus on first input
-            setTimeout(() => {
-                document.getElementById('answer-0')?.focus();
-            }, 100);
-        }
-
-        // Back to Settings
-        function backToSettings() {
-            clearInterval(timerInterval);
-            
-            quizPage.classList.add('hidden');
-            settingsPage.classList.remove('hidden');
-            
-            // Reset UI
-            feedbackMessage.classList.add('hidden');
-            retryButton.classList.add('hidden');
-        }
-
-        // Start Quiz
-        function startQuiz() {
-            if (words.length === 0) {
-                showMessage(sourceMode === 'pack' ? 'Pilih paket soal dulu, atau buka tab Kata Sendiri.' : 'Please add some words first!', 'warning');
-                return;
-            }
-
-            const timeInput = document.getElementById('timeInput');
-            const minutes = parseInt(timeInput.value) || 2;
-            totalTime = minutes * 60;
-            remainingTime = totalTime;
-
-            quizMode = document.getElementById('quizMode').value;
-
-            // Prepare quiz words
-            if (quizMode === 'shuffle') {
-                quizWords = [...words].sort(() => Math.random() - 0.5);
-            } else {
-                quizWords = [...words];
-            }
-
-            // Reset quiz state
-            score = 0;
-            answeredCount = 0;
-            correctAnswers = new Array(quizWords.length).fill(false);
-            isPaused = false;
-            pauseBtn.innerHTML = '⏸️ Pause';
-
-            // Update UI
-            settingsPage.classList.add('hidden');
-            quizPage.classList.remove('hidden');
-            
-            renderQuiz();
-            startTimer();
-            updateScore();
-        }
-
-        // Initialize
-        window.onload = function() {
-            updateWordList();
-            
-            // Add sample data for testing
-            // importSampleData(); // Uncomment if you want sample data on load
-        };
-    </script>
-    <script type="module" src="game-scores.js"></script>
-    <script type="module">
-        // Muat paket soal kosakata dari guru (lihat game-scores.js)
-        const result = await window.loadQuestionPacks("kosakata");
-        showPackResult(result);
+        $("startBtn").addEventListener("click", start);
+        $("againBtn").addEventListener("click", start);
+        $("backBtn").addEventListener("click", () => show("setup"));
+        $("pauseBtn").addEventListener("click", togglePause);
+        $("submitBtn").addEventListener("click", () => submit(false));
+        $("quizList").addEventListener("input", updateAnswered);
+        // Enter = pindah ke soal berikutnya
+        $("quizList").addEventListener("keydown", (e) => {
+            if (e.key !== "Enter" || !e.target.matches("input")) return;
+            e.preventDefault();
+            const list = inputs();
+            const next = list[list.indexOf(e.target) + 1];
+            if (next) next.focus();
+            else $("submitBtn").focus();
+        });
     </script>
 </body>
 </html>

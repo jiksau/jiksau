@@ -24,17 +24,19 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `leaderboard.html` | Papan peringkat mingguan: Semua Jenjang (default) / per jenjang, minggu ini / lalu, kartu poster 1080×1350 untuk diunduh |
 | `admin.html` | Admin: siswa (buat akun tanpa email, ubah jenjang/nama, hapus akun), kode kelas, **paket soal**, skor game |
 | `admin-login.html` | Login admin |
-| `gamelist.html` | Daftar game |
+| `gamelist.html` | Daftar game (Berpoin / Latihan) |
+| `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
+| `word-source.js` | Bagian "Pilih soal" bersama: tab Paket Guru / Kata Sendiri, daftar paket, isian kata sendiri, pencocokan jawaban |
 | `game-scores.js` | Modul simpan skor + muat paket soal (lihat di bawah) |
 
 ## Game yang ada
 
 | File | gameId | Simpan skor? |
 |---|---|---|
-| `kosakata 2.html` | `kosakata-2` | Ya. **Sudah memakai paket soal** (tab Paket dari Guru / Kata Sendiri) |
-| `kosakata 3.html` | `kosakata-3` | Ya |
+| `kosakata 2.html` (Kuis Kosakata) | `kosakata-2` | Ya, memakai paket soal |
+| `kosakata 3.html` (Kartu Hafalan) | `kosakata-3` | Ya, memakai paket soal |
 | `kosakata 4.html` (verb V1-V2-V3) | `kosakata-4` | Ya |
-| `kosakata 5.html` (hafalan tanpa salah) | `kosakata-5` | Ya (`points` = jumlah salah sebelum tuntas) |
+| `kosakata 5.html` (Hafalan Tanpa Salah) | `kosakata-5` | Ya, memakai paket soal (`points` = jumlah salah sebelum tuntas; kata sendiri maks. 10) |
 | `scramble.html` | `scramble` | Ya (`points` = skor game) |
 | `kosakatapart2.html` | – | Tidak (tanpa skor) |
 | `question.html` | – | Tidak (pengacak pertanyaan) |
@@ -66,7 +68,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
      packId: paket.id, packName: paket.title, // wajib agar masuk papan peringkat
    });
    ```
-   Daftar paket: `const hasil = await window.loadQuestionPacks("kosakata")` → `hasil.status` (`ok`/`login`/`inactive`/`error`) dan `hasil.packs`. Contoh lengkap ada di `kosakata 2.html` (fungsi `setSource`, `selectPack`, `showPackResult`).
+   Daftar paket: `const hasil = await window.loadQuestionPacks("kosakata")` → `hasil.status` (`ok`/`login`/`inactive`/`error`) dan `hasil.packs`. Untuk game kosakata cukup pakai `mountWordSource` dari `word-source.js` (contoh: `kosakata 5.html`); `source.scoreInfo()` mengisi `packId`/`packName`.
 3. **1 jawaban benar = 1 poin** di papan peringkat, hanya dari paket soal, hasil terbaik per paket per minggu. Minggu dihitung Senin 00.00 – Minggu 23.59 WIB.
 4. Skor hanya tersimpan jika siswa login dan profilnya masih ada. Jika tidak, muncul notifikasi kecil.
 
@@ -95,6 +97,6 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 ## Rencana berikutnya
 
-1. ~~Bank soal + paket resmi~~ (selesai untuk Kosakata 2). Sambungkan game lain: Kosakata 3 & 5 (`kosakata`), Kosakata 4 (`verb`), Scramble (`kalimat`).
-2. Rapikan daftar game: nama jelas, bahasa Indonesia, kurangi emoji, gabung/sembunyikan Kosakatapart2, nonaktifkan Chat Realtime (tanpa login, project Firebase lain).
+1. ~~Bank soal + paket resmi~~ (selesai: Kuis Kosakata, Kartu Hafalan, Hafalan Tanpa Salah). Berikutnya: Kosakata 4 (`verb`), Scramble (`kalimat`); pakai `game-ui.css` agar tampilannya seragam.
+2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Masih perlu: Kosakata 4, Scramble, Kartu Arti, Pertanyaan Acak, Chat belum memakai gaya baru; putuskan nasib Kartu Arti (mirip Kartu Hafalan) & Chat (tanpa login, project Firebase lain).
 3. Game baru dari paket soal: Pilihan Ganda Cepat, Tantangan Harian, Dengarkan & Tulis, Cocokkan Pasangan.

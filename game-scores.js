@@ -133,12 +133,12 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     try {
         await addDoc(collection(db, "gameScores"), data);
         showToast(packId
-            ? `Skor ${correct}/${total} tersimpan. Hasil terbaikmu di paket ini masuk papan peringkat.`
-            : `Skor ${correct}/${total} tersimpan sebagai latihan bebas (tidak menambah poin peringkat).`);
+            ? `Skor ${correct}/${total} tersimpan.`
+            : `Skor ${correct}/${total} tersimpan (latihan, tanpa poin).`);
     } catch (e) {
         console.error("Gagal menyimpan skor:", e);
         showToast(packId && e?.code === "permission-denied"
-            ? "Skor gagal disimpan: paket soal ini sudah tidak aktif atau bukan untuk jenjangmu."
+            ? "Skor gagal disimpan: paket ini sudah tidak aktif."
             : "Skor gagal disimpan. Coba lagi nanti.", true);
     }
 };

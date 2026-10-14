@@ -131,7 +131,7 @@ export const PACK_TYPES = [
         value: "kosakata", label: "Kosakata (kata = arti)",
         hint: "Satu pasang per baris: kata = arti. Jika ada beberapa jawaban benar, pisahkan dengan / (contoh: big = besar / luas).",
         example: "apple = apel\nbook = buku\nbig = besar / luas",
-        games: "Kosakata 2",
+        games: "Kuis Kosakata, Kartu Hafalan, Hafalan Tanpa Salah",
     },
     {
         value: "verb", label: "Kata kerja (V1, V2, V3 = arti)",

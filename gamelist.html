@@ -1,246 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Game - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
     <style>
-        /* Custom styles to override or extend Tailwind */
-        body {
-            font-family: 'Inter', sans-serif; /* Using Inter font */
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* More vibrant gradient */
-            color: #fff;
+        .game-list { display: grid; gap: 10px; }
+        .game {
             display: flex;
-            justify-content: center;
             align-items: center;
-            flex-direction: column;
-            min-height: 100vh;
-            text-align: center;
-            padding: 20px; /* Add some padding for smaller screens */
-        }
-
-        .welcome-section {
-            margin-bottom: 30px;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .welcome-section h2 {
-            font-size: 2.8rem; /* Larger welcome message */
-            font-weight: 800;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
-
-        .welcome-section p {
-            font-size: 1.3rem;
-            opacity: 0.9;
-        }
-
-
-        h1 {
-            font-size: 2.5rem; /* Slightly larger heading */
-            margin-bottom: 40px;
-            letter-spacing: 2px;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add text shadow */
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Slightly larger min-width for cards */
-            gap: 30px; /* Increased gap between cards */
-            width: 90%;
-            max-width: 1000px; /* Increased max-width for the dashboard */
-        }
-
-        .game-card {
-            background: rgba(255, 255, 255, 0.1); /* Semi-transparent white background */
-            backdrop-filter: blur(10px); /* Frosted glass effect */
-            border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
-            color: #e0f2fe; /* Light blue text for better contrast */
-            padding: 30px; /* More padding */
-            border-radius: 20px; /* More rounded corners */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); /* Deeper shadow */
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.4s ease-in-out, box-shadow 0.4s ease-in-out, background 0.4s ease-in-out;
-            position: relative;
-            overflow: hidden;
-            display: flex; /* Use flexbox for internal alignment */
-            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            min-height: 220px; /* Ensure consistent card height */
+            gap: 12px;
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
         }
-
-        .game-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(0, 123, 255, 0.3), rgba(0, 86, 179, 0.3));
-            z-index: -1;
-            transition: opacity 0.3s ease-in-out;
-            opacity: 0;
-        }
-
-        .game-card:hover {
-            transform: translateY(-12px) scale(1.02); /* More pronounced lift and slight scale */
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(106, 17, 203, 0.7); /* Glow effect on hover */
-            background: rgba(255, 255, 255, 0.15); /* Slightly less transparent on hover */
-        }
-
-        .game-card:hover::before {
-            opacity: 1;
-        }
-
-        .game-icon {
-            font-size: 3rem; /* Larger icon size */
-            margin-bottom: 15px;
-            color: #fff; /* White icon color */
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-title {
-            font-size: 1.4rem; /* Larger title */
-            font-weight: 700; /* Bolder font */
-            margin-bottom: 10px; /* Reduced margin */
-            color: #fff; /* White text for titles */
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .game-description {
-            font-size: 0.95rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 20px; /* Space before button */
-            flex-grow: 1; /* Allow description to take available space */
-        }
-
-        .play-button {
-            padding: 12px 25px; /* More padding for a larger button */
-            background: linear-gradient(45deg, #00c6ff, #0072ff); /* Gradient background for button */
-            color: #fff;
-            border: none;
-            border-radius: 12px; /* More rounded button */
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 114, 255, 0.4); /* Button shadow */
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .play-button:hover {
-            background: linear-gradient(45deg, #0072ff, #00c6ff); /* Reverse gradient on hover */
-            transform: translateY(-3px); /* Slight lift on hover */
-            box-shadow: 0 8px 20px rgba(0, 114, 255, 0.6);
-        }
-
-        .play-button:active {
-            transform: translateY(0); /* Press effect */
-            box-shadow: 0 3px 10px rgba(0, 114, 255, 0.3);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .welcome-section h2 {
-                font-size: 2rem;
-            }
-            .welcome-section p {
-                font-size: 1rem;
-            }
-            h1 {
-                font-size: 2rem;
-                margin-bottom: 30px;
-            }
-            .dashboard {
-                grid-template-columns: 1fr; /* Stack cards on small screens */
-                gap: 25px;
-            }
-            .game-card {
-                padding: 25px;
-                min-height: 200px;
-            }
-            .game-icon {
-                font-size: 2.5rem;
-            }
-            .game-title {
-                font-size: 1.3rem;
-            }
-            .game-description {
-                font-size: 0.9rem;
-            }
-            .play-button {
-                font-size: 1rem;
-                padding: 10px 20px;
-            }
-        }
+        .game:hover { border-color: #c7d2fe; background: #fafaff; }
+        .game .name { display: block; font-weight: 700; }
+        .game .desc { display: block; color: var(--muted); font-size: 0.875rem; margin-top: 2px; }
+        .game .go { color: var(--accent); font-weight: 600; white-space: nowrap; }
+        .topbar-inner .spacer { flex: 1; }
     </style>
 </head>
 <body>
-    <nav style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px auto 0;max-width:900px;padding:0 16px">
-        <a href="user-dashboard.html" style="background:rgba(255,255,255,.9);color:#4338ca;font-weight:700;padding:8px 16px;border-radius:999px;text-decoration:none">← Dashboard</a>
-        <a href="leaderboard.html" style="background:#f59e0b;color:#fff;font-weight:700;padding:8px 16px;border-radius:999px;text-decoration:none">Papan Peringkat</a>
-    </nav>
-    <div class="welcome-section">
-        <h2>Welcome to the ExtraCourse!</h2>
-        <p>Choose a module to start your journey.</p>
-    </div>
-
-    <h1>Game Dashboard</h1>
-    <div class="dashboard">
-        <div class="game-card" onclick="window.location.href='question.html'">
-            <div class="game-icon">💡</div> <div class="game-title">Question Generator</div>
-            <div class="game-description">Craft engaging questions on any topic.</div>
-            <button class="play-button">Play</button>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="user-dashboard.html">← Dashboard</a>
+            <h1>Game</h1>
+            <span class="spacer"></span>
+            <a href="leaderboard.html">Peringkat</a>
         </div>
+    </header>
 
-        <div class="game-card" onclick="window.location.href='kosakata 5.html'">
-            <div class="game-icon">💬</div> <div class="game-title">Kosakata 5</div>
-            <div class="game-description">pengulangan kosakata jika ada salah.</div>
-            <button class="play-button">Play</button>
-        </div>
+    <main class="app">
+        <section class="card">
+            <h2>Berpoin</h2>
+            <p class="note" style="margin:-6px 0 12px">Pilih paket dari guru untuk mendapat poin peringkat.</p>
+            <div class="game-list">
+                <a class="game" href="kosakata%202.html">
+                    <span><span class="name">Kuis Kosakata</span><span class="desc">Jawab semua kata sebelum waktu habis.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="kosakata%203.html">
+                    <span><span class="name">Kartu Hafalan</span><span class="desc">Satu kata per kartu, 3 kesempatan.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="kosakata%205.html">
+                    <span><span class="name">Hafalan Tanpa Salah</span><span class="desc">Sekali salah, ulang dari kata pertama.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+            </div>
+        </section>
 
-        <div class="game-card" onclick="window.location.href='kosakata 2.html'">
-            <div class="game-icon">📚</div> <div class="game-title">Vocabulary Memorize</div>
-            <div class="game-description">Expand your vocabulary with interactive exercises.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-        <div class="game-card" onclick="window.location.href='chat real 1.html'">
-            <div class="game-icon">🗣️</div> <div class="game-title">Chat Realtime</div>
-            <div class="game-description">Practice speaking and writing in real-time.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-        <div class="game-card" onclick="window.location.href='scramble.html'">
-            <div class="game-icon">🧩</div> <div class="game-title">Scramble Sentences</div>
-            <div class="game-description">Rearrange words to form correct sentences.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-        <div class="game-card" onclick="window.location.href='kosakatapart2.html'">
-            <div class="game-icon">📖</div> <div class="game-title">Vocabulary Memorize Part 2</div>
-            <div class="game-description">Continue building your vocabulary with new sets.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-        <div class="game-card" onclick="window.location.href='kosakata 3.html'">
-            <div class="game-icon">📘</div> <div class="game-title">Vocabulary Memorize part 3</div>
-            <div class="game-description">Advanced vocabulary for fluent speakers.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-        <div class="game-card" onclick="window.location.href='kosakata 4.html'">
-            <div class="game-icon">🎓</div> <div class="game-title">Vocabulary Memorize part 4</div>
-            <div class="game-description">Master complex words and phrases.</div>
-            <button class="play-button">Play</button>
-        </div>
-
-    </div>
+        <section class="card">
+            <h2>Latihan</h2>
+            <div class="game-list">
+                <a class="game" href="kosakata%204.html">
+                    <span><span class="name">Kata Kerja V1-V2-V3</span><span class="desc">Hafalkan bentuk kata kerja.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="scramble.html">
+                    <span><span class="name">Susun Kalimat</span><span class="desc">Urutkan kata menjadi kalimat.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="kosakatapart2.html">
+                    <span><span class="name">Kartu Arti</span><span class="desc">Tebak arti, lalu buka jawabannya.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="question.html">
+                    <span><span class="name">Pertanyaan Acak</span><span class="desc">Pertanyaan untuk latihan bicara.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+                <a class="game" href="chat%20real%201.html">
+                    <span><span class="name">Chat</span><span class="desc">Latihan menulis langsung.</span></span>
+                    <span class="go">Main →</span>
+                </a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
