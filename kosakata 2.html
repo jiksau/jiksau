@@ -8,39 +8,31 @@
 </head>
 <body>
     <header class="topbar">
-        <div class="topbar-inner">
+        <div class="topbar-inner wide">
             <a href="gamelist.html">← Game</a>
             <h1>Kuis Kosakata</h1>
         </div>
     </header>
 
-    <main class="app">
+    <main class="app wide">
         <!-- ===== Persiapan ===== -->
-        <section id="setup" class="stack">
+        <section id="setup" class="setup-grid">
             <div class="card">
                 <h2>Pilih soal</h2>
                 <div id="source"></div>
             </div>
-            <div class="card">
-                <div class="settings">
-                    <label class="field wide">Arah soal
-                        <select id="direction" class="input">
-                            <option value="qa">Kata → Arti</option>
-                            <option value="aq">Arti → Kata</option>
-                        </select>
-                    </label>
-                    <label class="field">Waktu (menit)
-                        <input type="number" id="minutes" class="input" min="1" max="30" value="2" inputmode="numeric">
-                    </label>
-                    <label class="check"><input type="checkbox" id="shuffle"> Acak urutan</label>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
                 </div>
-                <div id="setupMsg" class="feedback bad"></div>
-                <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
             </div>
         </section>
 
         <!-- ===== Bermain ===== -->
-        <section id="play" class="stack" hidden>
+        <section id="play" class="stack narrow" hidden>
             <div class="card result" id="resultCard" hidden>
                 <div class="big" id="resultScore">0/0</div>
                 <p class="sub" id="resultSub"></p>
@@ -52,7 +44,7 @@
             <div class="card">
                 <div class="play-head">
                     <span class="badge" id="answeredBadge">0 / 0</span>
-                    <span class="badge" id="timer">00:00</span>
+                    <span class="badge" id="timer" hidden>00:00</span>
                 </div>
                 <div class="progress"><span id="bar"></span></div>
                 <div class="quiz-list" id="quizList"></div>
@@ -65,19 +57,26 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, isAnswerCorrect, shuffled } from "./word-source.js";
+        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock } from "./word-source.js";
         import { escapeHtml } from "./ec-common.js";
 
         const $ = (id) => document.getElementById(id);
 
+        let settings = null;
         const source = mountWordSource($("source"), {
             gameKey: "k2",
-            onChange: () => { $("setupMsg").textContent = ""; },
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "k2", secondsPerWord: 8, timerDefault: true,
+            count: () => source.words().length,
         });
 
         let words = [];
         let reverse = false;
         let timerId = null;
+        let limit = null;      // detik, null = tanpa batas waktu
         let secondsLeft = 0;
         let paused = false;
         let submitted = false;
@@ -92,11 +91,10 @@
         function start() {
             const problem = source.problem();
             if (problem) { $("setupMsg").textContent = problem; return; }
-            const minutes = Math.min(30, Math.max(1, parseInt($("minutes").value, 10) || 2));
-            $("minutes").value = minutes;
-            words = $("shuffle").checked ? shuffled(source.words()) : source.words();
-            reverse = $("direction").value === "aq";
-            secondsLeft = minutes * 60;
+            const s = settings.get();
+            words = s.shuffle ? shuffled(source.words()) : source.words();
+            reverse = s.reverse;
+            limit = s.seconds;
             paused = false;
             submitted = false;
 
@@ -109,6 +107,7 @@
             $("resultCard").hidden = true;
             $("playActions").hidden = false;
             $("pauseBtn").textContent = "Jeda";
+            $("pauseBtn").hidden = limit === null; // jeda hanya berguna jika ada batas waktu
             updateAnswered();
             show("play");
             startTimer();
@@ -117,6 +116,9 @@
 
         function startTimer() {
             clearInterval(timerId);
+            $("timer").hidden = limit === null;
+            if (limit === null) return;
+            secondsLeft = limit;
             renderTimer();
             timerId = setInterval(() => {
                 if (paused) return;
@@ -127,9 +129,8 @@
         }
 
         function renderTimer() {
-            const s = Math.max(0, secondsLeft);
-            $("timer").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-            $("timer").className = "badge" + (s <= 30 ? " bad" : s <= 60 ? " warn" : "");
+            $("timer").textContent = formatClock(secondsLeft);
+            $("timer").className = "badge" + (secondsLeft <= 30 ? " bad" : secondsLeft <= 60 ? " warn" : "");
         }
 
         function updateAnswered() {

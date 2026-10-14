@@ -103,6 +103,9 @@ service cloud.firestore {
         && request.resource.data.type in ['kosakata', 'verb', 'kalimat']
         && (request.resource.data.level == 'SEMUA' || isValidLevel(request.resource.data.level))
         && request.resource.data.active is bool
+        // Level paket (opsional): 1-5
+        && (!('tier' in request.resource.data)
+            || (request.resource.data.tier is int && request.resource.data.tier >= 1 && request.resource.data.tier <= 5))
         && request.resource.data.items is list
         && request.resource.data.items.size() > 0
         && request.resource.data.items.size() <= 200

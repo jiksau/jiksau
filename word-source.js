@@ -1,24 +1,22 @@
 // =====================================================================
-//  word-source.js - Bagian "pilih soal" untuk game kosakata
+//  word-source.js - Bagian "pilih soal" & pengaturan untuk game kosakata
 // ---------------------------------------------------------------------
-//  Menampilkan dua pilihan:
-//    - Paket Guru  : paket soal dari admin (questionPacks). Berpoin.
-//    - Kata Sendiri: siswa mengetik kata sendiri. Latihan, tanpa poin.
+//  1) mountWordSource: tab Paket Guru (berpoin) / Kata Sendiri (latihan),
+//     cari & filter paket (jenjang, level), tag, dan pratinjau isi paket.
+//  2) mountPlaySettings: arah soal, acak urutan, batas waktu (+ saran).
 //
-//  Cara pakai (di <script type="module"> halaman game):
-//    import { mountWordSource, isAnswerCorrect, shuffled } from "./word-source.js";
-//    const source = mountWordSource(document.getElementById("source"), {
-//        gameKey: "k2",          // untuk mengingat pilihan & kata sendiri
-//        maxOwn: 100,            // batas jumlah kata sendiri
-//        onChange: () => {},     // dipanggil saat soal berubah
-//    });
-//    source.words()      -> [{ q, a }]  (kata, arti)
-//    source.scoreInfo()  -> { packId, packName } atau {} untuk latihan
-//    source.title()      -> judul paket atau "Kata sendiri"
+//  Contoh (lihat kosakata 5.html):
+//    const source = mountWordSource($("source"), {
+//        gameKey: "k5", maxOwn: 10, previewEl: $("preview"), onChange });
+//    const settings = mountPlaySettings($("settings"), {
+//        gameKey: "k5", secondsPerWord: 15, timerDefault: false,
+//        count: () => source.words().length });
+//    source.words() -> [{ q, a }]     settings.get() -> { reverse, shuffle, seconds|null }
+//    source.scoreInfo() -> { packId, packName } (kosong untuk latihan)
 // =====================================================================
 
 import "./game-scores.js"; // window.loadQuestionPacks & window.saveGameScore
-import { escapeHtml } from "./ec-common.js";
+import { escapeHtml, packTags, PACK_ALL_LEVELS } from "./ec-common.js";
 
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
@@ -46,7 +44,22 @@ export function shuffled(list) {
     return a;
 }
 
-export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => {} }) {
+export function formatClock(seconds) {
+    const s = Math.max(0, seconds);
+    return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function tagsHtml(pack) {
+    return packTags(pack).map((t, i) => {
+        const cls = i === 0 ? (pack.level === PACK_ALL_LEVELS ? " all" : "") : " lvl";
+        return `<span class="tag${cls}">${escapeHtml(t)}</span>`;
+    }).join("");
+}
+
+// =====================================================================
+//  Pilih soal
+// =====================================================================
+export function mountWordSource(root, { gameKey, maxOwn = 100, previewEl = null, onChange = () => {} }) {
     const KEY = `ec-${gameKey}`;
     const saved = store.get(KEY) || {};
     const state = {
@@ -55,6 +68,9 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
         packs: [],
         pack: null,
         savedPackId: saved.packId || null,
+        search: "",
+        scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"
+        tier: "all",
         own: Array.isArray(saved.own) ? saved.own.filter((w) => w && typeof w.q === "string").slice(0, maxOwn) : [],
     };
 
@@ -64,7 +80,15 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
             <button type="button" data-src="own">Kata Sendiri</button>
         </div>
         <p class="source-note" data-note></p>
-        <div data-pack-area><div class="pack-list" data-pack-list></div></div>
+        <div data-pack-area>
+            <div class="pack-tools" data-tools hidden>
+                <input type="search" class="input" data-search placeholder="Cari paket" autocomplete="off">
+                <select class="input" data-scope aria-label="Jenjang"></select>
+                <select class="input" data-tier aria-label="Level"></select>
+            </div>
+            <div class="pack-list scroll" data-pack-list></div>
+            <div class="pack-count" data-pack-count></div>
+        </div>
         <div data-own-area>
             <div class="word-head"><span>Kata</span><span>Arti</span><span></span></div>
             <div class="word-rows" data-rows style="margin-top:6px"></div>
@@ -72,8 +96,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
                 <button type="button" class="btn ghost" data-add-row>+ Tambah baris</button>
                 <span class="count" data-count></span>
             </div>
-        </div>
-        <div class="word-scroll" data-preview hidden><table class="word-table"><tbody data-preview-body></tbody></table></div>`;
+        </div>`;
     const $ = (sel) => root.querySelector(sel);
 
     function persist() {
@@ -91,6 +114,38 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
         renderPreview();
     }
 
+    // ---------- Filter ----------
+    function setupFilters() {
+        const packs = state.packs;
+        const myLevels = [...new Set(packs.filter((p) => p.level !== PACK_ALL_LEVELS).map((p) => p.level))];
+        const hasAll = packs.some((p) => p.level === PACK_ALL_LEVELS);
+        const tiers = [...new Set(packs.map((p) => p.tier).filter(Boolean))].sort((a, b) => a - b);
+
+        const scopeOpts = [`<option value="all">Semua paket</option>`];
+        if (myLevels.length) scopeOpts.push(`<option value="mine">${escapeHtml(packTags({ level: myLevels[0] })[0])}</option>`);
+        if (hasAll) scopeOpts.push(`<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>`);
+        $("[data-scope]").innerHTML = scopeOpts.join("");
+        $("[data-scope]").hidden = scopeOpts.length <= 2;
+
+        $("[data-tier]").innerHTML = `<option value="all">Semua level</option>`
+            + tiers.map((t) => `<option value="${t}">Level ${t}</option>`).join("");
+        $("[data-tier]").hidden = tiers.length <= 1;
+
+        // Jika hanya satu filter yang tampil, lebarkan ke satu baris penuh
+        $("[data-scope]").style.gridColumn = $("[data-tier]").hidden ? "1 / -1" : "";
+        $("[data-tier]").style.gridColumn = $("[data-scope]").hidden ? "1 / -1" : "";
+        // Kotak cari & filter hanya muncul jika paketnya cukup banyak
+        $("[data-tools]").hidden = packs.length < 6 && $("[data-scope]").hidden && $("[data-tier]").hidden;
+    }
+
+    function filteredPacks() {
+        const term = state.search.trim().toLowerCase();
+        return state.packs.filter((p) =>
+            (state.scope === "all" || (state.scope === "mine" ? p.level !== PACK_ALL_LEVELS : p.level === state.scope))
+            && (state.tier === "all" || String(p.tier) === state.tier)
+            && (!term || String(p.title).toLowerCase().includes(term)));
+    }
+
     function renderPacks() {
         const box = $("[data-pack-list]");
         const messages = {
@@ -101,23 +156,44 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
             empty: "Belum ada paket untuk jenjangmu. Coba tab Kata Sendiri.",
         };
         const status = state.packStatus === "ok" && !state.packs.length ? "empty" : state.packStatus;
+        $("[data-pack-count]").textContent = "";
         if (status !== "ok") {
             box.innerHTML = `<div class="pack-msg">${messages[status] || messages.error}</div>`;
             return;
         }
-        box.innerHTML = state.packs.map((p) => `
-            <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
-                <span class="t">${escapeHtml(p.title)}</span><span class="n">${p.itemCount} kata</span>
-            </button>`).join("");
+        const list = filteredPacks();
+        if (!list.length) {
+            box.innerHTML = '<div class="pack-msg">Tidak ada paket yang cocok.</div>';
+        } else {
+            box.innerHTML = list.map((p) => `
+                <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
+                    <span class="info"><span class="t">${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}</span></span>
+                    <span class="n">${p.itemCount} kata</span>
+                </button>`).join("");
+        }
+        if (list.length !== state.packs.length) $("[data-pack-count]").textContent = `${list.length} dari ${state.packs.length} paket`;
     }
 
-    // Pratinjau hanya untuk paket (kata sendiri sudah terlihat di isian).
+    // ---------- Pratinjau ----------
     function renderPreview() {
-        const show = state.mode === "pack" && state.pack;
-        $("[data-preview]").hidden = !show;
-        if (!show) return;
-        $("[data-preview-body]").innerHTML = api.words().map((w, i) =>
-            `<tr><td>${i + 1}</td><td>${escapeHtml(w.q)}</td><td>${escapeHtml(w.a)}</td></tr>`).join("");
+        if (!previewEl) return;
+        if (state.mode !== "pack") { previewEl.hidden = true; return; }
+        previewEl.hidden = false;
+        const p = state.pack;
+        if (!p) {
+            // Di HP kartu kosong disembunyikan agar tidak memakan tempat
+            previewEl.classList.add("only-wide");
+            previewEl.innerHTML = '<p class="preview-empty">Pilih paket untuk melihat isinya.</p>';
+            return;
+        }
+        previewEl.classList.remove("only-wide");
+        previewEl.innerHTML = `
+            <div class="preview-head">
+                <div><h2>${escapeHtml(p.title)}</h2><div class="tags">${tagsHtml(p)}</div></div>
+                <span class="n">${p.itemCount} kata</span>
+            </div>
+            <div class="word-scroll"><table class="word-table"><tbody>${api.words().map((w, i) =>
+                `<tr><td>${i + 1}</td><td>${escapeHtml(w.q)}</td><td>${escapeHtml(w.a)}</td></tr>`).join("")}</tbody></table></div>`;
     }
 
     // ---------- Kata sendiri ----------
@@ -160,7 +236,7 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
         updateCount();
         root.querySelector(".word-row:last-child [data-q]").focus();
     });
-    // Enter di kolom Arti baris terakhir = tambah baris baru
+    // Enter: Kata → Arti → baris berikutnya (baris baru jika di akhir)
     $("[data-rows]").addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
         e.preventDefault();
@@ -172,6 +248,10 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
     });
 
     // ---------- Pilihan ----------
+    $("[data-search]").addEventListener("input", (e) => { state.search = e.target.value; renderPacks(); });
+    $("[data-scope]").addEventListener("change", (e) => { state.scope = e.target.value; renderPacks(); });
+    $("[data-tier]").addEventListener("change", (e) => { state.tier = e.target.value; renderPacks(); });
+
     root.addEventListener("click", (e) => {
         const src = e.target.closest("[data-src]");
         if (src && src.dataset.src !== state.mode) {
@@ -209,11 +289,88 @@ export function mountWordSource(root, { gameKey, maxOwn = 100, onChange = () => 
 
     window.loadQuestionPacks("kosakata").then((res) => {
         state.packStatus = res.status;
-        state.packs = res.packs || [];
+        // Urutan: level paling mudah dulu, lalu judul
+        state.packs = (res.packs || []).sort((a, b) => (a.tier || 0) - (b.tier || 0)
+            || String(a.title).localeCompare(String(b.title), "id", { numeric: true }));
         state.pack = state.packs.find((p) => p.id === state.savedPackId) || null;
+        setupFilters();
         render();
         onChange();
     });
 
     return api;
+}
+
+// =====================================================================
+//  Pengaturan permainan: arah, acak, batas waktu
+// =====================================================================
+//  secondsPerWord: dasar waktu saran. Saran = jumlah kata x detik,
+//  dibulatkan ke atas ke menit (1-30 menit).
+export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDefault = true, count = () => 0 }) {
+    const KEY = `ec-${gameKey}-settings`;
+    const saved = store.get(KEY) || {};
+    const state = {
+        reverse: !!saved.reverse,
+        shuffle: !!saved.shuffle,
+        timer: typeof saved.timer === "boolean" ? saved.timer : timerDefault,
+        // null = ikuti saran otomatis; angka = menit pilihan siswa
+        minutes: Number.isInteger(saved.minutes) ? saved.minutes : null,
+    };
+
+    root.innerHTML = `
+        <div class="opts">
+            <label class="field">Arah soal
+                <select class="input" data-dir>
+                    <option value="qa">Kata → Arti</option>
+                    <option value="aq">Arti → Kata</option>
+                </select>
+            </label>
+            <div class="opt-row">
+                <label class="check"><input type="checkbox" data-shuffle> Acak urutan</label>
+                <label class="check"><input type="checkbox" data-timer> Batas waktu</label>
+            </div>
+            <div class="timer-row" data-timer-row>
+                <input type="number" class="input" data-min min="1" max="30" inputmode="numeric" aria-label="Menit">
+                <span class="unit">menit</span>
+                <span class="unit" data-auto>· sesuai saran</span>
+                <button type="button" class="btn ghost" data-suggest></button>
+            </div>
+        </div>`;
+    const $ = (sel) => root.querySelector(sel);
+
+    const suggested = () => Math.min(30, Math.max(1, Math.ceil((count() * secondsPerWord) / 60)));
+    const persist = () => store.set(KEY, state);
+
+    function render() {
+        $("[data-dir]").value = state.reverse ? "aq" : "qa";
+        $("[data-shuffle]").checked = state.shuffle;
+        $("[data-timer]").checked = state.timer;
+        $("[data-timer-row]").hidden = !state.timer;
+        const s = suggested();
+        if (document.activeElement !== $("[data-min]")) $("[data-min]").value = state.minutes ?? s;
+        const custom = state.minutes !== null && state.minutes !== s;
+        $("[data-suggest]").textContent = `Pakai saran (${s} menit)`;
+        $("[data-suggest]").hidden = !custom;
+        $("[data-auto]").hidden = custom;
+    }
+
+    $("[data-dir]").addEventListener("change", (e) => { state.reverse = e.target.value === "aq"; persist(); });
+    $("[data-shuffle]").addEventListener("change", (e) => { state.shuffle = e.target.checked; persist(); });
+    $("[data-timer]").addEventListener("change", (e) => { state.timer = e.target.checked; persist(); render(); });
+    $("[data-min]").addEventListener("input", (e) => {
+        const v = parseInt(e.target.value, 10);
+        if (v >= 1 && v <= 30) { state.minutes = v; persist(); render(); }
+    });
+    $("[data-min]").addEventListener("blur", () => render());
+    $("[data-suggest]").addEventListener("click", () => { state.minutes = null; persist(); render(); });
+
+    render();
+
+    return {
+        refresh: render, // panggil saat jumlah kata berubah (ganti paket)
+        get() {
+            const minutes = state.minutes ?? suggested();
+            return { reverse: state.reverse, shuffle: state.shuffle, seconds: state.timer ? minutes * 60 : null };
+        },
+    };
 }

@@ -8,43 +8,35 @@
 </head>
 <body>
     <header class="topbar">
-        <div class="topbar-inner">
+        <div class="topbar-inner wide">
             <a href="gamelist.html">← Game</a>
             <h1>Kartu Hafalan</h1>
         </div>
     </header>
 
-    <main class="app">
+    <main class="app wide">
         <!-- ===== Persiapan ===== -->
-        <section id="setup" class="stack">
+        <section id="setup" class="setup-grid">
             <div class="card">
                 <h2>Pilih soal</h2>
                 <div id="source"></div>
             </div>
-            <div class="card">
-                <div class="settings">
-                    <label class="field wide">Arah soal
-                        <select id="direction" class="input">
-                            <option value="qa">Kata → Arti</option>
-                            <option value="aq">Arti → Kata</option>
-                        </select>
-                    </label>
-                    <label class="field">Waktu (menit)
-                        <input type="number" id="minutes" class="input" min="1" max="30" value="3" inputmode="numeric">
-                    </label>
-                    <label class="check"><input type="checkbox" id="shuffle"> Acak urutan</label>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <p class="note" style="margin-top:12px">Tiap kata punya 3 kesempatan menjawab.</p>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
                 </div>
-                <p class="note" style="margin-top:12px">Tiap kata punya 3 kesempatan menjawab.</p>
-                <div id="setupMsg" class="feedback bad"></div>
-                <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
             </div>
         </section>
 
         <!-- ===== Bermain ===== -->
-        <section id="play" class="card" hidden>
+        <section id="play" class="card narrow" hidden>
             <div class="play-head">
                 <span class="badge" id="progressBadge">1 / 1</span>
-                <span class="badge" id="timer">00:00</span>
+                <span class="badge" id="timer" hidden>00:00</span>
             </div>
             <div class="progress"><span id="bar"></span></div>
             <p class="prompt-label" id="promptLabel">Arti dari</p>
@@ -61,7 +53,7 @@
         </section>
 
         <!-- ===== Hasil ===== -->
-        <section id="done" class="stack" hidden>
+        <section id="done" class="stack narrow" hidden>
             <div class="card result">
                 <div class="big" id="doneScore">0/0</div>
                 <p class="sub" id="doneSub"></p>
@@ -78,15 +70,21 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, isAnswerCorrect, shuffled } from "./word-source.js";
+        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock } from "./word-source.js";
         import { escapeHtml } from "./ec-common.js";
 
         const $ = (id) => document.getElementById(id);
         const MAX_TRIES = 3;
 
+        let settings = null;
         const source = mountWordSource($("source"), {
             gameKey: "k3",
-            onChange: () => { $("setupMsg").textContent = ""; },
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "k3", secondsPerWord: 12, timerDefault: true,
+            count: () => source.words().length,
         });
 
         let words = [];
@@ -97,6 +95,7 @@
         let missed = [];
         let reverse = false;
         let timerId = null;
+        let limit = null;      // detik, null = tanpa batas waktu
         let secondsLeft = 0;
         let finished = false;
 
@@ -108,15 +107,14 @@
         function start() {
             const problem = source.problem();
             if (problem) { $("setupMsg").textContent = problem; return; }
-            const minutes = Math.min(30, Math.max(1, parseInt($("minutes").value, 10) || 3));
-            $("minutes").value = minutes;
-            words = $("shuffle").checked ? shuffled(source.words()) : source.words();
-            reverse = $("direction").value === "aq";
+            const s = settings.get();
+            words = s.shuffle ? shuffled(source.words()) : source.words();
+            reverse = s.reverse;
             index = 0;
             correct = 0;
             missed = [];
             finished = false;
-            secondsLeft = minutes * 60;
+            limit = s.seconds;
             show("play");
             startTimer();
             renderCard();
@@ -124,6 +122,9 @@
 
         function startTimer() {
             clearInterval(timerId);
+            $("timer").hidden = limit === null;
+            if (limit === null) return;
+            secondsLeft = limit;
             renderTimer();
             timerId = setInterval(() => {
                 secondsLeft--;
@@ -133,9 +134,8 @@
         }
 
         function renderTimer() {
-            const s = Math.max(0, secondsLeft);
-            $("timer").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-            $("timer").className = "badge" + (s <= 30 ? " bad" : s <= 60 ? " warn" : "");
+            $("timer").textContent = formatClock(secondsLeft);
+            $("timer").className = "badge" + (secondsLeft <= 30 ? " bad" : secondsLeft <= 60 ? " warn" : "");
         }
 
         function renderCard() {

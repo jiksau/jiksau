@@ -8,37 +8,38 @@
 </head>
 <body>
     <header class="topbar">
-        <div class="topbar-inner">
+        <div class="topbar-inner wide">
             <a href="gamelist.html">← Game</a>
             <h1>Hafalan Tanpa Salah</h1>
         </div>
     </header>
 
-    <main class="app">
+    <main class="app wide">
         <!-- ===== Persiapan ===== -->
-        <section id="setup" class="stack">
+        <section id="setup" class="setup-grid">
             <div class="card">
                 <h2>Pilih soal</h2>
                 <div id="source"></div>
             </div>
-            <div class="card">
-                <label class="field">Arah soal
-                    <select id="direction" class="input">
-                        <option value="qa">Kata → Arti</option>
-                        <option value="aq">Arti → Kata</option>
-                    </select>
-                </label>
-                <p class="note" style="margin-top:12px">Sekali salah, hafalan diulang dari kata pertama.</p>
-                <div id="setupMsg" class="feedback bad"></div>
-                <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <p class="note" style="margin-top:12px">Sekali salah, hafalan diulang dari kata pertama.</p>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+                </div>
             </div>
         </section>
 
         <!-- ===== Bermain ===== -->
-        <section id="play" class="card" hidden>
+        <section id="play" class="card narrow" hidden>
             <div class="play-head">
                 <span class="badge" id="progressBadge">1 / 1</span>
-                <span class="badge" id="mistakeBadge">0 salah</span>
+                <span style="display:flex;gap:8px">
+                    <span class="badge" id="mistakeBadge">0 salah</span>
+                    <span class="badge" id="timer" hidden>00:00</span>
+                </span>
             </div>
             <div class="progress"><span id="bar"></span></div>
             <p class="prompt-label" id="promptLabel">Arti dari</p>
@@ -55,9 +56,9 @@
         </section>
 
         <!-- ===== Selesai ===== -->
-        <section id="done" class="stack" hidden>
+        <section id="done" class="stack narrow" hidden>
             <div class="card result">
-                <div class="big">Tuntas</div>
+                <div class="big" id="doneTitle">Tuntas</div>
                 <p class="sub" id="doneSub"></p>
                 <div class="actions" style="margin-top:16px">
                     <button type="button" class="btn" id="againBtn">Main lagi</button>
@@ -72,7 +73,7 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, isAnswerCorrect } from "./word-source.js";
+        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock } from "./word-source.js";
         import { escapeHtml } from "./ec-common.js";
 
         const $ = (id) => document.getElementById(id);
@@ -88,16 +89,27 @@
             }
         } catch { /* abaikan */ }
 
+        let settings = null;
         const source = mountWordSource($("source"), {
             gameKey: "k5",
             maxOwn: 10,
-            onChange: () => { $("setupMsg").textContent = ""; },
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "k5", secondsPerWord: 15, timerDefault: false,
+            count: () => source.words().length,
         });
 
+        let baseWords = [];
         let words = [];
         let index = 0;
         let mistakes = 0;
         let reverse = false;
+        let shuffle = false;
+        let limit = null;      // detik, null = tanpa batas waktu
+        let secondsLeft = 0;
+        let timerId = null;
         let running = false;
 
         function show(section) {
@@ -108,15 +120,43 @@
         function start() {
             const problem = source.problem();
             if (problem) { $("setupMsg").textContent = problem; return; }
-            words = source.words();
-            reverse = $("direction").value === "aq";
+            const s = settings.get();
+            baseWords = source.words();
+            reverse = s.reverse;
+            shuffle = s.shuffle;
+            limit = s.seconds;
+            begin(null);
+        }
+
+        // Mulai sesi baru (urutan diacak ulang setiap sesi jika "Acak" aktif)
+        function begin(message) {
+            words = shuffle ? shuffled(baseWords) : [...baseWords];
             mistakes = 0;
             index = 0;
             running = true;
-            $("feedback").textContent = "";
-            $("feedback").className = "feedback";
+            $("feedback").className = message ? "feedback info" : "feedback";
+            $("feedback").textContent = message || "";
             show("play");
+            startTimer();
             renderQuestion();
+        }
+
+        function startTimer() {
+            clearInterval(timerId);
+            $("timer").hidden = limit === null;
+            if (limit === null) return;
+            secondsLeft = limit;
+            renderTimer();
+            timerId = setInterval(() => {
+                secondsLeft--;
+                renderTimer();
+                if (secondsLeft <= 0) timeUp();
+            }, 1000);
+        }
+
+        function renderTimer() {
+            $("timer").textContent = formatClock(secondsLeft);
+            $("timer").className = "badge" + (secondsLeft <= 30 ? " bad" : secondsLeft <= 60 ? " warn" : "");
         }
 
         function renderQuestion() {
@@ -153,12 +193,18 @@
             }
         }
 
-        function finish() {
-            running = false;
-            $("doneSub").textContent = `${words.length} kata · ${mistakes ? `${mistakes} kali salah sebelum tuntas` : "tanpa salah"}`;
+        function showList() {
             $("doneListTitle").textContent = source.title();
             $("doneList").innerHTML = words.map((w, i) =>
                 `<tr><td>${i + 1}</td><td>${escapeHtml(w.q)}</td><td>${escapeHtml(w.a)}</td></tr>`).join("");
+        }
+
+        function finish() {
+            running = false;
+            clearInterval(timerId);
+            $("doneTitle").textContent = "Tuntas";
+            $("doneSub").textContent = `${words.length} kata · ${mistakes ? `${mistakes} kali salah sebelum tuntas` : "tanpa salah"}`;
+            showList();
             show("done");
             // Tuntas = semua kata benar berurutan. "points" = jumlah salah sebelum tuntas.
             window.saveGameScore?.({
@@ -168,21 +214,22 @@
             });
         }
 
-        function restart() {
-            mistakes = 0;
-            index = 0;
-            running = true;
-            $("feedback").className = "feedback info";
-            $("feedback").textContent = "Dimulai lagi dari kata pertama.";
-            show("play");
-            renderQuestion();
+        // Waktu habis sebelum tuntas: tidak ada skor tersimpan
+        function timeUp() {
+            if (!running) return;
+            running = false;
+            clearInterval(timerId);
+            $("doneTitle").textContent = "Waktu habis";
+            $("doneSub").textContent = `Sampai kata ${index + 1} dari ${words.length}. Belum tuntas, skor tidak tersimpan.`;
+            showList();
+            show("done");
         }
 
         $("startBtn").addEventListener("click", start);
         $("answerForm").addEventListener("submit", check);
-        $("restartBtn").addEventListener("click", restart);
-        $("againBtn").addEventListener("click", restart);
-        $("backBtn").addEventListener("click", () => { running = false; show("setup"); });
+        $("restartBtn").addEventListener("click", () => begin("Dimulai lagi dari kata pertama."));
+        $("againBtn").addEventListener("click", () => begin(null));
+        $("backBtn").addEventListener("click", () => { running = false; clearInterval(timerId); show("setup"); });
         $("doneBackBtn").addEventListener("click", () => show("setup"));
     </script>
 </body>

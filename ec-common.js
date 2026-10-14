@@ -125,6 +125,15 @@ export function weekRangeLabel(key) {
 // yang menambah poin di papan peringkat.
 export const PACK_ALL_LEVELS = "SEMUA";
 export const PACK_MAX_ITEMS = 200;
+// Level kesulitan paket di dalam satu jenjang (1 = paling mudah).
+export const PACK_TIERS = [1, 2, 3, 4, 5];
+
+// Label tag paket, contoh: ["SMP", "Level 2"] atau ["Semua jenjang", "Level 1"]
+export function packTags(pack) {
+    const tags = [packLevelLabel(pack?.level)];
+    if (pack?.tier) tags.push(`Level ${pack.tier}`);
+    return tags;
+}
 
 export const PACK_TYPES = [
     {

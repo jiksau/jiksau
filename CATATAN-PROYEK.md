@@ -26,7 +26,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `admin-login.html` | Login admin |
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
 | `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
-| `word-source.js` | Bagian "Pilih soal" bersama: tab Paket Guru / Kata Sendiri, daftar paket, isian kata sendiri, pencocokan jawaban |
+| `word-source.js` | `mountWordSource`: tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal, acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
 | `game-scores.js` | Modul simpan skor + muat paket soal (lihat di bawah) |
 
 ## Game yang ada
@@ -46,7 +46,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 ## Paket soal (bank soal dari guru)
 
-- Dibuat admin di tab **Paket Soal**: judul, jenis, jenjang (atau Semua jenjang), daftar soal ditempel satu per baris.
+- Dibuat admin di tab **Paket Soal**: judul, jenis, jenjang (atau Semua jenjang), **level 1–5** (`tier`, 1 = paling mudah; `PACK_TIERS` di `ec-common.js`), daftar soal ditempel satu per baris. Daftar paket admin bisa dicari & difilter jenjang.
   - `kosakata`: `kata = arti` (jawaban alternatif dipisah `/`, mis. `big = besar / luas`) → item `{q, a}`
   - `verb`: `eat, ate, eaten = makan` → item `{v1, v2, v3, arti}` (belum dipakai game)
   - `kalimat`: satu kalimat per baris, 2–20 kata → item `{text}` (belum dipakai game)
@@ -55,6 +55,13 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung **hasil terbaik** per siswa per paket (`weeklyPoints` di `ec-common.js`, dipakai `leaderboard.html` dan `user-dashboard.html`).
 - Siswa melihat paket aktif untuk jenjangnya + paket "Semua jenjang". Aturan Firestore menolak skor berpaket jika paket nonaktif, beda jenjang, atau `total` tidak sama dengan jumlah soal paket.
 - Keterbatasan: jumlah jawaban benar tetap dihitung di browser siswa (tanpa server), jadi siswa yang sangat paham teknis masih bisa memalsukan nilai di satu paket, tetapi tidak bisa lagi menumpuk poin tanpa batas.
+
+## Halaman game kosakata
+
+- Tata letak: PC dua kolom (kiri pilih soal; kanan pratinjau + pengaturan + Mulai), HP satu kolom. Kelas `app wide`, `setup-grid`, `side`, `narrow` di `game-ui.css`.
+- Kotak cari & filter muncul otomatis jika paket ≥ 6 atau ada lebih dari satu jenjang/level.
+- Batas waktu: saran = jumlah kata × detik per kata (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
+- Pilihan siswa (paket, kata sendiri, pengaturan) diingat di browser (`localStorage`, kunci `ec-k2`, `ec-k2-settings`, dst.).
 
 ## Cara menyambungkan game ke skor & papan peringkat
 
@@ -76,7 +83,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 - `users/{uid}`: name, role "Student", email, level, classCode, loginType ("email"/"username"), createdAt, lastLoginAt
 - `classCodes/{KODE}`: level, note, active, createdAt
-- `questionPacks/{id}`: title, type ("kosakata"/"verb"/"kalimat"), level (jenjang atau "SEMUA"), active, items[], itemCount, createdAt, updatedAt
+- `questionPacks/{id}`: title, type ("kosakata"/"verb"/"kalimat"), level (jenjang atau "SEMUA"), tier (1–5, opsional untuk paket lama), active, items[], itemCount, createdAt, updatedAt
 - `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, week ("YYYY-MM-DD" Senin), timestamp
 - Akun tanpa email memakai email sintetis `<namapengguna>@siswa.extra-course-d02c2.firebaseapp.com`.
 

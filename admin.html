@@ -168,7 +168,7 @@
         .note { font-size: 0.82rem; color: var(--muted); background: #f9fafb; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
 
         /* Paket soal */
-        .pack-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; }
+        .pack-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr); gap: 14px; }
         textarea.pack-text {
             display: block; width: 100%; min-height: 220px; margin-top: 4px; padding: 10px;
             border: 1px solid #d1d5db; border-radius: 8px; resize: vertical;
@@ -178,10 +178,12 @@
         .pack-check b { color: var(--text); }
         .pack-errors { margin: 6px 0 0; padding-left: 18px; color: var(--red); font-size: 0.82rem; }
         .pack-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        #panel-packs th, #packsBody td:not(:first-child) { white-space: nowrap; overflow-wrap: normal; }
 
         @media (max-width: 960px) {
             .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .field-btn { grid-column: 1 / -1; }
+            .pack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .field-btn .field-label { display: none; }
         }
 
@@ -337,7 +339,7 @@
         <section class="panel" id="panel-packs">
             <div class="card" id="packFormCard">
                 <h2 id="packFormTitle">Buat Paket Soal</h2>
-                <p class="desc">Soal dari guru untuk dimainkan siswa. <b>Hanya permainan dengan paket soal yang menambah poin di papan peringkat</b>; jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung hanya hasil terbaiknya.</p>
+                <p class="desc">Hanya permainan dengan paket yang menambah poin (hasil terbaik per paket tiap minggu).</p>
                 <form id="packForm" autocomplete="off">
                     <div class="pack-grid">
                         <label class="field"><span class="field-label">Judul paket</span>
@@ -351,6 +353,10 @@
                         <label class="field"><span class="field-label">Untuk jenjang</span>
                             <select id="packLevel"></select>
                             <small>&nbsp;</small>
+                        </label>
+                        <label class="field"><span class="field-label">Level</span>
+                            <select id="packTier"></select>
+                            <small>1 = paling mudah</small>
                         </label>
                     </div>
                     <label class="field" style="margin-top:6px"><span class="field-label">Daftar soal</span>
@@ -368,19 +374,24 @@
             </div>
             <div class="card">
                 <h2>Daftar Paket Soal</h2>
-                <p class="desc">Paket nonaktif tidak terlihat oleh siswa dan tidak bisa dimainkan untuk poin. Skor yang sudah tersimpan tetap ada.</p>
+                <p class="desc">Paket nonaktif tidak terlihat oleh siswa. Skor yang sudah tersimpan tetap ada.</p>
+                <div class="toolbar">
+                    <input type="search" id="packSearch" placeholder="Cari judul paket...">
+                    <select id="packLevelFilter"></select>
+                </div>
                 <table class="responsive">
                     <thead>
                         <tr>
                             <th>Judul</th>
                             <th>Jenis</th>
                             <th>Jenjang</th>
+                            <th>Level</th>
                             <th>Soal</th>
                             <th>Status</th>
                             <th class="col-actions">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="packsBody"><tr><td colspan="6" class="empty">Memuat...</td></tr></tbody>
+                    <tbody id="packsBody"><tr><td colspan="7" class="empty">Memuat...</td></tr></tbody>
                 </table>
                 <p class="note">Jika jumlah soal sebuah paket diubah, siswa yang sedang membuka paket itu perlu memuat ulang halaman game sebelum skornya bisa tersimpan.</p>
             </div>
@@ -443,7 +454,7 @@
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
             loginIdToEmail, usernameFromEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
-            parsePackText, packToText
+            parsePackText, packToText, PACK_TIERS
         } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
@@ -762,6 +773,10 @@
 
         $('packType').innerHTML = PACK_TYPES.map((t) => `<option value="${t.value}">${t.label}</option>`).join('');
         $('packLevel').innerHTML = `<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>` + levelOptions(false);
+        $('packTier').innerHTML = PACK_TIERS.map((t) => `<option value="${t}">Level ${t}</option>`).join('');
+        $('packLevelFilter').innerHTML = `<option value="all">Semua paket</option><option value="${PACK_ALL_LEVELS}">Semua jenjang (umum)</option>` + levelOptions(false);
+        // Urutan tampil: jenjang (SD → Umum, lalu Semua jenjang), level, judul
+        const levelOrder = (v) => { const i = LEVELS.findIndex((l) => l.value === v); return i < 0 ? 99 : i; };
 
         function startPacks() {
             if (packsStarted) return;
@@ -769,13 +784,14 @@
             updatePackHelp();
             onSnapshot(collection(db, 'questionPacks'), (snap) => {
                 packs = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => String(a.title).localeCompare(String(b.title), 'id', { numeric: true }));
+                    .sort((a, b) => levelOrder(a.level) - levelOrder(b.level) || (a.tier || 0) - (b.tier || 0)
+                        || String(a.title).localeCompare(String(b.title), 'id', { numeric: true }));
                 renderPacks();
             }, (e) => {
                 console.error(e);
                 packsStarted = false;
                 const hint = e.code === 'permission-denied' ? ' Pastikan aturan keamanan terbaru (firestore.rules) sudah dipasang di Firebase Console.' : '';
-                $('packsBody').innerHTML = `<tr><td colspan="6" class="empty">Gagal memuat paket soal: ${escapeHtml(e.message)}.${hint}</td></tr>`;
+                $('packsBody').innerHTML = `<tr><td colspan="7" class="empty">Gagal memuat paket soal: ${escapeHtml(e.message)}.${hint}</td></tr>`;
             });
         }
 
@@ -798,6 +814,8 @@
         }
 
         $('packType').addEventListener('change', updatePackHelp);
+        $('packSearch').addEventListener('input', renderPacks);
+        $('packLevelFilter').addEventListener('change', renderPacks);
         $('packText').addEventListener('input', checkPackText);
 
         function resetPackForm() {
@@ -816,6 +834,7 @@
             const title = $('packTitle').value.trim();
             const type = $('packType').value;
             const level = $('packLevel').value;
+            const tier = Number($('packTier').value) || 1;
             const { items, errors } = checkPackText();
             if (!title) return setMsg('packMsg', 'Judul paket wajib diisi.', false);
             if (errors.length) return setMsg('packMsg', 'Masih ada baris yang perlu diperbaiki (lihat daftar merah di atas).', false);
@@ -823,13 +842,13 @@
 
             $('packSubmitBtn').disabled = true;
             try {
-                const data = { title, type, level, items, itemCount: items.length, updatedAt: serverTimestamp() };
+                const data = { title, type, level, tier, items, itemCount: items.length, updatedAt: serverTimestamp() };
                 if (editingPackId) {
                     await updateDoc(doc(db, 'questionPacks', editingPackId), data);
                     setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).`, true);
                 } else {
                     await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp() });
-                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal) dan langsung bisa dimainkan siswa ${packLevelLabel(level)}.`, true);
+                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal, ${packLevelLabel(level)} · Level ${tier}).`, true);
                 }
                 resetPackForm();
             } catch (err) {
@@ -842,14 +861,23 @@
 
         function renderPacks() {
             if (packs.length === 0) {
-                $('packsBody').innerHTML = '<tr><td colspan="6" class="empty">Belum ada paket soal. Buat satu di atas.</td></tr>';
+                $('packsBody').innerHTML = '<tr><td colspan="7" class="empty">Belum ada paket soal. Buat satu di atas.</td></tr>';
                 return;
             }
-            $('packsBody').innerHTML = packs.map((p) => `
+            const term = $('packSearch').value.trim().toLowerCase();
+            const lvl = $('packLevelFilter').value;
+            const rows = packs.filter((p) => (lvl === 'all' || p.level === lvl)
+                && (!term || String(p.title).toLowerCase().includes(term)));
+            if (rows.length === 0) {
+                $('packsBody').innerHTML = '<tr><td colspan="7" class="empty">Tidak ada paket yang cocok.</td></tr>';
+                return;
+            }
+            $('packsBody').innerHTML = rows.map((p) => `
                 <tr>
                     <td data-label="Judul"><b>${escapeHtml(p.title)}</b></td>
                     <td data-label="Jenis">${escapeHtml(packTypeLabel(p.type).split(' (')[0])}</td>
                     <td data-label="Jenjang">${escapeHtml(packLevelLabel(p.level))}</td>
+                    <td data-label="Level">${p.tier ? `Level ${p.tier}` : '-'}</td>
                     <td data-label="Soal">${p.itemCount ?? (p.items || []).length}</td>
                     <td data-label="Status"><span class="pill ${p.active ? 'on' : 'off'}">${p.active ? 'Aktif' : 'Nonaktif'}</span></td>
                     <td data-label="Aksi" class="col-actions"><span class="actions">
@@ -871,6 +899,7 @@
                     $('packType').value = p.type;
                     $('packType').disabled = true; // jenis tidak diubah agar skor lama tetap masuk akal
                     $('packLevel').value = p.level;
+                    $('packTier').value = String(p.tier || 1);
                     $('packText').value = packToText(p.type, p.items);
                     $('packFormTitle').textContent = 'Ubah Paket Soal';
                     $('packSubmitBtn').textContent = 'Simpan Perubahan';
