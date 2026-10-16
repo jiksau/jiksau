@@ -28,7 +28,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
 | `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb" / "kalimat", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal (`directions: null` = tanpa pilihan arah), acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
 | `game-scores.js` | Modul simpan skor + muat paket soal (lihat di bawah) |
-| `notifications.js` | Lonceng notifikasi paket baru (di `user-dashboard.html` & `gamelist.html`, wadah `<span id="notif">`; atribut `data-light` untuk latar terang). Paket aktif jenjang siswa + Semua jenjang yang dirilis ≤ 30 hari, maks. 20. Angka merah = dirilis setelah `notifSeenAt`. Tombol game memakai `?paket=<id>` sehingga paket langsung terpilih (`word-source.js`). Daftar game per jenis paket: `PACK_GAMES` di `ec-common.js` (tambahkan di sini setiap ada game baru) |
+| `notifications.js` | Lonceng notifikasi paket baru (di `user-dashboard.html` & `gamelist.html`, wadah `<span id="notif">`; atribut `data-light` untuk latar terang). Paket aktif jenjang siswa + Semua jenjang yang dirilis ≤ 30 hari, maks. 20. Angka merah = paket baru yang belum pernah dimainkan siswa (belum ada `gameScores` miliknya dengan `packId` itu, game apa pun); membuka lonceng tidak menghapus angka. Tombol game memakai `?paket=<id>` sehingga paket langsung terpilih (`word-source.js`). Daftar game per jenis paket: `PACK_GAMES` di `ec-common.js` (tambahkan di sini setiap ada game baru) |
 
 ## Game yang ada
 
@@ -81,7 +81,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 ## Data Firestore
 
-- `users/{uid}`: name, role "Student", email, level, classCode, loginType ("email"/"username"), createdAt, lastLoginAt, notifSeenAt (waktu terakhir membuka lonceng)
+- `users/{uid}`: name, role "Student", email, level, classCode, loginType ("email"/"username"), createdAt, lastLoginAt
 - `classCodes/{KODE}`: level, note, active, createdAt
 - `questionPacks/{id}`: title, type ("kosakata"/"verb"/"kalimat"), level (jenjang atau "SEMUA"), tier (1–5, opsional untuk paket lama), active, items[], itemCount, createdAt, updatedAt, publishedAt (diisi saat dibuat & saat diaktifkan lagi; dasar notifikasi, paket lama memakai createdAt)
 - `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, week ("YYYY-MM-DD" Senin), timestamp

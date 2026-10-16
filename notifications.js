@@ -8,14 +8,15 @@
 //
 //  "Paket baru" = paket aktif untuk jenjang siswa + "Semua jenjang" yang
 //  dirilis (publishedAt, atau createdAt untuk paket lama) dalam 30 hari
-//  terakhir. Angka merah = paket yang dirilis setelah lonceng terakhir
-//  dibuka (users/{uid}.notifSeenAt, cadangan di localStorage).
+//  terakhir. Angka merah = paket baru yang BELUM PERNAH dimainkan siswa
+//  (belum ada skor gameScores dengan packId itu, di game mana pun).
+//  Membuka lonceng tidak menghapus angka; memainkan paketnya yang menghapus.
 // =====================================================================
 
 import "./game-scores.js"; // window.loadQuestionPacks
 import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { escapeHtml, packTags, PACK_GAMES, PACK_ALL_LEVELS } from "./ec-common.js";
 
 const DAYS = 30;
@@ -65,6 +66,7 @@ const CSS = `
 .ec-item .t { font-weight: 700; overflow-wrap: anywhere; }
 .ec-item .new-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 999px; background: #dc2626; vertical-align: 2px; }
 .ec-item .meta { margin-top: 2px; color: #6b7280; font-size: .8rem; }
+.ec-item .played { color: #15803d; font-weight: 600; }
 .ec-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-right: 4px; vertical-align: middle; }
 .ec-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; background: #f3f4f6; color: #4b5563; font-size: .72rem; font-weight: 600; }
 .ec-tag.all { background: #ecfdf5; color: #047857; }
@@ -86,33 +88,42 @@ function tagsHtml(p) {
         `<span class="ec-tag${i === 0 ? (p.level === PACK_ALL_LEVELS ? " all" : "") : " lvl"}">${escapeHtml(t)}</span>`).join("")}</span>`;
 }
 
-function itemHtml(p, isNew) {
+function itemHtml(p, played) {
+    const isNew = !played;
     const games = (PACK_GAMES[p.type] || []).map((g) =>
         `<a href="${g.href}?paket=${encodeURIComponent(p.id)}">${escapeHtml(g.name)}</a>`).join("");
     return `<div class="ec-item${isNew ? " new" : ""}">
         <div class="t">${isNew ? '<span class="new-dot"></span>' : ""}${escapeHtml(p.title)}</div>
-        <div class="meta">${tagsHtml(p)}${p.itemCount} ${unit[p.type] || "soal"} · ${whenLabel(releasedAt(p))}</div>
+        <div class="meta">${tagsHtml(p)}${p.itemCount} ${unit[p.type] || "soal"} · ${whenLabel(releasedAt(p))}${played ? ' · <span class="played">Sudah dimainkan</span>' : ""}</div>
         <div class="ec-games">${games}</div>
     </div>`;
 }
 
+// Paket yang pernah dimainkan siswa ini (skor dengan packId, game apa pun)
+async function playedPackIds(db, uid) {
+    try {
+        const snap = await getDocs(query(collection(db, "gameScores"), where("userId", "==", uid)));
+        return new Set(snap.docs.map((d) => d.data().packId).filter(Boolean));
+    } catch (e) {
+        console.warn("Gagal memuat riwayat main:", e);
+        return new Set();
+    }
+}
+
 async function start(user) {
     const db = getFirestore(getApp());
-    const LOCAL = `ec-notif-seen-${user.uid}`;
-    let seen = 0;
     try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists()) return; // akun tidak aktif: tanpa lonceng
-        seen = ms(snap.data().notifSeenAt);
     } catch { return; }
-    try { seen = Math.max(seen, Number(localStorage.getItem(LOCAL)) || 0); } catch { /* abaikan */ }
 
-    const res = await window.loadQuestionPacks();
+    const [res, played] = await Promise.all([window.loadQuestionPacks(), playedPackIds(db, user.uid)]);
     if (res.status !== "ok") return;
     const since = Date.now() - DAYS * 86400000;
+    // Yang belum dimainkan di atas, lalu yang paling baru
     const list = res.packs
         .filter((p) => PACK_GAMES[p.type] && releasedAt(p) >= since)
-        .sort((a, b) => releasedAt(b) - releasedAt(a))
+        .sort((a, b) => played.has(a.id) - played.has(b.id) || releasedAt(b) - releasedAt(a))
         .slice(0, MAX_ITEMS);
 
     const style = document.createElement("style");
@@ -127,29 +138,14 @@ async function start(user) {
     const count = root.querySelector(".ec-count");
     const panel = root.querySelector(".ec-panel");
 
-    let shownSeen = seen; // batas "baru" selama panel ini dibuka
-    const unread = () => list.filter((p) => releasedAt(p) > seen).length;
-    function renderCount() {
-        const n = unread();
-        count.hidden = n === 0;
-        count.textContent = n > 9 ? "9+" : String(n);
-        bell.setAttribute("aria-label", n ? `Notifikasi, ${n} paket baru` : "Notifikasi");
-    }
-
-    function markSeen() {
-        if (!unread()) return;
-        shownSeen = seen;
-        seen = Date.now();
-        try { localStorage.setItem(LOCAL, String(seen)); } catch { /* abaikan */ }
-        updateDoc(doc(db, "users", user.uid), { notifSeenAt: serverTimestamp() })
-            .catch((e) => console.warn("Gagal menyimpan status notifikasi:", e));
-        renderCount();
-    }
+    const unread = list.filter((p) => !played.has(p.id)).length;
+    count.hidden = unread === 0;
+    count.textContent = unread > 9 ? "9+" : String(unread);
+    bell.setAttribute("aria-label", unread ? `Notifikasi, ${unread} paket baru belum dimainkan` : "Notifikasi");
 
     function open() {
-        markSeen();
         panel.innerHTML = `<h3>Paket soal baru</h3>` + (list.length
-            ? list.map((p) => itemHtml(p, releasedAt(p) > shownSeen)).join("")
+            ? list.map((p) => itemHtml(p, played.has(p.id))).join("")
             : '<div class="ec-empty">Belum ada paket baru.</div>');
         panel.hidden = false;
         // Di HP panel selebar layar, tepat di bawah lonceng
@@ -166,7 +162,6 @@ async function start(user) {
     document.addEventListener("click", (e) => { if (!panel.hidden && !root.contains(e.target)) close(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
 
-    renderCount();
 }
 
 if (root) {

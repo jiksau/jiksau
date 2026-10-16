@@ -65,15 +65,12 @@ service cloud.firestore {
             && isValidLevel(request.resource.data.level)
             && isActiveCodeFor(request.resource.data.classCode, request.resource.data.level));
 
-      // Siswa hanya boleh memperbarui waktu masuk terakhir dan waktu
-      // terakhir membuka notifikasi (notifSeenAt, harus waktu sekarang).
+      // Siswa hanya boleh memperbarui waktu masuk terakhir.
       // Nama, jenjang, dan peran hanya bisa diubah admin.
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['lastLoginAt', 'notifSeenAt'])
-            && (!('notifSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
-                || request.resource.data.notifSeenAt == request.time));
+                 .hasOnly(['lastLoginAt']));
 
       allow delete: if isAdmin();
     }
