@@ -375,6 +375,8 @@ body {
 .pack-list.scroll { max-height: 360px; overflow-y: auto; padding: 2px; margin: -2px; }
 .pack-item .info { min-width: 0; }
 .pack-item .t { display: block; overflow-wrap: anywhere; }
+/* Titik merah: paket belum pernah dimainkan */
+.new-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 999px; background: #dc2626; vertical-align: 2px; }
 .pack-count { margin-top: 8px; color: var(--muted); font-size: 0.8rem; }
 
 /* Tag paket */

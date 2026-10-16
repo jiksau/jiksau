@@ -19,6 +19,11 @@
 //         // hasil.status: "ok" | "login" | "inactive" | "error"
 //         // hasil.packs: [{ id, title, type, level, items, itemCount }]
 //
+//    4. Paket yang pernah dimainkan siswa (game apa pun):
+//         const played = await window.loadPlayedPackIds(); // Set berisi packId
+//       Setelah skor berpaket tersimpan, halaman menerima event
+//       "ec-pack-played" (event.detail.packId).
+//
 //  Skor disimpan ke koleksi "gameScores" jika siswa sedang login.
 //  Jika belum login, muncul pemberitahuan kecil dan skor tidak disimpan.
 // =====================================================================
@@ -132,6 +137,10 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
 
     try {
         await addDoc(collection(db, "gameScores"), data);
+        if (packId) {
+            playedCache?.then((set) => set.add(data.packId));
+            window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId } }));
+        }
         showToast(packId
             ? `Skor ${correct}/${total} tersimpan.`
             : `Skor ${correct}/${total} tersimpan (latihan, tanpa poin).`);
@@ -141,6 +150,26 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
             ? "Skor gagal disimpan: paket ini sudah tidak aktif."
             : "Skor gagal disimpan. Coba lagi nanti.", true);
     }
+};
+
+// Paket yang pernah dimainkan siswa ini (skor dengan packId, game apa pun).
+// Dimuat sekali per halaman. Jika gagal: Set kosong.
+let playedCache = null;
+window.loadPlayedPackIds = function () {
+    if (!playedCache) {
+        playedCache = (async () => {
+            await authReady;
+            if (!currentUser || !hasProfile) return new Set();
+            try {
+                const snap = await getDocs(query(collection(db, "gameScores"), where("userId", "==", currentUser.uid)));
+                return new Set(snap.docs.map((d) => d.data().packId).filter(Boolean));
+            } catch (e) {
+                console.warn("Gagal memuat riwayat main:", e);
+                return new Set();
+            }
+        })();
+    }
+    return playedCache;
 };
 
 // Paket soal aktif untuk jenjang siswa + paket "Semua jenjang".

@@ -13,10 +13,10 @@
 //  Membuka lonceng tidak menghapus angka; memainkan paketnya yang menghapus.
 // =====================================================================
 
-import "./game-scores.js"; // window.loadQuestionPacks
+import "./game-scores.js"; // window.loadQuestionPacks & loadPlayedPackIds
 import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { escapeHtml, packTags, PACK_GAMES, PACK_ALL_LEVELS } from "./ec-common.js";
 
 const DAYS = 30;
@@ -99,17 +99,6 @@ function itemHtml(p, played) {
     </div>`;
 }
 
-// Paket yang pernah dimainkan siswa ini (skor dengan packId, game apa pun)
-async function playedPackIds(db, uid) {
-    try {
-        const snap = await getDocs(query(collection(db, "gameScores"), where("userId", "==", uid)));
-        return new Set(snap.docs.map((d) => d.data().packId).filter(Boolean));
-    } catch (e) {
-        console.warn("Gagal memuat riwayat main:", e);
-        return new Set();
-    }
-}
-
 async function start(user) {
     const db = getFirestore(getApp());
     try {
@@ -117,7 +106,7 @@ async function start(user) {
         if (!snap.exists()) return; // akun tidak aktif: tanpa lonceng
     } catch { return; }
 
-    const [res, played] = await Promise.all([window.loadQuestionPacks(), playedPackIds(db, user.uid)]);
+    const [res, played] = await Promise.all([window.loadQuestionPacks(), window.loadPlayedPackIds()]);
     if (res.status !== "ok") return;
     const since = Date.now() - DAYS * 86400000;
     // Yang belum dimainkan di atas, lalu yang paling baru

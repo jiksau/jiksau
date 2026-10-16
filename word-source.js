@@ -115,6 +115,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         search: "",
         scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"
         tier: "all",
+        played: null,   // Set packId yang pernah dimainkan (game apa pun)
         own: Array.isArray(saved.own) ? saved.own.filter(isComplete).slice(0, maxOwn) : [],
     };
 
@@ -211,7 +212,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         } else {
             box.innerHTML = list.map((p) => `
                 <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
-                    <span class="info"><span class="t">${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}</span></span>
+                    <span class="info"><span class="t">${state.played && !state.played.has(p.id) ? '<span class="new-dot" title="Belum pernah dimainkan"></span>' : ""}${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}</span></span>
                     <span class="n">${p.itemCount} ${unit}</span>
                 </button>`).join("");
         }
@@ -333,6 +334,13 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
 
     renderRows();
     render();
+
+    // Titik merah: paket yang belum pernah dimainkan di game mana pun
+    window.loadPlayedPackIds().then((set) => { state.played = set; if (state.mode === "pack") renderPacks(); });
+    window.addEventListener("ec-pack-played", (e) => {
+        state.played?.add(e.detail.packId);
+        if (state.mode === "pack") renderPacks();
+    });
 
     window.loadQuestionPacks(type).then((res) => {
         state.packStatus = res.status;

@@ -27,7 +27,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
 | `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
 | `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb" / "kalimat", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal (`directions: null` = tanpa pilihan arah), acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
-| `game-scores.js` | Modul simpan skor + muat paket soal (lihat di bawah) |
+| `game-scores.js` | Modul simpan skor + muat paket soal + `loadPlayedPackIds()` (Set paket yang pernah dimainkan siswa, game apa pun; dipakai lonceng & titik merah di daftar paket; event `ec-pack-played` setelah skor berpaket tersimpan) |
 | `notifications.js` | Lonceng notifikasi paket baru (di `user-dashboard.html` & `gamelist.html`, wadah `<span id="notif">`; atribut `data-light` untuk latar terang). Paket aktif jenjang siswa + Semua jenjang yang dirilis ≤ 30 hari, maks. 20. Angka merah = paket baru yang belum pernah dimainkan siswa (belum ada `gameScores` miliknya dengan `packId` itu, game apa pun); membuka lonceng tidak menghapus angka. Tombol game memakai `?paket=<id>` sehingga paket langsung terpilih (`word-source.js`). Daftar game per jenis paket: `PACK_GAMES` di `ec-common.js` (tambahkan di sini setiap ada game baru) |
 
 ## Game yang ada
@@ -61,6 +61,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Tata letak: PC dua kolom (kiri pilih soal; kanan pratinjau + pengaturan + Mulai), HP satu kolom. Kelas `app wide`, `setup-grid`, `side`, `narrow` di `game-ui.css`.
 - Kotak cari & filter muncul otomatis jika paket ≥ 6 atau ada lebih dari satu jenjang/level.
 - Batas waktu: saran = jumlah soal × detik per soal (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15, Kata Kerja 20, Susun Kalimat 25, Cocokkan Pasangan 6), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
+- Titik merah di depan judul paket = paket belum pernah dimainkan siswa di game mana pun; hilang setelah skor paket itu tersimpan.
 - Pilihan siswa (paket, kata sendiri, pengaturan) diingat di browser (`localStorage`, kunci `ec-k2`, `ec-k2-settings`, dst.).
 
 ## Cara menyambungkan game ke skor & papan peringkat
