@@ -8,7 +8,7 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 
 | Data | Isi | Siswa | Admin | Belum login |
 |---|---|---|---|---|
-| Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
+| Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif; hanya bisa mengubah waktu masuk terakhir & waktu terakhir membuka notifikasi | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
 | Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, aktif/nonaktif | Membaca paket yang aktif | Semua | Tidak bisa |
 | Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
@@ -63,6 +63,15 @@ Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana ya
 - [ ] Nonaktifkan paket di admin → paket hilang dari game siswa
 
 Jika game menampilkan "Paket soal gagal dimuat", kemungkinan aturan terbaru belum dipasang.
+
+## Uji notifikasi paket baru (setelah memasang aturan terbaru)
+
+- [ ] Admin membuat paket baru → siswa jenjang itu melihat angka merah di lonceng (dashboard & daftar game)
+- [ ] Siswa membuka lonceng → angka hilang; tombol game membuka game dengan paket itu sudah terpilih
+- [ ] Muat ulang halaman / masuk dari HP lain → angka tidak muncul lagi
+- [ ] Nonaktifkan lalu aktifkan lagi paket di admin → siswa mendapat notifikasi lagi
+
+Jika angka merah muncul lagi di HP lain setelah dibuka, kemungkinan aturan terbaru belum dipasang.
 
 ## Papan peringkat
 

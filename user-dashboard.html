@@ -347,7 +347,8 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="position:relative">
+        <span id="notif" data-light style="position:absolute;top:1rem;right:1rem"></span>
         <header class="mb-8 flex justify-between items-center">
             <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>!</h1>
             <div class="header-buttons">
@@ -382,14 +383,15 @@
     <footer>
         <p>© ExtraCourse · Teman Belajar</p>
     </footer>
+    <script type="module" src="notifications.js"></script>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
 
-        const app = initializeApp(firebaseConfig);
+        const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);

@@ -103,6 +103,9 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         && (type !== "kalimat" || isValidSentence(w.text));
     const KEY = `ec-${gameKey}`;
     const saved = store.get(KEY) || {};
+    // Dari notifikasi: game.html?paket=<id> langsung memilih paket itu
+    const linkedPack = new URLSearchParams(location.search).get("paket");
+    if (linkedPack) { saved.mode = "pack"; saved.packId = linkedPack; }
     const state = {
         mode: saved.mode === "own" ? "own" : "pack",
         packStatus: "loading",

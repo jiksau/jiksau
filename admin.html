@@ -847,8 +847,8 @@
                     await updateDoc(doc(db, 'questionPacks', editingPackId), data);
                     setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).`, true);
                 } else {
-                    await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp() });
-                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal, ${packLevelLabel(level)} · Level ${tier}).`, true);
+                    await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp(), publishedAt: serverTimestamp() });
+                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal, ${packLevelLabel(level)} · Level ${tier}). Siswa mendapat notifikasi.`, true);
                 }
                 resetPackForm();
             } catch (err) {
@@ -908,7 +908,10 @@
                     setMsg('packMsg', '', true);
                     $('packFormCard').scrollIntoView({ behavior: 'smooth' });
                 } else if (togglePack) {
-                    await updateDoc(doc(db, 'questionPacks', p.id), { active: !p.active, updatedAt: serverTimestamp() });
+                    // Mengaktifkan lagi = dirilis ulang, siswa mendapat notifikasi
+                    await updateDoc(doc(db, 'questionPacks', p.id), p.active
+                        ? { active: false, updatedAt: serverTimestamp() }
+                        : { active: true, updatedAt: serverTimestamp(), publishedAt: serverTimestamp() });
                 } else if (deletePack) {
                     if (!confirm(`Hapus paket "${p.title}"?\n\nSkor yang sudah tersimpan tetap ada. Jika hanya ingin menyembunyikan sementara, pilih Nonaktifkan.`)) return;
                     await deleteDoc(doc(db, 'questionPacks', p.id));

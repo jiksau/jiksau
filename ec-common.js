@@ -135,24 +135,38 @@ export function packTags(pack) {
     return tags;
 }
 
+// Game yang bisa memakai tiap jenis paket (untuk admin & notifikasi siswa).
+// href boleh ditambah ?paket=<id> agar paket langsung terpilih.
+export const PACK_GAMES = {
+    kosakata: [
+        { name: "Kuis Kosakata", href: "kosakata%202.html" },
+        { name: "Kartu Hafalan", href: "kosakata%203.html" },
+        { name: "Hafalan Tanpa Salah", href: "kosakata%205.html" },
+        { name: "Cocokkan Pasangan", href: "cocokkan.html" },
+    ],
+    verb: [{ name: "Kata Kerja V1-V2-V3", href: "kosakata%204.html" }],
+    kalimat: [{ name: "Susun Kalimat", href: "scramble.html" }],
+};
+const gameNames = (type) => PACK_GAMES[type].map((g) => g.name).join(", ");
+
 export const PACK_TYPES = [
     {
         value: "kosakata", label: "Kosakata (kata = arti)",
         hint: "Satu pasang per baris: kata = arti. Jika ada beberapa jawaban benar, pisahkan dengan / (contoh: big = besar / luas).",
         example: "apple = apel\nbook = buku\nbig = besar / luas",
-        games: "Kuis Kosakata, Kartu Hafalan, Hafalan Tanpa Salah",
+        games: gameNames("kosakata"),
     },
     {
         value: "verb", label: "Kata kerja (V1, V2, V3 = arti)",
         hint: "Satu kata kerja per baris: V1, V2, V3 = arti. Jika ada dua bentuk benar, pisahkan dengan / (contoh: learn, learnt / learned, learnt / learned = belajar).",
         example: "eat, ate, eaten = makan\ngo, went, gone = pergi\nlearn, learnt / learned, learnt / learned = belajar",
-        games: "Kata Kerja V1-V2-V3",
+        games: gameNames("verb"),
     },
     {
         value: "kalimat", label: "Kalimat (untuk susun kalimat)",
         hint: "Satu kalimat per baris, 2–20 kata.",
         example: "I go to school every day.\nShe is reading a book.",
-        games: "",
+        games: gameNames("kalimat"),
     },
 ];
 
