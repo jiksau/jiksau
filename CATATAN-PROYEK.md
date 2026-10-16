@@ -97,6 +97,9 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Halaman siswa utama (`user-dashboard.html`, `gamelist.html`, `leaderboard.html`) memakai navigasi bawah `nav.tabs` (Beranda / Game / Peringkat) + `body.has-tabs`. Halaman game tidak memakai navigasi bawah.
 - Komponen: `.card`, `.sec` (judul bagian), `.list` + `.item` (baris bisa diketuk, panah kanan), `.stats` + `.stat`, `.btn` (`.secondary`, `.ghost`, `.danger`, `.block`), `.input`, `.search`, `.empty`.
 - Ikon: SVG garis (`class="ico"`), tanpa emoji kecuali medali peringkat. Poster peringkat tetap hijau di mode gelap.
+- Nama merek: **ExtraCourse** (tanpa spasi); halaman masuk memakai "Special ExtraCourse". Slogan "Teman Belajar" tidak dipakai lagi.
+- Beranda: kartu peringkat (#rank besar, poin, kapsul "Semua jenjang x/y" & jenjang), nilai terbaik maks. 3 game, latihan terakhir maks. 5.
+- Peringkat: kartu minggu (tanggal, sisa waktu, 7 kotak hari, aturan poin di balik tombol "i"), kartu posisi dengan bilah "x poin lagi menyalip NAMA", nama siswa KAPITAL, jenjang di bawah nama (podium & daftar 4-10). Poster: "Top 10 Minggu Ini" / "Juara Minggu Ini", jenjang di depan nama untuk peringkat 4-10.
 
 ## Preferensi pemilik
 

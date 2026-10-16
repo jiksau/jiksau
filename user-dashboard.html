@@ -13,17 +13,21 @@
 
         /* Peringkat minggu ini */
         .week-rank {
-            display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
-            padding: 14px 14px 14px 16px; border-radius: var(--radius); text-decoration: none;
-            background: var(--accent-soft); color: var(--accent);
+            display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
+            padding: 16px 14px 16px 18px; border-radius: var(--radius); text-decoration: none;
+            background: var(--accent-soft); color: var(--text);
         }
         .week-rank:active { transform: scale(0.99); }
-        .week-rank .big { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
-        .week-rank .txt { grid-column: auto; min-width: 0; }
+        .week-rank .big { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .week-rank .txt { min-width: 0; }
         .week-rank .txt:first-child { grid-column: 1 / 3; }
-        .week-rank b { display: block; font-size: 15px; }
-        .week-rank small { display: block; font-size: 13px; color: var(--text); opacity: 0.75; margin-top: 2px; line-height: 1.45; }
-        .week-rank .go { opacity: 0.9; display: grid; }
+        .week-rank .kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .week-rank .pts { display: block; font-size: 19px; line-height: 1.3; color: var(--accent); }
+        .week-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: 99px; background: var(--surface); font-size: 12px; color: var(--muted); font-weight: 600; }
+        .pill b { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+        .week-rank .go { color: var(--accent); display: grid; }
 
         /* Nilai terbaik & riwayat */
         .rows { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -68,7 +72,7 @@
 
         <div id="gameStats" class="stats"></div>
 
-        <div class="sec" id="bestSec" hidden>Nilai terbaik per game</div>
+        <div class="sec" id="bestSec" hidden>Nilai terbaik</div>
         <div id="gameBestList" class="rows"></div>
 
         <div class="sec">Latihan terakhir</div>
@@ -197,11 +201,13 @@
                 const g = rankOf(all);
                 const box = $('weekRank');
                 if (g.mine > 0) {
-                    const l = rankOf(same);
-                    const levelLine = level ? `<br>#${l.rank} dari ${l.total} siswa ${escapeHtml(levelLabel(level))}` : '';
-                    box.innerHTML = `<div class="big">#${g.rank}</div><div class="txt"><b>Peringkatmu minggu ini · ${g.mine} poin</b><small>#${g.rank} dari ${g.total} siswa (semua jenjang)${levelLine}</small></div><span class="go">${CHEV}</span>`;
+                    const pill = (label, r) => `<span class="pill"><span>${label}</span><b>${r.rank}/${r.total}</b></span>`;
+                    box.innerHTML = `<div class="big">#${g.rank}</div>
+                        <div class="txt"><small class="kicker">Peringkat minggu ini</small><b class="pts">${g.mine} poin</b>
+                        <div class="pills">${pill('Semua jenjang', g)}${level ? pill(escapeHtml(levelLabel(level)), rankOf(same)) : ''}</div></div>
+                        <span class="go">${CHEV}</span>`;
                 } else {
-                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><small>Mainkan paket soal dari guru: 1 jawaban benar = 1 poin.</small></div><span class="go">${CHEV}</span>`;
+                    box.innerHTML = `<div class="txt"><small class="kicker">Peringkat minggu ini</small><b class="pts">Belum ada poin</b><small class="hint">Mainkan paket soal dari guru untuk masuk peringkat.</small></div><span class="go">${CHEV}</span>`;
                 }
                 box.hidden = false;
             } catch (e) {
@@ -260,10 +266,11 @@
                     if (!best[i.gameId] || i.percent > best[i.gameId].percent) best[i.gameId] = i;
                 });
                 $('bestSec').hidden = false;
-                bestEl.innerHTML = Object.values(best).map((b) => `
+                // Hanya 3 game dengan nilai terbaik agar beranda tetap ringkas
+                bestEl.innerHTML = Object.values(best).sort((a, b) => b.percent - a.percent).slice(0, 3).map((b) => `
                     <div class="row"><span class="nm">${escapeHtml(b.gameName)}</span><span class="pct ${scoreColor(b.percent)}">${b.percent}%</span></div>`).join('');
 
-                historyEl.innerHTML = items.slice(0, 15).map((i) => {
+                historyEl.innerHTML = items.slice(0, 5).map((i) => {
                     const when = i.timestamp ? i.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Baru saja';
                     return `
                         <div class="hist">

@@ -21,19 +21,43 @@
         .seg[hidden] { display: none; }
         #levelSelect { flex: 1 1 200px; height: 46px; padding: 0 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); background: var(--surface); font-weight: 600; }
         .lb-tag { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
-        .meta { color: var(--muted); font-size: 13px; margin: -4px 2px 0; line-height: 1.5; }
+        /* Kartu minggu */
+        .week { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 14px 12px 16px; }
+        .wk-top { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; }
+        .wk-col small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .wk-col b { display: block; font-size: 15.5px; font-variant-numeric: tabular-nums; }
+        .wk-col.right { text-align: right; }
+        .wk-col.right b { color: var(--accent); }
+        .info { width: 32px; height: 32px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); display: grid; place-items: center; cursor: pointer; padding: 0; }
+        .info .ico { width: 17px; height: 17px; }
+        .info.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+        .wk-bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+        .wk-bar .day { display: grid; gap: 4px; justify-items: center; }
+        .wk-bar .wseg { display: block; width: 100%; height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+        .wk-bar .wseg i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+        .wk-bar .dn { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+        .wk-bar .today .dn { color: var(--accent); font-weight: 700; }
+        .rule { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--soft); font-size: 13.5px; line-height: 1.5; animation: drop .18s ease-out; }
+        @keyframes drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
         /* Peringkatku */
-        .my-rank {
-            border-radius: var(--radius); padding: 14px 16px;
-            background: var(--accent-soft); color: var(--text);
-            display: flex; align-items: center; gap: 14px;
-        }
-        .my-rank .big { font-size: 30px; font-weight: 700; line-height: 1; min-width: 52px; text-align: center; color: var(--accent); letter-spacing: -0.5px; }
-        .my-rank .txt { font-size: 13.5px; line-height: 1.5; }
-        .my-rank .txt b { font-size: 15px; color: var(--accent); }
-        .my-rank a { color: var(--accent); font-weight: 700; }
-        .my-rank.empty { display: block; background: var(--soft); }
+        .my-rank { border-radius: var(--radius); padding: 16px 16px 14px 18px; background: var(--accent-soft); color: var(--text); }
+        .my-rank .head { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+        .my-rank .big { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .my-rank .kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .my-rank .pts { display: block; font-size: 19px; line-height: 1.3; color: var(--accent); }
+        .my-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .my-rank.empty { background: var(--surface); border: 1px solid var(--line); }
+        .my-rank.empty .pts { color: var(--text); }
+        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .pill { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 99px; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--muted); }
+        .chase { margin-top: 14px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); font-size: 13.5px; }
+        .chase.done { color: var(--accent); font-weight: 600; }
+        .chase-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+        .chase-top b { color: var(--accent); }
+        .chase .num { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .cbar { height: 8px; border-radius: 99px; background: var(--surface); margin-top: 8px; overflow: hidden; }
+        .cbar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
         #myRank:empty { display: none; }
 
         /* Podium */
@@ -42,6 +66,8 @@
         .pod { text-align: center; min-width: 0; }
         .pod .medal { font-size: 28px; line-height: 1; }
         .pod .name { font-weight: 700; font-size: 14.5px; margin: 6px 0 2px; overflow-wrap: anywhere; }
+        .pod .lv { margin: 2px 0 2px; }
+        .pod .lv .lb-tag { margin: 0; }
         .pod .pts { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
         .pod .block { border-radius: 12px 12px 0 0; color: #fff; font-weight: 700; font-size: 22px; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
         .pod.p1 .block { height: 92px; }
@@ -50,7 +76,8 @@
         .pod .block.r1 { background: linear-gradient(180deg, #f2c94c, #d9a21b); }
         .pod .block.r2 { background: linear-gradient(180deg, #c9d2cd, #9aa6a0); }
         .pod .block.r3 { background: linear-gradient(180deg, #e3a67a, #c0763f); }
-        .pod.me .name::after { content: " (kamu)"; color: var(--accent); font-weight: 600; font-size: 12px; }
+        .pod .name { letter-spacing: .02em; }
+        .pod.me .name::after { content: " (kamu)"; color: var(--accent); font-weight: 600; font-size: 11px; letter-spacing: 0; }
         .pod.blank { visibility: hidden; }
 
         /* Daftar */
@@ -59,7 +86,8 @@
         #list .row:first-child { border-top: 0; }
         #list:empty { display: none; }
         #list .rank { font-weight: 700; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
-        #list .who { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+        #list .who { font-weight: 700; overflow-wrap: anywhere; min-width: 0; letter-spacing: .02em; }
+        #list .who em { font-style: normal; font-weight: 600; font-size: 12px; color: var(--accent); letter-spacing: 0; }
         #list .who small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
         #list .pts { font-weight: 700; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
         #list .row.me { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
@@ -94,9 +122,12 @@
             font-family: "Plus Jakarta Sans", system-ui, sans-serif;
             overflow: hidden;
         }
-        .poster .brand { flex: none; font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; opacity: .85; line-height: 1.4; }
-        .poster .title { font-size: 34px; font-weight: 800; line-height: 1.1; margin: 6px 0 4px; }
-        .poster .sub { font-size: 15px; font-weight: 500; opacity: .92; }
+        .poster .ptop { display: flex; justify-content: space-between; align-items: center; font-size: 13px; line-height: 1.4; }
+        .poster .ptop .brand { flex: none; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; opacity: .9; }
+        .poster .ptop .date { font-weight: 600; opacity: .85; }
+        .poster .kicker { margin-top: 18px; font-size: 13px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #f6d36b; }
+        .poster .title { font-size: 44px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; margin: 4px 0 10px; }
+        .poster .sub { font-size: 15px; font-weight: 500; opacity: .95; }
         .poster .sub b { background: rgba(255,255,255,.2); padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
         .poster .ppodium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; margin: 22px 0 14px; }
         .poster .ppod { text-align: center; min-width: 0; }
@@ -117,10 +148,11 @@
         .poster .prow .r { font-weight: 800; opacity: .85; }
         .poster .prow .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
         .poster .prow .p { font-weight: 700; }
-        .poster .prow .lv { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.2); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+        .poster .prow .lv { display: inline-block; min-width: 40px; text-align: center; font-size: 11px; font-weight: 700; background: rgba(255,255,255,.2); border-radius: 999px; padding: 1px 8px; margin-right: 8px; vertical-align: 1px; }
+        .poster .prow .n, .poster .ppod .n { letter-spacing: .03em; }
         .poster .ppod .lv { font-size: 11px; font-weight: 700; opacity: .9; }
         .poster .pempty { margin: auto; text-align: center; font-size: 16px; opacity: .9; }
-        .poster .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; opacity: .9; }
+        .poster .foot { display: flex; justify-content: center; align-items: center; margin-top: 14px; font-size: 12px; opacity: .95; }
         .poster .foot b { font-size: 14px; }
     </style>
 </head>
@@ -146,7 +178,15 @@
             </div>
             <select id="levelSelect" hidden aria-label="Pilih papan peringkat"></select>
         </div>
-        <p class="meta" id="meta">Memuat...</p>
+        <div class="week">
+            <div class="wk-top">
+                <div class="wk-col"><small id="weekLbl">Minggu ini</small><b id="weekRange">-</b></div>
+                <div class="wk-col right"><small id="leftLbl">Reset dalam</small><b id="weekLeft">-</b></div>
+                <button type="button" class="info" id="ruleBtn" aria-label="Cara menghitung poin" aria-expanded="false"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+            </div>
+            <div class="wk-bar" id="weekBar"></div>
+            <div class="rule" id="rule" hidden>1 jawaban benar = 1 poin, hanya dari paket soal guru. Jika satu paket dimainkan berkali-kali, yang dihitung hasil terbaiknya.</div>
+        </div>
 
         <div id="myRank"></div>
         <div id="podium" class="podium"></div>
@@ -293,20 +333,42 @@
             }
         }
 
+        // Kartu minggu: tanggal, sisa waktu, dan 7 kotak hari (Senin-Minggu)
         function renderMeta(key) {
-            const parts = [weekRangeLabel(key)];
-            if (state.week === 'this') {
-                const ms = weekEndMs(key) - Date.now();
+            const isThis = state.week === 'this';
+            const end = weekEndMs(key);
+            const start = end - 7 * 864e5;
+            $('weekLbl').textContent = isThis ? 'Minggu ini' : 'Minggu lalu';
+            $('weekRange').textContent = weekRangeLabel(key);
+            let done = 7, part = 0;
+            if (isThis) {
+                const ms = Math.max(0, end - Date.now());
                 const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5), m = Math.floor((ms % 36e5) / 6e4);
-                parts.push(`reset dalam ${d > 0 ? `${d} hari ${h} jam` : `${h} jam ${m} menit`}`);
+                $('leftLbl').textContent = 'Reset dalam';
+                $('weekLeft').textContent = d > 0 ? `${d} hari ${h} jam` : `${h} jam ${m} menit`;
+                const elapsed = Math.min(7, Math.max(0, (Date.now() - start) / 864e5));
+                done = Math.floor(elapsed);
+                part = elapsed - done;
             } else {
-                parts.push('hasil akhir');
+                $('leftLbl').textContent = 'Status';
+                $('weekLeft').textContent = 'Selesai';
             }
-            parts.push('1 jawaban benar = 1 poin, dari paket soal guru (hasil terbaik per paket)');
-            $('meta').textContent = parts.join(' · ');
+            const days = ['S', 'S', 'R', 'K', 'J', 'S', 'M'];
+            $('weekBar').innerHTML = days.map((dn, i) => {
+                const fill = i < done ? 100 : i === done ? Math.round(part * 100) : 0;
+                return `<div class="day${i === done && isThis ? ' today' : ''}"><span class="wseg"><i style="width:${fill}%"></i></span><span class="dn">${dn}</span></div>`;
+            }).join('');
         }
+        $('ruleBtn').addEventListener('click', () => {
+            const open = $('rule').hidden;
+            $('rule').hidden = !open;
+            $('ruleBtn').classList.toggle('on', open);
+            $('ruleBtn').setAttribute('aria-expanded', String(open));
+        });
 
         // ---------- Tampilan ----------
+        // Nama di papan peringkat & poster: kapital semua agar seragam
+        const NAME = (r) => shortName(r.name).toUpperCase();
         const medal = (rank) => ({ 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '');
 
         function render() {
@@ -317,17 +379,27 @@
             // Kartu posisi saya (khusus siswa)
             if (!state.isAdmin) {
                 if (!me) {
-                    $('myRank').innerHTML = `<div class="my-rank empty"><div class="txt">${isThis
-                        ? '<b>Kamu belum punya poin minggu ini.</b><br>Mainkan paket soal dari guru untuk masuk papan peringkat. <a href="gamelist.html">Main sekarang →</a>'
-                        : '<b>Kamu tidak bermain minggu lalu.</b><br>Ayo kejar peringkat di minggu ini.'}</div></div>`;
+                    $('myRank').innerHTML = `<div class="my-rank empty"><div class="txt"><small class="kicker">Peringkatmu</small>${isThis
+                        ? '<b class="pts">Belum ada poin</b><span class="hint">Mainkan paket soal dari guru untuk masuk papan peringkat.</span><a class="btn block" href="gamelist.html" style="margin-top:12px">Main sekarang</a>'
+                        : '<b class="pts">Tidak bermain</b><span class="hint">Ayo kejar peringkat di minggu ini.</span>'}</div></div>`;
                 } else {
-                    let tip;
+                    // Target: orang tepat di atasku (atau masuk 10 besar)
                     const above = list.filter((r) => r.points > me.points).pop();
-                    if (!isThis) tip = me.rank === 1 ? 'Kamu juara minggu lalu. Selamat!' : `Peringkat akhirmu minggu lalu.`;
-                    else if (me.rank === 1) tip = list.length > 1 ? 'Kamu juara sementara. Pertahankan!' : 'Kamu satu-satunya yang punya poin. Pertahankan!';
-                    else if (me.rank > TOP_N) tip = `<b>${list[TOP_N - 1].points - me.points + 1} poin lagi</b> untuk masuk 10 besar!`;
-                    else tip = `<b>${above.points - me.points + 1} poin lagi</b> untuk menyalip ${escapeHtml(shortName(above.name))}!`;
-                    $('myRank').innerHTML = `<div class="my-rank"><div class="big">#${me.rank}</div><div class="txt"><b>${me.points} poin</b> · ${me.packs} paket · dari ${list.length} siswa (${state.boardLevel ? `jenjang ${escapeHtml(levelLabel(state.boardLevel))}` : 'semua jenjang'})<br>${tip}</div></div>`;
+                    let chase = '';
+                    if (!isThis) {
+                        chase = `<div class="chase done">${me.rank === 1 ? 'Juara minggu lalu. Selamat!' : 'Peringkat akhir minggu lalu.'}</div>`;
+                    } else if (me.rank === 1) {
+                        chase = `<div class="chase done">${list.length > 1 ? 'Juara sementara. Pertahankan!' : 'Satu-satunya yang punya poin. Pertahankan!'}</div>`;
+                    } else {
+                        const target = me.rank > TOP_N ? list[TOP_N - 1].points + 1 : above.points + 1;
+                        const need = target - me.points;
+                        const label = me.rank > TOP_N ? 'masuk 10 besar' : `menyalip <b>${escapeHtml(shortName(above.name).toUpperCase())}</b>`;
+                        chase = `<div class="chase"><div class="chase-top"><span><b>${need} poin lagi</b> ${label}</span><span class="num">${me.points}/${target}</span></div>
+                            <div class="cbar"><i style="width:${Math.max(4, Math.round((me.points / target) * 100))}%"></i></div></div>`;
+                    }
+                    $('myRank').innerHTML = `<div class="my-rank"><div class="head"><div class="big">#${me.rank}</div>
+                        <div class="txt"><small class="kicker">Peringkatmu</small><b class="pts">${me.points} poin</b>
+                        <div class="pills"><span class="pill">${me.packs} paket</span><span class="pill">dari ${list.length} siswa</span></div></div></div>${chase}</div>`;
                 }
             }
 
@@ -341,13 +413,14 @@
             const top = list.slice(0, 3);
             const showLevel = !state.boardLevel;
             const lvTag = (r) => showLevel && r.level ? `<span class="lb-tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
+            const lvText = (r) => showLevel && r.level ? `${escapeHtml(levelLabel(r.level))} · ` : '';
             const pod = (r, cls) => r
-                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div><div class="name">${escapeHtml(shortName(r.name))}</div><div class="pts">${r.points} poin${lvTag(r)}</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div><div class="name">${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(shortName(r.name))}${r.uid === state.uid ? ' (kamu)' : ''}${lvTag(r)}<small>${r.packs} paket</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${r.packs} paket</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;
@@ -359,16 +432,18 @@
             const isThis = state.week === 'this';
             const top = list.slice(0, 3);
             const p = (r, cls) => r
-                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(shortName(r.name))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(NAME(r))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="ppod ${cls} blank"></div>`;
-            const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${medal(r.rank) || r.rank}</span><span class="n">${escapeHtml(shortName(r.name))}${!state.boardLevel && r.level ? `<span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</span><span class="p">${r.points} poin</span></div>`).join('');
+            // Peringkat 4-10: jenjang di depan nama
+            const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${medal(r.rank) || r.rank}</span><span class="n">${!state.boardLevel && r.level ? `<span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}${escapeHtml(NAME(r))}</span><span class="p">${r.points} poin</span></div>`).join('');
             return `
-                <div class="brand">ExtraCourse · Teman Belajar</div>
-                <div class="title">${isThis ? 'Klasemen Sementara' : 'Juara Mingguan'}</div>
-                <div class="sub"><b>${escapeHtml(boardLabel())}</b>${weekRangeLabel(weekKey())}</div>
+                <div class="ptop"><span class="brand">ExtraCourse</span><span class="date">${weekRangeLabel(weekKey())}</span></div>
+                <div class="kicker">${isThis ? 'Klasemen sementara' : 'Hasil akhir'}</div>
+                <div class="title">${isThis ? 'Top 10 Minggu Ini' : 'Juara Minggu Ini'}</div>
+                <div class="sub"><b>${escapeHtml(boardLabel())}</b></div>
                 ${list.length ? `<div class="ppodium">${p(top[1], 'p2')}${p(top[0], 'p1')}${p(top[2], 'p3')}</div>` : ''}
                 <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar!' : 'Selamat untuk para juara!'}</div>` : '<div class="pempty">Belum ada poin di minggu ini.<br>Siapa yang jadi juara pertama?</div>')}</div>
-                <div class="foot"><span>1 jawaban benar = 1 poin</span><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara!'}</b></div>`;
+                <div class="foot"><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara!'}</b></div>`;
         }
 
         function fitPoster() {
