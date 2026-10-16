@@ -38,6 +38,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `kosakata 4.html` (Kata Kerja V1-V2-V3) | `kosakata-4` | Ya, memakai paket jenis `verb`. Benar jika ketiga bentuk tepat. Arah: Arti → V1,V2,V3 atau V1 → V2,V3 |
 | `kosakata 5.html` (Hafalan Tanpa Salah) | `kosakata-5` | Ya, memakai paket soal (`points` = jumlah salah sebelum tuntas; kata sendiri maks. 10) |
 | `scramble.html` (Susun Kalimat) | `scramble` | Ya, memakai paket jenis `kalimat`. Satu kalimat per layar, siswa mengetuk kotak kata untuk menyusun. Tanda baca akhir (. ? !) tidak diacak. Benar jika urutan sama persis dengan kalimat paket (huruf besar/kecil diabaikan). 3 kesempatan per kalimat (`MAX_TRIES`); benar di kesempatan mana pun = 1 poin; susunan salah yang sama tidak mengurangi kesempatan |
+| `cocokkan.html` (Cocokkan Pasangan) | `cocokkan` | Ya, memakai paket `kosakata`. Kata & arti diacak dalam dua kolom, siswa mengetuk untuk memasangkan. Ronde berisi maks. 6 pasang (`ROUND_SIZE`), dibagi rata; semua kata paket dimainkan. Poin hanya untuk kata yang cocok di percobaan pertama (salah pasang = kata yang diketuk pertama tidak dapat poin). Arti kembar (big/large = besar) dan kata kembar (can = bisa/kaleng) diterima. Tombol Berhenti menyimpan hasil sejauh itu |
 | `question.html` | – | Tidak (pengacak pertanyaan) |
 
 Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
@@ -58,7 +59,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 - Tata letak: PC dua kolom (kiri pilih soal; kanan pratinjau + pengaturan + Mulai), HP satu kolom. Kelas `app wide`, `setup-grid`, `side`, `narrow` di `game-ui.css`.
 - Kotak cari & filter muncul otomatis jika paket ≥ 6 atau ada lebih dari satu jenjang/level.
-- Batas waktu: saran = jumlah soal × detik per soal (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15, Kata Kerja 20, Susun Kalimat 25), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
+- Batas waktu: saran = jumlah soal × detik per soal (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15, Kata Kerja 20, Susun Kalimat 25, Cocokkan Pasangan 6), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
 - Pilihan siswa (paket, kata sendiri, pengaturan) diingat di browser (`localStorage`, kunci `ec-k2`, `ec-k2-settings`, dst.).
 
 ## Cara menyambungkan game ke skor & papan peringkat
@@ -104,4 +105,4 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 1. ~~Bank soal + paket resmi~~ (selesai untuk semua game berpoin, termasuk Susun Kalimat).
 2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Kartu Arti (`kosakatapart2.html`) dan Chat (`chat real 1.html`) dihapus karena kurang menarik. Pertanyaan Acak belum memakai gaya baru.
-3. Game baru dari paket soal: Pilihan Ganda Cepat, Tantangan Harian, Dengarkan & Tulis, Cocokkan Pasangan.
+3. Game baru dari paket soal: ~~Cocokkan Pasangan~~ (selesai). Berikutnya: Pilihan Ganda Cepat, Dengarkan & Tulis, Tantangan Harian.

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocokkan Pasangan - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner wide">
+            <a href="gamelist.html">← Game</a>
+            <h1>Cocokkan Pasangan</h1>
+        </div>
+    </header>
+
+    <main class="app wide">
+        <!-- ===== Persiapan ===== -->
+        <section id="setup" class="setup-grid">
+            <div class="card">
+                <h2>Pilih soal</h2>
+                <div id="source"></div>
+            </div>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <p class="note" style="margin-top:12px">Kata yang pernah salah dipasangkan tidak mendapat poin.</p>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Bermain ===== -->
+        <section id="play" class="card narrow" hidden>
+            <div class="play-head">
+                <span class="badge" id="roundBadge">Ronde 1 / 1</span>
+                <span class="badge" id="timer" hidden>00:00</span>
+            </div>
+            <div class="progress"><span id="bar"></span></div>
+            <div class="match-grid">
+                <div class="match-col" id="leftCol"></div>
+                <div class="match-col" id="rightCol"></div>
+            </div>
+            <div class="actions" style="margin-top:16px">
+                <button type="button" class="btn secondary" id="stopBtn">Berhenti</button>
+            </div>
+        </section>
+
+        <!-- ===== Hasil ===== -->
+        <section id="done" class="stack narrow" hidden>
+            <div class="card result">
+                <div class="big" id="doneScore">0/0</div>
+                <p class="sub" id="doneSub"></p>
+                <div class="actions" style="margin-top:16px">
+                    <button type="button" class="btn" id="againBtn">Main lagi</button>
+                    <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
+                </div>
+            </div>
+            <div class="card" id="missedCard">
+                <h2>Perlu diulang</h2>
+                <div id="missedList"></div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { mountWordSource, mountPlaySettings, shuffled, formatClock, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js";
+        import { escapeHtml } from "./ec-common.js";
+
+        const $ = (id) => document.getElementById(id);
+        const ROUND_SIZE = 6;
+
+        let settings = null;
+        const source = mountWordSource($("source"), {
+            gameKey: "match",
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "match", secondsPerWord: 6, timerDefault: true,
+            count: () => source.words().length,
+            directions: null,
+        });
+
+        let words = [];        // [{ q, a, missed, matched }]
+        let rounds = [];       // [[indeks words], ...]
+        let roundIndex = 0;
+        let left = [];         // urutan tampil kolom kiri (indeks words)
+        let right = [];        // urutan tampil kolom kanan
+        let selected = null;   // { side: "q"|"a", w: indeks words }
+        let lastMatch = -1;    // pasangan yang baru cocok (tampil terang sebentar)
+        let busy = false;      // jeda animasi salah
+        let limit = null;      // detik, null = tanpa batas waktu
+        let secondsLeft = 0;
+        let timerId = null;
+        let finished = true;
+
+        function show(section) {
+            ["setup", "play", "done"].forEach((id) => { $(id).hidden = id !== section; });
+            window.scrollTo(0, 0);
+        }
+
+        // Bagi kata ke ronde yang ukurannya rata (mis. 7 kata -> 4 + 3)
+        function splitRounds(n) {
+            const count = Math.ceil(n / ROUND_SIZE);
+            const out = [];
+            let start = 0;
+            for (let r = 0; r < count; r++) {
+                const size = Math.ceil((n - start) / (count - r));
+                out.push(Array.from({ length: size }, (_, i) => start + i));
+                start += size;
+            }
+            return out;
+        }
+
+        function start() {
+            const problem = source.problem();
+            if (problem) { $("setupMsg").textContent = problem; return; }
+            const s = settings.get();
+            const list = source.words();
+            words = (s.shuffle ? shuffled(list) : list).map((w) => ({ ...w, missed: false, matched: false }));
+            rounds = splitRounds(words.length);
+            roundIndex = 0;
+            limit = s.seconds;
+            finished = false;
+            show("play");
+            startTimer();
+            renderRound();
+        }
+
+        function startTimer() {
+            clearInterval(timerId);
+            $("timer").hidden = limit === null;
+            if (limit === null) return;
+            secondsLeft = limit;
+            renderTimer();
+            timerId = setInterval(() => {
+                secondsLeft--;
+                renderTimer();
+                if (secondsLeft <= 0) finish("time");
+            }, 1000);
+        }
+
+        function renderTimer() {
+            $("timer").textContent = formatClock(secondsLeft);
+            $("timer").className = "badge" + (secondsLeft <= 30 ? " bad" : secondsLeft <= 60 ? " warn" : "");
+        }
+
+        function renderRound() {
+            const ids = rounds[roundIndex];
+            left = shuffled(ids);
+            right = shuffled(ids);
+            selected = null;
+            lastMatch = -1;
+            $("roundBadge").textContent = `Ronde ${roundIndex + 1} / ${rounds.length}`;
+            renderTiles();
+        }
+
+        function tileHtml(side, w) {
+            const word = words[w];
+            const isSel = selected?.side === side && selected.w === w;
+            const cls = word.matched ? " matched" + (w === lastMatch ? " flash-ok" : "") : isSel ? " selected" : "";
+            return `<button type="button" class="match-tile${cls}" data-side="${side}" data-w="${w}"${word.matched ? " disabled" : ""}>${escapeHtml(word[side])}</button>`;
+        }
+
+        function renderTiles() {
+            $("leftCol").innerHTML = left.map((w) => tileHtml("q", w)).join("");
+            $("rightCol").innerHTML = right.map((w) => tileHtml("a", w)).join("");
+            const done = words.filter((w) => w.matched).length;
+            $("bar").style.width = `${(done / words.length) * 100}%`;
+        }
+
+        function tileEl(side, w) {
+            return document.querySelector(`.match-tile[data-side="${side}"][data-w="${w}"]`);
+        }
+
+        // Pasangan diterima jika artinya sama (mis. big & large = besar) atau
+        // katanya sama (mis. can = bisa, can = kaleng).
+        // Hasil: indeks kata yang dianggap tuntas, atau -1 jika salah.
+        const same = (x, y) => normalizeAnswer(x) === normalizeAnswer(y);
+        function matchOf(qw, aw) {
+            if (qw === aw) return qw;
+            if (same(words[qw].a, words[aw].a)) {
+                // Tukar kotak arti agar kotak yang diketuk menjadi milik kata ini
+                const i = right.indexOf(qw), j = right.indexOf(aw);
+                [right[i], right[j]] = [right[j], right[i]];
+                return qw;
+            }
+            if (same(words[qw].q, words[aw].q)) {
+                const i = left.indexOf(qw), j = left.indexOf(aw);
+                [left[i], left[j]] = [left[j], left[i]];
+                return aw;
+            }
+            return -1;
+        }
+
+        function pick(side, w) {
+            if (busy || finished || words[w].matched) return;
+            if (!selected || selected.side === side) {
+                // Pilih (atau ganti pilihan di kolom yang sama, atau batalkan)
+                selected = selected?.side === side && selected.w === w ? null : { side, w };
+                renderTiles();
+                return;
+            }
+            const qw = side === "q" ? w : selected.w;
+            const aw = side === "a" ? w : selected.w;
+            const first = selected.w;
+            selected = null;
+            const m = matchOf(qw, aw);
+            if (m >= 0) {
+                words[m].matched = true;
+                lastMatch = m;
+                renderTiles();
+                if (rounds[roundIndex].every((i) => words[i].matched)) {
+                    busy = true;
+                    setTimeout(() => {
+                        busy = false;
+                        if (finished) return;
+                        roundIndex++;
+                        if (roundIndex >= rounds.length) finish("done");
+                        else renderRound();
+                    }, 450);
+                }
+            } else {
+                // Salah: kata yang dipilih pertama tidak mendapat poin
+                words[first].missed = true;
+                lastMatch = -1;
+                renderTiles();
+                const a = tileEl("q", qw), b = tileEl("a", aw);
+                a?.classList.add("flash-bad");
+                b?.classList.add("flash-bad");
+                busy = true;
+                setTimeout(() => {
+                    busy = false;
+                    a?.classList.remove("flash-bad");
+                    b?.classList.remove("flash-bad");
+                }, 500);
+            }
+        }
+
+        function finish(reason) {
+            if (finished) return;
+            finished = true;
+            clearInterval(timerId);
+            const correct = words.filter((w) => w.matched && !w.missed).length;
+            const missed = words.filter((w) => !w.matched || w.missed);
+            $("doneScore").textContent = `${correct}/${words.length}`;
+            $("doneSub").textContent = "benar di percobaan pertama"
+                + (reason === "time" ? " · waktu habis" : reason === "stop" ? " · berhenti" : "");
+            $("missedCard").hidden = missed.length === 0;
+            $("missedList").innerHTML = wordTableHtml(missed, PACK_FIELDS.kosakata);
+            show("done");
+            window.saveGameScore?.({
+                gameId: "cocokkan", gameName: "Cocokkan Pasangan",
+                correct, total: words.length, mode: "pasangan",
+                ...source.scoreInfo(),
+            });
+        }
+
+        document.querySelector(".match-grid").addEventListener("click", (e) => {
+            const t = e.target.closest(".match-tile");
+            if (t) pick(t.dataset.side, Number(t.dataset.w));
+        });
+        $("stopBtn").addEventListener("click", () => finish("stop"));
+        $("startBtn").addEventListener("click", start);
+        $("againBtn").addEventListener("click", start);
+        $("doneBackBtn").addEventListener("click", () => show("setup"));
+    </script>
+</body>
+</html>

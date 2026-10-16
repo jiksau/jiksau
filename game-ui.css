@@ -327,6 +327,31 @@ body {
 .sentence-box .tile { background: var(--surface); }
 .sentence-box.is-ok .tile, .sentence-box.is-bad .tile { border-color: var(--line-strong); color: var(--text); }
 
+/* Cocokkan Pasangan */
+.match-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.match-col { display: grid; gap: 10px; align-content: start; }
+.match-tile {
+    min-height: 56px;
+    padding: 8px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    transition: background 0.15s, border-color 0.15s;
+}
+.match-tile:hover { border-color: #a5b4fc; }
+.match-tile.selected { border: 2px solid var(--accent); padding: 7px 11px; background: var(--accent-soft); color: var(--accent-dark); }
+.match-tile.matched { border-color: transparent; background: var(--ok-soft); color: var(--ok); opacity: 0.45; cursor: default; }
+.match-tile.flash-ok { opacity: 1; }
+.match-tile.flash-bad { border: 2px solid var(--bad); padding: 7px 11px; background: var(--bad-soft); color: var(--bad); animation: shake 0.3s; }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
 /* Hasil akhir */
 .result { text-align: center; }
 .result .big { font-size: 2.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
