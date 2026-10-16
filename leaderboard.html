@@ -77,7 +77,8 @@
         .pod .block.r2 { background: linear-gradient(180deg, #c9d2cd, #9aa6a0); }
         .pod .block.r3 { background: linear-gradient(180deg, #e3a67a, #c0763f); }
         .pod .name { letter-spacing: .02em; }
-        .pod.me .name::after { content: " (kamu)"; color: var(--accent); font-weight: 600; font-size: 11px; letter-spacing: 0; }
+        .pod .you { display: inline-block; margin-top: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 10.5px; font-weight: 700; }
+        .pod .you + .name { margin-top: 3px; }
         .pod.blank { visibility: hidden; }
 
         /* Daftar */
@@ -393,7 +394,7 @@
                     } else {
                         const target = me.rank > TOP_N ? list[TOP_N - 1].points + 1 : above.points + 1;
                         const need = target - me.points;
-                        const label = me.rank > TOP_N ? 'masuk 10 besar' : `menyalip <b>${escapeHtml(shortName(above.name).toUpperCase())}</b>`;
+                        const label = me.rank > TOP_N ? 'untuk masuk 10 besar' : `untuk mengejar <b>${escapeHtml(shortName(above.name).toUpperCase())}</b>`;
                         chase = `<div class="chase"><div class="chase-top"><span><b>${need} poin lagi</b> ${label}</span><span class="num">${me.points}/${target}</span></div>
                             <div class="cbar"><i style="width:${Math.max(4, Math.round((me.points / target) * 100))}%"></i></div></div>`;
                     }
@@ -415,7 +416,7 @@
             const lvTag = (r) => showLevel && r.level ? `<span class="lb-tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
             const lvText = (r) => showLevel && r.level ? `${escapeHtml(levelLabel(r.level))} · ` : '';
             const pod = (r, cls) => r
-                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div><div class="name">${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div>${r.uid === state.uid ? '<div class="you">Kamu</div>' : ''}<div class="name">${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
