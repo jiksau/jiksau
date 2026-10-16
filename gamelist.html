@@ -3,82 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Game - ExtraCourse</title>
     <link rel="stylesheet" href="game-ui.css">
-    <style>
-        .game-list { display: grid; gap: 10px; }
-        .game {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 14px 16px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: var(--surface);
-            color: var(--text);
-            text-decoration: none;
-        }
-        .game:hover { border-color: #c7d2fe; background: #fafaff; }
-        .game .name { display: block; font-weight: 700; }
-        .game .desc { display: block; color: var(--muted); font-size: 0.875rem; margin-top: 2px; }
-        .game .go { color: var(--accent); font-weight: 600; white-space: nowrap; }
-        .topbar-inner .spacer { flex: 1; }
-    </style>
 </head>
-<body>
+<body class="has-tabs">
     <header class="topbar">
         <div class="topbar-inner">
-            <a href="user-dashboard.html">← Dashboard</a>
-            <h1>Game</h1>
-            <span class="spacer"></span>
+            <span class="logo">EC</span>
+            <div class="brand"><b>Game</b><small>Belajar sambil bermain</small></div>
             <span id="notif"></span>
-            <a href="leaderboard.html">Peringkat</a>
         </div>
     </header>
 
     <main class="app">
-        <section class="card">
-            <h2>Berpoin</h2>
-            <p class="note" style="margin:-6px 0 12px">Pilih paket dari guru untuk mendapat poin peringkat.</p>
-            <div class="game-list">
-                <a class="game" href="kosakata%202.html">
-                    <span><span class="name">Kuis Kosakata</span><span class="desc">Jawab semua kata sebelum waktu habis.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-                <a class="game" href="kosakata%203.html">
-                    <span><span class="name">Kartu Hafalan</span><span class="desc">Satu kata per kartu, 3 kesempatan.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-                <a class="game" href="kosakata%205.html">
-                    <span><span class="name">Hafalan Tanpa Salah</span><span class="desc">Sekali salah, ulang dari kata pertama.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-                <a class="game" href="kosakata%204.html">
-                    <span><span class="name">Kata Kerja V1-V2-V3</span><span class="desc">Tulis tiga bentuk kata kerja.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-                <a class="game" href="scramble.html">
-                    <span><span class="name">Susun Kalimat</span><span class="desc">Urutkan kata menjadi kalimat.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-                <a class="game" href="cocokkan.html">
-                    <span><span class="name">Cocokkan Pasangan</span><span class="desc">Pasangkan kata dengan artinya.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-            </div>
-        </section>
+        <div class="sec">Berpoin <small>Pakai paket dari guru</small></div>
+        <div class="list">
+            <a class="item" href="kosakata%202.html"><span><span class="name">Kuis Kosakata</span><span class="desc">Jawab semua kata sebelum waktu habis.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="kosakata%203.html"><span><span class="name">Kartu Hafalan</span><span class="desc">Satu kata per kartu, 3 kesempatan.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="kosakata%205.html"><span><span class="name">Hafalan Tanpa Salah</span><span class="desc">Sekali salah, ulang dari kata pertama.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="kosakata%204.html"><span><span class="name">Kata Kerja V1-V2-V3</span><span class="desc">Tulis tiga bentuk kata kerja.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="scramble.html"><span><span class="name">Susun Kalimat</span><span class="desc">Urutkan kata menjadi kalimat.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="cocokkan.html"><span><span class="name">Cocokkan Pasangan</span><span class="desc">Pasangkan kata dengan artinya.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+        </div>
 
-        <section class="card">
-            <h2>Latihan</h2>
-            <div class="game-list">
-                <a class="game" href="question.html">
-                    <span><span class="name">Pertanyaan Acak</span><span class="desc">Pertanyaan untuk latihan bicara.</span></span>
-                    <span class="go">Main →</span>
-                </a>
-            </div>
-        </section>
+        <div class="sec">Latihan</div>
+        <div class="list">
+            <a class="item" href="question.html"><span><span class="name">Pertanyaan Acak</span><span class="desc">Pertanyaan untuk latihan bicara.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+        </div>
     </main>
+
+    <nav class="tabs" aria-label="Menu"><div class="in">
+        <a href="user-dashboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Beranda</a>
+        <a href="gamelist.html" class="on" aria-current="page"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 11.5h.01M18 14h.01"/></svg>Game</a>
+        <a href="leaderboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>Peringkat</a>
+    </div></nav>
+
     <script type="module" src="notifications.js"></script>
 </body>
 </html>

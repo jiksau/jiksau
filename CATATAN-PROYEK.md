@@ -25,7 +25,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `admin.html` | Admin: siswa (buat akun tanpa email, ubah jenjang/nama, hapus akun), kode kelas, **paket soal**, **pengumuman**, skor game |
 | `admin-login.html` | Login admin |
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
-| `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
+| `game-ui.css` | **Gaya bersama seluruh website** (lihat "Tampilan" di bawah): token warna + mode gelap, header, navigasi bawah, kartu, tombol, isian, komponen game. `admin.html` punya salinan token sendiri di `<style>` (karena kelas `nav.tabs` admin berbeda) |
 | `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb" / "kalimat", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal (`directions: null` = tanpa pilihan arah), acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
 | `announcements.js` | Jendela pengumuman di `user-dashboard.html`: pengumuman aktif (jenjang siswa + Semua siswa) yang terbit setelah siswa terakhir menekan "Mengerti" (`users.announceSeenAt`, cadangan localStorage); belum pernah = 30 hari terakhir; maks. 5 sekaligus. Format isi: `announcementHtml` di `ec-common.js` (paragraf dipisah baris kosong, baris "- " jadi daftar berpoin) |
 | `game-scores.js` | Modul simpan skor + muat paket soal + `loadPlayedPackIds()` (Set paket yang pernah dimainkan siswa, game apa pun; dipakai lonceng & titik merah di daftar paket; event `ec-pack-played` setelah skor berpaket tersimpan) |
@@ -90,9 +90,17 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, week ("YYYY-MM-DD" Senin), timestamp
 - Akun tanpa email memakai email sintetis `<namapengguna>@siswa.extra-course-d02c2.firebaseapp.com`.
 
+## Tampilan (sejak 17 Okt 2026, meniru Monitor Kelas)
+
+- Hijau `#1f6f4a` (gelap: `#5cc493`), latar `#f3f5f4`, kartu putih bergaris tipis sudut 14px, font **Plus Jakarta Sans** (Google Fonts, dipasang di `<head>` tiap halaman). Mode gelap otomatis mengikuti HP/PC (`prefers-color-scheme`). Selalu pakai token (`var(--accent)`, `--surface`, `--line`, `--muted`, `--ok`, `--bad`, `--warn`, `--info`, `--soft` ...), jangan warna langsung.
+- Header lengket: `<header class="topbar"><div class="topbar-inner">` berisi `<span class="logo">EC</span>` + `<div class="brand"><b>Judul</b><small>sub</small></div>` + `<span id="notif">` (lonceng). Di halaman game: `<a class="back">` (panah + "Game") + `<h1>`.
+- Halaman siswa utama (`user-dashboard.html`, `gamelist.html`, `leaderboard.html`) memakai navigasi bawah `nav.tabs` (Beranda / Game / Peringkat) + `body.has-tabs`. Halaman game tidak memakai navigasi bawah.
+- Komponen: `.card`, `.sec` (judul bagian), `.list` + `.item` (baris bisa diketuk, panah kanan), `.stats` + `.stat`, `.btn` (`.secondary`, `.ghost`, `.danger`, `.block`), `.input`, `.search`, `.empty`.
+- Ikon: SVG garis (`class="ico"`), tanpa emoji kecuali medali peringkat. Poster peringkat tetap hijau di mode gelap.
+
 ## Preferensi pemilik
 
-- Tampilan harus **rapi di HP dan PC** (cek kedua ukuran).
+- Tampilan harus **rapi di HP dan PC** (cek kedua ukuran, juga mode gelap). Suka tampilan Monitor Kelas (hijau, kartu simetris, kotak cari jelas).
 - **Jangan banyak ikon/emoji dekoratif.** Medali 🥇🥈🥉 boleh karena memberi kesan pemenang.
 - Bahasa Indonesia di semua teks untuk siswa.
 - Kerjakan pelan-pelan, satu fitur per langkah; jelaskan dengan bahasa sederhana.

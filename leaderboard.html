@@ -6,136 +6,70 @@
     <title>Papan Peringkat - ExtraCourse</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="game-ui.css">
     <style>
-        :root {
-            --purple: #6a11cb;
-            --blue: #2575fc;
-            --ink: #1f2937;
-            --muted: #6b7280;
-            --line: #e5e7eb;
-            --gold: #f59e0b;
-            --silver: #94a3b8;
-            --bronze: #c2703d;
-            --me: #fef3c7;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
-            background-attachment: fixed;
-            color: var(--ink);
-            visibility: hidden; /* Tampil setelah login terverifikasi */
-        }
-        header.top {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 16px 16px 4px;
-            color: #fff;
-        }
-        header.top a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            background: rgba(255,255,255,.18);
-            padding: 8px 12px;
-            border-radius: 999px;
-            white-space: nowrap;
-        }
-        header.top h1 { margin: 0; font-size: 1.35rem; font-weight: 800; }
-        main {
-            max-width: 720px;
-            margin: 12px auto 32px;
-            padding: 20px 16px 24px;
-            background: #fff;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.2);
-        }
-        @media (min-width: 760px) { main { padding: 24px 28px 28px; } }
+        body { visibility: hidden; } /* Tampil setelah login terverifikasi */
 
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
-        .seg { display: inline-flex; background: #f3f4f6; border-radius: 999px; padding: 4px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--soft); border-radius: var(--radius-sm); padding: 4px; flex: 1 1 220px; }
         .seg button {
-            border: none; background: transparent; font: inherit; font-weight: 600; font-size: .9rem;
-            padding: 8px 16px; border-radius: 999px; cursor: pointer; color: var(--muted);
+            border: 0; background: transparent; font-weight: 600; font-size: 14px;
+            padding: 8px 12px; border-radius: 9px; cursor: pointer; color: var(--muted); white-space: nowrap;
         }
-        .seg button.active { background: #fff; color: var(--purple); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+        .seg button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(23,32,28,.12); }
         .seg[hidden] { display: none; }
-        .tag { display: inline-block; font-size: .7rem; font-weight: 700; color: var(--purple); background: #ede9fe; border-radius: 999px; padding: 1px 8px; margin-left: 4px; vertical-align: middle; }
-        #levelSelect { font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 10px; border: 1px solid #d1d5db; color: var(--purple); }
-        .meta { color: var(--muted); font-size: .85rem; margin: 12px 0 16px; line-height: 1.5; }
+        #levelSelect { flex: 1 1 200px; height: 46px; padding: 0 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--line); background: var(--surface); font-weight: 600; }
+        .lb-tag { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+        .meta { color: var(--muted); font-size: 13px; margin: -4px 2px 0; line-height: 1.5; }
 
+        /* Peringkatku */
         .my-rank {
-            border-radius: 14px;
-            padding: 14px 16px;
-            margin-bottom: 18px;
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #78350f;
+            border-radius: var(--radius); padding: 14px 16px;
+            background: var(--accent-soft); color: var(--text);
             display: flex; align-items: center; gap: 14px;
         }
-        .my-rank .big { font-size: 1.9rem; font-weight: 800; line-height: 1; min-width: 56px; text-align: center; }
-        .my-rank .txt { font-size: .9rem; line-height: 1.45; }
-        .my-rank .txt b { font-size: 1rem; }
-        .my-rank a { color: #92400e; font-weight: 700; }
-        .my-rank.empty { background: #eef2ff; color: #3730a3; display: block; }
-        .my-rank.empty a { color: #4338ca; }
+        .my-rank .big { font-size: 30px; font-weight: 700; line-height: 1; min-width: 52px; text-align: center; color: var(--accent); letter-spacing: -0.5px; }
+        .my-rank .txt { font-size: 13.5px; line-height: 1.5; }
+        .my-rank .txt b { font-size: 15px; color: var(--accent); }
+        .my-rank a { color: var(--accent); font-weight: 700; }
+        .my-rank.empty { display: block; background: var(--soft); }
+        #myRank:empty { display: none; }
 
         /* Podium */
-        .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin: 8px 0 18px; }
-        .pod { text-align: center; }
-        .pod .medal { font-size: 1.8rem; line-height: 1; }
-        .pod .name { font-weight: 700; font-size: .92rem; margin: 6px 0 2px; overflow-wrap: anywhere; }
-        .pod .pts { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
-        .pod .block { border-radius: 12px 12px 0 0; color: #fff; font-weight: 800; font-size: 1.4rem; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
+        .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin-top: 8px; }
+        .podium:empty { display: none; }
+        .pod { text-align: center; min-width: 0; }
+        .pod .medal { font-size: 28px; line-height: 1; }
+        .pod .name { font-weight: 700; font-size: 14.5px; margin: 6px 0 2px; overflow-wrap: anywhere; }
+        .pod .pts { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
+        .pod .block { border-radius: 12px 12px 0 0; color: #fff; font-weight: 700; font-size: 22px; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; }
         .pod.p1 .block { height: 92px; }
         .pod.p2 .block { height: 68px; }
         .pod.p3 .block { height: 52px; }
-        .pod .block.r1 { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
-        .pod .block.r2 { background: linear-gradient(180deg, #cbd5e1, #94a3b8); }
-        .pod .block.r3 { background: linear-gradient(180deg, #e7a578, #c2703d); }
-        .pod.me .name::after { content: " (kamu)"; color: var(--purple); font-weight: 600; font-size: .75rem; }
+        .pod .block.r1 { background: linear-gradient(180deg, #f2c94c, #d9a21b); }
+        .pod .block.r2 { background: linear-gradient(180deg, #c9d2cd, #9aa6a0); }
+        .pod .block.r3 { background: linear-gradient(180deg, #e3a67a, #c0763f); }
+        .pod.me .name::after { content: " (kamu)"; color: var(--accent); font-weight: 600; font-size: 12px; }
         .pod.blank { visibility: hidden; }
 
         /* Daftar */
-        .list { list-style: none; margin: 0; padding: 0; }
-        .row {
-            display: grid;
-            grid-template-columns: 40px 1fr auto;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 12px;
-        }
-        .row:nth-child(odd) { background: #f9fafb; }
-        .row .rank { font-weight: 800; color: var(--muted); text-align: center; }
-        .row .who { font-weight: 600; overflow-wrap: anywhere; }
-        .row .who small { display: block; font-weight: 400; color: var(--muted); font-size: .75rem; }
-        .row .pts { font-weight: 800; color: var(--purple); white-space: nowrap; }
-        .row.me { background: var(--me) !important; outline: 2px solid #fbbf24; }
-        .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 2px 0; }
-        .empty-state { text-align: center; color: var(--muted); padding: 28px 8px; }
-
-        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-        .btn {
-            flex: 1 1 200px;
-            border: none; border-radius: 12px; padding: 12px 16px;
-            font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer;
-            background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff;
-            text-decoration: none; text-align: center;
-        }
-        .btn.secondary { background: #f3f4f6; color: var(--ink); }
-        .btn:disabled { opacity: .6; cursor: wait; }
+        #list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        #list .row { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
+        #list .row:first-child { border-top: 0; }
+        #list:empty { display: none; }
+        #list .rank { font-weight: 700; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+        #list .who { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+        #list .who small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+        #list .pts { font-weight: 700; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        #list .row.me { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+        #list .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 4px 0; border-top: 1px solid var(--line); }
+        #list .empty-state { text-align: center; color: var(--muted); padding: 28px 12px; }
 
         /* ---------- Kartu siap dibagikan (1080x1350, ditampilkan 540x675) ---------- */
         .overlay {
             position: fixed; inset: 0; z-index: 50;
-            background: rgba(17, 24, 39, .94);
+            background: rgba(10, 16, 13, .94);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             gap: 14px; padding: 16px;
         }
@@ -144,27 +78,28 @@
         .poster-frame > .poster { transform-origin: top left; position: absolute; top: 0; left: 0; }
         .overlay .share-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; max-width: 540px; }
         .overlay .share-actions .btn { flex: 1 1 140px; }
-        .overlay .hint { color: #d1d5db; font-size: .8rem; text-align: center; margin: 0; }
+        .overlay .btn.secondary { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; }
+        .overlay .hint { color: #c9d2cd; font-size: 13px; text-align: center; margin: 0; }
 
+        /* Poster selalu berwarna sama (tidak ikut mode gelap) */
         .poster {
             width: 540px; height: 675px;
             padding: 34px 34px 26px;
             display: flex; flex-direction: column;
             background:
-                radial-gradient(circle at 85% 8%, rgba(255,255,255,.18) 0 70px, transparent 71px),
-                radial-gradient(circle at 8% 92%, rgba(255,255,255,.12) 0 90px, transparent 91px),
-                linear-gradient(150deg, #6a11cb 0%, #4f46e5 50%, #2575fc 100%);
+                radial-gradient(circle at 85% 8%, rgba(255,255,255,.14) 0 70px, transparent 71px),
+                radial-gradient(circle at 8% 92%, rgba(255,255,255,.10) 0 90px, transparent 91px),
+                linear-gradient(150deg, #14553a 0%, #1f6f4a 55%, #2e8a5f 100%);
             color: #fff;
-            font-family: 'Poppins', system-ui, sans-serif;
-            border-radius: 0;
+            font-family: "Plus Jakarta Sans", system-ui, sans-serif;
             overflow: hidden;
         }
-        .poster .brand { font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; opacity: .85; }
+        .poster .brand { flex: none; font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; opacity: .85; line-height: 1.4; }
         .poster .title { font-size: 34px; font-weight: 800; line-height: 1.1; margin: 6px 0 4px; }
-        .poster .sub { font-size: 15px; font-weight: 500; opacity: .9; }
-        .poster .sub b { background: rgba(255,255,255,.22); padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
+        .poster .sub { font-size: 15px; font-weight: 500; opacity: .92; }
+        .poster .sub b { background: rgba(255,255,255,.2); padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
         .poster .ppodium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; margin: 22px 0 14px; }
-        .poster .ppod { text-align: center; }
+        .poster .ppod { text-align: center; min-width: 0; }
         .poster .ppod .m { font-size: 30px; line-height: 1; }
         .poster .ppod .n { font-size: 16px; font-weight: 700; margin: 6px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .poster .ppod .p { font-size: 13px; opacity: .9; margin-bottom: 6px; }
@@ -172,30 +107,34 @@
         .poster .ppod.p1 .b { height: 104px; }
         .poster .ppod.p2 .b { height: 76px; }
         .poster .ppod.p3 .b { height: 58px; }
-        .poster .ppod .b.r1 { background: linear-gradient(180deg, #fcd34d, #f59e0b); }
-        .poster .ppod .b.r2 { background: linear-gradient(180deg, #e2e8f0, #94a3b8); }
-        .poster .ppod .b.r3 { background: linear-gradient(180deg, #f0b48b, #c2703d); }
+        .poster .ppod .b.r1 { background: linear-gradient(180deg, #f6d36b, #d9a21b); }
+        .poster .ppod .b.r2 { background: linear-gradient(180deg, #e3e8e5, #a3aea8); }
+        .poster .ppod .b.r3 { background: linear-gradient(180deg, #edb88f, #c0763f); }
         .poster .ppod.blank { visibility: hidden; }
-        .poster .plist { background: rgba(255,255,255,.14); border-radius: 16px; padding: 8px 14px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
-        .poster .prow { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; font-size: 15px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.14); }
+        .poster .plist { background: rgba(255,255,255,.12); border-radius: 16px; padding: 8px 14px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+        .poster .prow { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; font-size: 15px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
         .poster .prow:last-child { border-bottom: none; }
         .poster .prow .r { font-weight: 800; opacity: .85; }
         .poster .prow .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
         .poster .prow .p { font-weight: 700; }
-        .poster .prow .lv { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.22); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+        .poster .prow .lv { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.2); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
         .poster .ppod .lv { font-size: 11px; font-weight: 700; opacity: .9; }
         .poster .pempty { margin: auto; text-align: center; font-size: 16px; opacity: .9; }
         .poster .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; opacity: .9; }
         .poster .foot b { font-size: 14px; }
     </style>
 </head>
-<body>
-    <header class="top">
-        <a id="backLink" href="user-dashboard.html">← Kembali</a>
-        <h1>Papan Peringkat</h1>
+<body class="has-tabs">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a id="backLink" href="admin.html" class="back" hidden><svg class="ico" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>Admin</a>
+            <span class="logo" id="logoMark">EC</span>
+            <div class="brand"><b>Peringkat</b><small>Juara setiap minggu</small></div>
+            <span id="notif"></span>
+        </div>
     </header>
 
-    <main>
+    <main class="app">
         <div class="controls">
             <div class="seg" id="weekSeg" role="tablist">
                 <button data-week="this" class="active" role="tab">Minggu Ini</button>
@@ -211,13 +150,18 @@
 
         <div id="myRank"></div>
         <div id="podium" class="podium"></div>
-        <ol id="list" class="list"></ol>
+        <ol id="list"></ol>
 
         <div class="actions">
-            <button class="btn" id="shareBtn" type="button">Tampilan untuk dibagikan</button>
-            <a class="btn secondary" href="gamelist.html">Main game</a>
+            <button class="btn secondary" id="shareBtn" type="button">Tampilan untuk dibagikan</button>
         </div>
     </main>
+
+    <nav class="tabs" aria-label="Menu"><div class="in">
+        <a href="user-dashboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Beranda</a>
+        <a href="gamelist.html"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 11.5h.01M18 14h.01"/></svg>Game</a>
+        <a href="leaderboard.html" class="on" aria-current="page"><svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>Peringkat</a>
+    </div></nav>
 
     <!-- Kartu siap dibagikan -->
     <div class="overlay" id="shareOverlay" hidden>
@@ -264,7 +208,11 @@
             state.isAdmin = user.email === ADMIN_EMAIL;
 
             if (state.isAdmin) {
-                $('backLink').href = 'admin.html';
+                // Admin: tombol kembali ke admin, tanpa navigasi siswa
+                $('backLink').hidden = false;
+                $('logoMark').hidden = true;
+                document.querySelector('nav.tabs').remove();
+                document.body.classList.remove('has-tabs');
                 $('levelSelect').innerHTML = '<option value="ALL">Semua jenjang</option>'
                     + LEVELS.map((l) => `<option value="${l.value}">Jenjang ${l.label}</option>`).join('');
                 const saved = pref.get('lbBoard');
@@ -392,7 +340,7 @@
             // Podium: urutan tampil 2 - 1 - 3
             const top = list.slice(0, 3);
             const showLevel = !state.boardLevel;
-            const lvTag = (r) => showLevel && r.level ? `<span class="tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
+            const lvTag = (r) => showLevel && r.level ? `<span class="lb-tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
             const pod = (r, cls) => r
                 ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div><div class="name">${escapeHtml(shortName(r.name))}</div><div class="pts">${r.points} poin${lvTag(r)}</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
@@ -472,5 +420,6 @@
         });
 
     </script>
+    <script type="module" src="notifications.js"></script>
 </body>
 </html>

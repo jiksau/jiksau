@@ -28,29 +28,36 @@ const publishedMs = (n) => ms(n.publishedAt) || ms(n.createdAt);
 const CSS = `
 .ec-news-overlay {
     position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;
-    padding: 16px; background: rgba(17,24,39,.55);
+    padding: 20px; background: rgba(10,16,13,.5);
 }
 .ec-news {
-    display: flex; flex-direction: column; width: 100%; max-width: 520px; max-height: calc(100vh - 32px);
-    background: #fff; color: #1f2937; border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.3);
-    font: 15px/1.55 'Inter', system-ui, sans-serif; text-align: left; overflow: hidden;
+    display: flex; flex-direction: column; width: 100%; max-width: 460px; max-height: calc(100vh - 40px);
+    background: var(--surface, #fff); color: var(--text, #17201c); border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.25); overflow: hidden; text-align: left;
+    font: 15px/1.6 "Plus Jakarta Sans", system-ui, sans-serif; animation: ecPop .2s ease-out;
 }
-.ec-news-head { padding: 16px 20px 0; font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #4338ca; }
-.ec-news-list { padding: 4px 20px 8px; overflow-y: auto; }
-.ec-news-item { padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+@keyframes ecPop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.ec-news-head { padding: 20px 20px 0; }
+.ec-news-head span {
+    display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700;
+    background: var(--info-soft, #e3ecfa); color: var(--info, #2a5db0);
+}
+.ec-news-list { padding: 2px 20px 6px; overflow-y: auto; }
+.ec-news-item { padding: 12px 0; border-bottom: 1px solid var(--line, #e2e7e4); }
 .ec-news-item:last-child { border-bottom: 0; }
-.ec-news-item h3 { margin: 0; font-size: 1.12rem; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
-.ec-news-item .date { margin: 2px 0 8px; color: #6b7280; font-size: .8rem; }
-.ec-news-item p { margin: 0 0 8px; overflow-wrap: anywhere; }
-.ec-news-item ul { margin: 0 0 8px; padding-left: 20px; list-style: disc; }
-.ec-news-item li { margin: 2px 0; overflow-wrap: anywhere; }
-.ec-news-foot { padding: 12px 20px 18px; border-top: 1px solid #f1f2f4; }
+.ec-news-item h3 { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.ec-news-item .date { margin: 2px 0 10px; color: var(--muted, #66706b); font-size: 12.5px; }
+.ec-news-item p { margin: 0 0 10px; overflow-wrap: anywhere; }
+.ec-news-item ul { margin: 0 0 10px; padding-left: 20px; list-style: disc; }
+.ec-news-item li { margin: 3px 0; overflow-wrap: anywhere; }
+.ec-news-foot { padding: 10px 20px 18px; }
 .ec-news-foot button {
-    width: 100%; height: 46px; border: 0; border-radius: 10px; background: #4338ca; color: #fff;
-    font: 600 1rem 'Inter', system-ui, sans-serif; cursor: pointer;
+    width: 100%; height: 48px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent, #1f6f4a); color: var(--accent-ink, #fff);
+    font: 600 15px "Plus Jakarta Sans", system-ui, sans-serif;
 }
-.ec-news-foot button:hover { background: #3730a3; }
-@media (max-width: 520px) { .ec-news-head, .ec-news-list, .ec-news-foot { padding-left: 16px; padding-right: 16px; } }`;
+.ec-news-foot button:active { transform: scale(.98); }
+@media (max-width: 520px) { .ec-news-head, .ec-news-list, .ec-news-foot { padding-left: 18px; padding-right: 18px; } }`;
 
 function dateLabel(t) {
     return new Date(t).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
@@ -64,7 +71,7 @@ function show(list, onOk) {
     overlay.className = "ec-news-overlay";
     overlay.innerHTML = `
         <div class="ec-news" role="dialog" aria-modal="true" aria-labelledby="ecNewsHead">
-            <div class="ec-news-head" id="ecNewsHead">Pengumuman</div>
+            <div class="ec-news-head" id="ecNewsHead"><span>Pengumuman</span></div>
             <div class="ec-news-list">${list.map((n) => `
                 <article class="ec-news-item">
                     <h3>${escapeHtml(n.title)}</h3>

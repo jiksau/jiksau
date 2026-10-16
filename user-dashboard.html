@@ -3,386 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Siswa - ExtraCourse</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Beranda - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
     <style>
-        /* Custom styles for Inter font and general layout */
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column; /* Container di atas, footer di bawah (bukan berdampingan) */
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Vibrant gradient background */
-            color: #333; /* Default text color */
-            overflow-x: hidden; /* Prevent horizontal scroll */
-            visibility: hidden; /* Hide body content until auth state is confirmed */
-        }
-        .container {
-            box-sizing: border-box;
-            width: calc(100% - 2rem);
-            max-width: 900px;
-            margin: 2rem auto 0;
-            overflow-wrap: anywhere; /* Teks panjang (email, ID) turun baris, tidak terpotong */
-            padding: 2.5rem; /* Slightly more padding */
-            background: rgba(255, 255, 255, 0.95); /* Near opaque white background */
-            border-radius: 16px; /* More rounded corners */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Stronger shadow */
-            backdrop-filter: blur(8px); /* Subtle frosted glass effect */
-            border: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
-            animation: fadeInScale 0.7s ease-out forwards; /* Fade in and slightly scale */
-        }
+        body { visibility: hidden; } /* tampil setelah status login diketahui */
 
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        h1, h2 {
-            color: #1a202c;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.05); /* Subtle text shadow */
-        }
-        h1 {
-            font-size: 2.5rem; /* Larger main title */
-            font-weight: 800; /* Extra bold */
-            color: #312e81; /* Indigo-900 for main title */
-        }
-        h2 {
-            font-size: 2rem; /* Larger section titles */
-            font-weight: 700; /* Bold */
-            color: #3b82f6; /* Blue-500 for section titles */
-        }
-
-        .info-card {
-            background-color: #e0f7fa; /* Light cyan background */
-            border-left: 8px solid #00bcd4; /* Cyan border */
-            padding: 1.5rem; /* More padding */
-            margin-bottom: 1.5rem;
-            border-radius: 10px; /* More rounded corners */
-            text-align: left;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Subtle shadow */
-        }
-        .info-card p {
-            margin-bottom: 0.5rem;
-            font-size: 1rem; /* Slightly larger font */
-            color: #263238; /* Darker text */
-        }
-        .info-card strong {
-            color: #00838f; /* Darker cyan */
-        }
-
-        /* Button styles */
-        .header-buttons {
-            display: flex;
-            gap: 1rem; /* Space between buttons */
-            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
-            justify-content: flex-end; /* Align to right */
-        }
-        .header-buttons button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease-in-out; /* Smooth transitions for all button properties */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
-        }
-        #gamelistButton {
-            background-color: #f472b6; /* Pink-400 */
-            color: white;
-        }
-        #gamelistButton:hover {
-            background-color: #ec4899; /* Pink-500 */
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(236, 72, 153, 0.3);
-        }
-        #leaderboardButton {
-            background-color: #f59e0b;
-            color: white;
-        }
-        #leaderboardButton:hover {
-            background-color: #d97706;
-            transform: translateY(-2px);
-        }
+        /* Peringkat minggu ini */
         .week-rank {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #78350f;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 1.25rem;
-            text-decoration: none;
+            display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+            padding: 14px 14px 14px 16px; border-radius: var(--radius); text-decoration: none;
+            background: var(--accent-soft); color: var(--accent);
         }
-        .week-rank .big { font-size: 1.6rem; font-weight: 800; min-width: 48px; text-align: center; }
-        .week-rank .txt { font-size: 0.9rem; line-height: 1.4; }
-        .week-rank .go { margin-left: auto; font-weight: 700; white-space: nowrap; }
-        #logoutButton {
-            background-color: #ef4444; /* Red */
-            color: white;
-        }
-        #logoutButton:hover {
-            background-color: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(220, 38, 38, 0.3);
-        }
-        footer {
-            text-align: center;
-            padding: 1.5rem 1rem 2rem;
-            margin-top: auto;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
+        .week-rank:active { transform: scale(0.99); }
+        .week-rank .big { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+        .week-rank .txt { grid-column: auto; min-width: 0; }
+        .week-rank .txt:first-child { grid-column: 1 / 3; }
+        .week-rank b { display: block; font-size: 15px; }
+        .week-rank small { display: block; font-size: 13px; color: var(--text); opacity: 0.75; margin-top: 2px; line-height: 1.45; }
+        .week-rank .go { opacity: 0.9; display: grid; }
 
-        /* Message Box styles (reused) */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            text-align: center;
-            display: none;
-            max-width: 300px;
-        }
-        .message-box.success {
-            border: 2px solid #28a745;
-            color: #28a745;
-        }
-        .message-box.error {
-            border: 2px solid #dc3545;
-            color: #dc3545;
-        }
-        .message-box button {
-            margin-top: 15px;
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .message-box button:hover {
-            background-color: #0056b3;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
+        /* Nilai terbaik & riwayat */
+        .rows { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .rows .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+        .rows .row:first-child { border-top: 0; }
+        .rows:empty { display: none; }
+        .rows > .empty { border: 0; border-radius: 0; box-shadow: none; }
+        .rows .nm { font-weight: 600; min-width: 0; }
+        .pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+        .hist { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+        .hist:first-child { border-top: 0; }
+        .hist .m { min-width: 0; }
+        .hist .nm { font-weight: 700; }
+        .hist .ds { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+        .hist .res { text-align: right; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .hist .res small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+        .score-good { color: var(--ok); }
+        .score-mid { color: var(--warn); }
+        .score-low { color: var(--bad); }
 
-        /* Attendance History Card */
-        .attendance-history-card {
-            margin-bottom: 1rem;
-            padding: 1.5rem; /* More padding */
-            border-radius: 10px; /* More rounded */
-            background-color: #f0fdf4; /* Light green background for positive feel */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* Stronger shadow */
-            border: 1px solid #a7f3d0; /* Light green border */
-            transition: transform 0.2s ease-in-out;
-        }
-        .attendance-history-card:hover {
-            transform: translateY(-3px); /* Slight lift on hover */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-        }
-        .attendance-history-card p {
-            margin-bottom: 0.4rem; /* More space */
-            font-size: 1rem; /* Slightly larger font */
-            color: #2d3748; /* Darker text */
-        }
-        .attendance-history-card p strong {
-            color: #1a202c; /* Even darker for emphasis */
-        }
-        .evaluation-scores {
-            margin-top: 1rem; /* More space */
-            padding-top: 1rem;
-            border-top: 1px solid #d1fae5; /* Solid light green border */
-            font-size: 0.95rem; /* Slightly larger */
-            color: #4a5568;
-        }
-        .evaluation-scores span {
-            display: inline-block;
-            margin: 0 0.5rem 0.5rem 0;
-            background-color: #d1fae5; /* Light green background */
-            padding: 0.3rem 0.6rem; /* More padding */
-            border-radius: 6px; /* More rounded */
-            font-weight: 600; /* Semi-bold */
-            color: #065f46; /* Dark green text */
-        }
-
-        /* Progres Latihan Game */
-        .game-stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-        .stat-card {
-            background: #eef2ff;
-            border: 1px solid #e0e7ff;
-            border-radius: 10px;
-            padding: 0.9rem 0.5rem;
-            text-align: center;
-        }
-        .stat-card .stat-value {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #4338ca;
-            line-height: 1.2;
-        }
-        .stat-card .stat-label {
-            font-size: 0.8rem;
-            color: #4b5563;
-            margin-top: 0.25rem;
-        }
-        .game-subtitle {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0 0 0.6rem;
-        }
-        .best-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .best-chip {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 999px;
-            padding: 0.35rem 0.8rem;
-            font-size: 0.875rem;
-        }
-        .game-history {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 0 1rem;
-        }
-        .game-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.25rem 1rem;
-            padding: 0.7rem 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .game-row:last-child { border-bottom: none; }
-        .game-row .game-name { font-weight: 600; color: #1f2937; }
-        .game-row .game-time { font-size: 0.75rem; color: #6b7280; }
-        .game-row .game-result { font-size: 0.875rem; font-weight: 700; }
-        .score-good { color: #15803d; }
-        .score-mid { color: #a16207; }
-        .score-low { color: #b91c1c; }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .container {
-                width: calc(100% - 1.5rem);
-                margin: 0.75rem auto 0;
-                padding: 1.25rem 1rem;
-                border-radius: 12px;
-            }
-            header {
-                flex-direction: column; /* Judul di atas, tombol di bawah */
-                align-items: stretch !important;
-                gap: 1rem;
-                margin-bottom: 1.5rem !important;
-            }
-            h1 {
-                font-size: 1.6rem !important;
-                line-height: 1.25;
-                margin-bottom: 0;
-            }
-            h2 {
-                font-size: 1.3rem !important;
-                margin-bottom: 0.9rem !important;
-            }
-            .info-card {
-                padding: 1rem;
-                border-left-width: 5px;
-            }
-            .info-card p,
-            .attendance-history-card p {
-                font-size: 0.95rem;
-            }
-            .attendance-history-card {
-                padding: 1rem;
-            }
-            .evaluation-scores span {
-                font-size: 0.85rem;
-            }
-            .stat-card .stat-value {
-                font-size: 1.3rem;
-            }
-            .stat-card .stat-label {
-                font-size: 0.72rem;
-            }
-            .header-buttons {
-                flex-direction: column; /* Stack buttons vertically */
-                align-items: stretch; /* Stretch buttons to full width */
-            }
-            .header-buttons button {
-                width: 100%; /* Full width buttons */
-            }
-        }
+        /* Akun */
+        .kv { display: grid; gap: 0; margin: 0; }
+        .kv div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+        .kv div:first-child { border-top: 0; padding-top: 0; }
+        .kv dt { color: var(--muted); }
+        .kv dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; min-width: 0; }
     </style>
 </head>
-<body>
-    <div class="container" style="position:relative">
-        <span id="notif" data-light style="position:absolute;top:1rem;right:1rem"></span>
-        <header class="mb-8 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold flex-grow text-center">Halo, <span id="greetName">Siswa</span>!</h1>
-            <div class="header-buttons">
-                <button id="gamelistButton">Main Game</button>
-                <button id="leaderboardButton">Peringkat</button>
-                <button id="logoutButton">Keluar</button>
-            </div>
-        </header>
+<body class="has-tabs">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="logo">EC</span>
+            <div class="brand"><b>Halo, <span id="greetName">Siswa</span>!</b><small id="headSub">&nbsp;</small></div>
+            <span id="notif"></span>
+        </div>
+    </header>
 
-        <section id="user-info-section">
-            <h2 class="text-2xl font-bold mb-4">Akun Kamu</h2>
-            <div class="info-card">
-                <p><strong>Nama:</strong> <span id="userName">Memuat...</span></p>
-                <p><strong>Jenjang:</strong> <span id="userLevel">Memuat...</span></p>
-                <p><strong id="loginLabel">Email:</strong> <span id="userLogin">Memuat...</span></p>
-                <p><strong>Terakhir masuk:</strong> <span id="lastLoginAt">Memuat...</span></p>
-            </div>
-        </section>
+    <main class="app">
+        <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
 
-        <section id="game-progress-section" class="mt-8">
-            <h2 class="text-2xl font-bold mb-4">Progres Latihan Game</h2>
-            <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
-            <div id="gameStats" class="game-stats"></div>
-            <div id="gameBestList"></div>
-            <h3 class="game-subtitle">Latihan Terakhir</h3>
-            <div id="gameHistoryList" class="game-history">
-                <p class="text-gray-600 text-center">Memuat progres latihan...</p>
-            </div>
-        </section>
-    </div>
+        <a class="btn block" href="gamelist.html">Main game</a>
 
-    <footer>
-        <p>© ExtraCourse · Teman Belajar</p>
-    </footer>
+        <div id="gameStats" class="stats"></div>
+
+        <div class="sec" id="bestSec" hidden>Nilai terbaik per game</div>
+        <div id="gameBestList" class="rows"></div>
+
+        <div class="sec">Latihan terakhir</div>
+        <div id="gameHistoryList" class="rows">
+            <div class="empty">Memuat...</div>
+        </div>
+
+        <div class="sec">Akun</div>
+        <div class="card">
+            <dl class="kv">
+                <div><dt>Nama</dt><dd id="userName">Memuat...</dd></div>
+                <div><dt>Jenjang</dt><dd id="userLevel">-</dd></div>
+                <div><dt id="loginLabel">Email</dt><dd id="userLogin">-</dd></div>
+                <div><dt>Terakhir masuk</dt><dd id="lastLoginAt">-</dd></div>
+            </dl>
+            <button class="btn secondary block" id="logoutButton" style="margin-top:14px">Keluar</button>
+        </div>
+    </main>
+
+    <nav class="tabs" aria-label="Menu"><div class="in">
+        <a href="user-dashboard.html" class="on" aria-current="page"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Beranda</a>
+        <a href="gamelist.html"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 11.5h.01M18 14h.01"/></svg>Game</a>
+        <a href="leaderboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>Peringkat</a>
+    </div></nav>
+
     <script type="module" src="notifications.js"></script>
     <script type="module" src="announcements.js"></script>
 
@@ -411,7 +122,7 @@
             started = true;
 
             const username = usernameFromEmail(user.email);
-            $('loginLabel').textContent = username ? 'Nama pengguna:' : 'Email:';
+            $('loginLabel').textContent = username ? 'Nama pengguna' : 'Email';
             $('userLogin').textContent = username || user.email;
 
             try {
@@ -422,6 +133,7 @@
                     $('userName').textContent = data.name || '-';
                     $('greetName').textContent = (data.name || 'Siswa').split(' ')[0];
                     $('userLevel').textContent = levelLabel(data.level);
+                    $('headSub').textContent = [levelLabel(data.level), username || user.email].filter(Boolean).join(' · ');
                     $('lastLoginAt').textContent = data.lastLoginAt
                         ? data.lastLoginAt.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
                         : 'Ini pertama kalinya';
@@ -444,13 +156,14 @@
 
         async function handleDeletedAccount(user) {
             document.body.style.visibility = 'visible';
-            document.querySelector('.container').innerHTML = `
-                <h1 class="text-3xl font-extrabold text-center">Akun tidak aktif</h1>
-                <div class="info-card" style="margin-top:1.5rem">
-                    <p>Akun ini sudah dihapus oleh admin ExtraCourse.</p>
-                    <p>Jika menurutmu ini keliru, hubungi guru atau admin untuk dibuatkan akun baru.</p>
-                </div>
-                <div class="header-buttons" style="justify-content:center"><button id="backHome" style="background:#4338ca;color:#fff">Kembali ke halaman depan</button></div>`;
+            document.querySelector('main').innerHTML = `
+                <div class="card">
+                    <h2>Akun tidak aktif</h2>
+                    <p class="note" style="margin-bottom:8px">Akun ini sudah dihapus oleh admin ExtraCourse.</p>
+                    <p class="note">Jika menurutmu ini keliru, hubungi guru atau admin untuk dibuatkan akun baru.</p>
+                    <button class="btn block" id="backHome" style="margin-top:16px">Kembali ke halaman depan</button>
+                </div>`;
+            document.querySelector('nav.tabs')?.remove();
             document.getElementById('backHome').addEventListener('click', () => { window.location.href = 'index.html'; });
             try {
                 await user.delete();
@@ -464,9 +177,6 @@
         $('logoutButton').addEventListener('click', async () => {
             await signOut(auth);
             window.location.href = "index.html";
-        });
-        $('leaderboardButton').addEventListener('click', () => {
-            window.location.href = "leaderboard.html";
         });
 
         // Ringkasan peringkat minggu ini: semua jenjang + jenjang sendiri
@@ -489,9 +199,9 @@
                 if (g.mine > 0) {
                     const l = rankOf(same);
                     const levelLine = level ? `<br>#${l.rank} dari ${l.total} siswa ${escapeHtml(levelLabel(level))}` : '';
-                    box.innerHTML = `<div class="big">#${g.rank}</div><div class="txt"><b>Peringkatmu minggu ini</b> · ${g.mine} poin<br>#${g.rank} dari ${g.total} siswa (semua jenjang)${levelLine}</div><span class="go">Lihat →</span>`;
+                    box.innerHTML = `<div class="big">#${g.rank}</div><div class="txt"><b>Peringkatmu minggu ini · ${g.mine} poin</b><small>#${g.rank} dari ${g.total} siswa (semua jenjang)${levelLine}</small></div><span class="go">${CHEV}</span>`;
                 } else {
-                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><br>Mainkan paket soal dari guru: 1 jawaban benar = 1 poin.</div><span class="go">Lihat →</span>`;
+                    box.innerHTML = `<div class="txt"><b>Belum ada poin minggu ini</b><small>Mainkan paket soal dari guru: 1 jawaban benar = 1 poin.</small></div><span class="go">${CHEV}</span>`;
                 }
                 box.hidden = false;
             } catch (e) {
@@ -499,9 +209,7 @@
             }
         }
 
-        $('gamelistButton').addEventListener('click', () => {
-            window.location.href = "gamelist.html";
-        });
+        const CHEV = '<svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
 
         // --- Progres Latihan Game ---
         function scoreColor(percent) {
@@ -513,9 +221,9 @@
         function describeScore(item) {
             if (item.gameId === 'kosakata-5') {
                 const mistakes = item.points ?? 0;
-                return `Tuntas ${item.total} kata` + (mistakes > 0 ? ` (${mistakes}x salah sebelumnya)` : ' tanpa salah');
+                return `Tuntas ${item.total} kata` + (mistakes > 0 ? `<small>${mistakes}x salah sebelumnya</small>` : '<small>tanpa salah</small>');
             }
-            return `${item.correct}/${item.total} benar (${item.percent}%)` + (item.points ? ` · ${item.points} poin` : '');
+            return `${item.correct}/${item.total} benar<small>${item.percent}%</small>`;
         }
 
         function loadGameScores(currentUserId) {
@@ -532,7 +240,8 @@
                 if (items.length === 0) {
                     statsEl.innerHTML = '';
                     bestEl.innerHTML = '';
-                    historyEl.innerHTML = '<p class="text-gray-600 text-center" style="padding:1rem 0">Belum ada skor. Mainkan game di menu Game, skormu akan tersimpan otomatis di sini.</p>';
+                    $('bestSec').hidden = true;
+                    historyEl.innerHTML = '<div class="empty">Belum ada latihan. Mainkan game di menu Game, hasilnya tersimpan otomatis di sini.</div>';
                     return;
                 }
 
@@ -540,11 +249,7 @@
                 const thisWeek = items.filter((i) => (i.timestamp?.toMillis?.() ?? Date.now()) >= weekAgo).length;
                 const avg = Math.round(items.reduce((sum, i) => sum + (i.percent || 0), 0) / items.length);
 
-                const statCard = (label, value) => `
-                    <div class="stat-card">
-                        <div class="stat-value">${value}</div>
-                        <div class="stat-label">${label}</div>
-                    </div>`;
+                const statCard = (label, value) => `<div class="stat"><b>${value}</b><span>${label}</span></div>`;
                 statsEl.innerHTML = statCard('Total latihan', items.length)
                     + statCard('7 hari terakhir', thisWeek)
                     + statCard('Rata-rata nilai', `${avg}%`);
@@ -554,28 +259,24 @@
                 items.forEach((i) => {
                     if (!best[i.gameId] || i.percent > best[i.gameId].percent) best[i.gameId] = i;
                 });
-                bestEl.innerHTML = '<h3 class="game-subtitle">Nilai Terbaik per Game</h3><div class="best-chips">'
-                    + Object.values(best).map((b) => `
-                        <span class="best-chip">
-                            ${escapeHtml(b.gameName)}: <strong class="${scoreColor(b.percent)}">${b.percent}%</strong>
-                        </span>`).join('')
-                    + '</div>';
+                $('bestSec').hidden = false;
+                bestEl.innerHTML = Object.values(best).map((b) => `
+                    <div class="row"><span class="nm">${escapeHtml(b.gameName)}</span><span class="pct ${scoreColor(b.percent)}">${b.percent}%</span></div>`).join('');
 
                 historyEl.innerHTML = items.slice(0, 15).map((i) => {
                     const when = i.timestamp ? i.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Baru saja';
                     return `
-                        <div class="game-row">
-                            <div>
-                                <div class="game-name">${escapeHtml(i.gameName)}</div>
-                                <div class="game-time">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : 'Latihan bebas'}</div>
-                                <div class="game-time">${when}</div>
+                        <div class="hist">
+                            <div class="m">
+                                <div class="nm">${escapeHtml(i.gameName)}</div>
+                                <div class="ds">${i.packId ? escapeHtml(i.packName || '-') : 'Latihan bebas'} · ${when}</div>
                             </div>
-                            <div class="game-result ${scoreColor(i.percent)}">${describeScore(i)}</div>
+                            <div class="res ${scoreColor(i.percent)}">${describeScore(i)}</div>
                         </div>`;
                 }).join('');
             }, (error) => {
                 console.error("Error fetching game scores:", error);
-                historyEl.innerHTML = `<p class="text-red-500 text-center">Gagal memuat progres latihan: ${escapeHtml(error.message)}</p>`;
+                historyEl.innerHTML = `<div class="feedback bad">Gagal memuat progres latihan: ${escapeHtml(error.message)}</div>`;
             });
         }
     </script>
