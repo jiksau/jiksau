@@ -93,7 +93,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 ## Tampilan (sejak 17 Okt 2026, meniru Monitor Kelas)
 
 - Hijau `#1f6f4a` (gelap: `#5cc493`), latar `#f3f5f4`, kartu putih bergaris tipis sudut 14px, font **Plus Jakarta Sans** (Google Fonts, dipasang di `<head>` tiap halaman). Mode gelap otomatis mengikuti HP/PC (`prefers-color-scheme`). Selalu pakai token (`var(--accent)`, `--surface`, `--line`, `--muted`, `--ok`, `--bad`, `--warn`, `--info`, `--soft` ...), jangan warna langsung.
-- Header lengket: `<header class="topbar"><div class="topbar-inner">` berisi `<span class="logo">EC</span>` + `<div class="brand"><b>Judul</b><small>sub</small></div>` + `<span id="notif">` (lonceng). Di halaman game: `<a class="back">` (panah + "Game") + `<h1>`.
+- Header lengket: `<header class="topbar"><div class="topbar-inner">` berisi `<a class="logo" href="user-dashboard.html">EC</a>` (logo = tombol ke Beranda; di admin ke admin.html) + `<div class="brand"><b>Judul</b><small>sub</small></div>` + `<span id="notif">` (lonceng). Di halaman game: `<a class="back">` (panah + "Game") + `<h1>`.
 - Halaman siswa utama (`user-dashboard.html`, `gamelist.html`, `leaderboard.html`) memakai navigasi bawah `nav.tabs` (Beranda / Game / Peringkat) + `body.has-tabs`. Halaman game tidak memakai navigasi bawah.
 - Komponen: `.card`, `.sec` (judul bagian), `.list` + `.item` (baris bisa diketuk, panah kanan), `.stats` + `.stat`, `.btn` (`.secondary`, `.ghost`, `.danger`, `.block`), `.input`, `.search`, `.empty`.
 - Ikon: SVG garis (`class="ico"`), tanpa emoji kecuali medali peringkat. Poster peringkat tetap hijau di mode gelap.

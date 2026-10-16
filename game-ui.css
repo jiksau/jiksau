@@ -112,6 +112,8 @@ a { color: var(--accent); }
     letter-spacing: -0.5px;
     text-decoration: none;
 }
+a.logo:active { transform: scale(0.95); }
+a.logo:hover { background: var(--accent-dark); }
 .brand { flex: 1; min-width: 0; line-height: 1.25; }
 .brand b { display: block; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand small { display: block; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
