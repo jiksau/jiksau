@@ -26,7 +26,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `admin-login.html` | Login admin |
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
 | `game-ui.css` | Tampilan bersama game (tombol, isian, kartu, ukuran) |
-| `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal, acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
+| `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb" / "kalimat", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal (`directions: null` = tanpa pilihan arah), acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
 | `game-scores.js` | Modul simpan skor + muat paket soal (lihat di bawah) |
 
 ## Game yang ada
@@ -37,7 +37,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `kosakata 3.html` (Kartu Hafalan) | `kosakata-3` | Ya, memakai paket soal |
 | `kosakata 4.html` (Kata Kerja V1-V2-V3) | `kosakata-4` | Ya, memakai paket jenis `verb`. Benar jika ketiga bentuk tepat. Arah: Arti → V1,V2,V3 atau V1 → V2,V3 |
 | `kosakata 5.html` (Hafalan Tanpa Salah) | `kosakata-5` | Ya, memakai paket soal (`points` = jumlah salah sebelum tuntas; kata sendiri maks. 10) |
-| `scramble.html` | `scramble` | Ya (`points` = skor game) |
+| `scramble.html` (Susun Kalimat) | `scramble` | Ya, memakai paket jenis `kalimat`. Satu kalimat per layar, siswa mengetuk kotak kata untuk menyusun. Tanda baca akhir (. ? !) tidak diacak. Benar jika urutan sama persis dengan kalimat paket (huruf besar/kecil diabaikan) |
 | `kosakatapart2.html` | – | Tidak (tanpa skor) |
 | `question.html` | – | Tidak (pengacak pertanyaan) |
 | `chat real 1.html` | – | Tidak (memakai project Firebase lain: `ask-me-questions-25b22`) |
@@ -49,7 +49,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Dibuat admin di tab **Paket Soal**: judul, jenis, jenjang (atau Semua jenjang), **level 1–5** (`tier`, 1 = paling mudah; `PACK_TIERS` di `ec-common.js`), daftar soal ditempel satu per baris. Daftar paket admin bisa dicari & difilter jenjang.
   - `kosakata`: `kata = arti` (jawaban alternatif dipisah `/`, mis. `big = besar / luas`) → item `{q, a}`
   - `verb`: `eat, ate, eaten = makan` → item `{v1, v2, v3, arti}`; bentuk ganda dengan `/` (mis. `learn, learnt / learned, learnt / learned = belajar`)
-  - `kalimat`: satu kalimat per baris, 2–20 kata → item `{text}` (belum dipakai game)
+  - `kalimat`: satu kalimat per baris, 2–20 kata → item `{text}` (dipakai Susun Kalimat)
   - Maks. 200 soal per paket. Pengurai teks: `parsePackText` / `packToText` di `ec-common.js`.
 - **Hanya skor dengan paket soal yang menambah poin.** Latihan dengan kata sendiri tetap tersimpan (riwayat), tetapi tidak dihitung.
 - Jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung **hasil terbaik** per siswa per paket (`weeklyPoints` di `ec-common.js`, dipakai `leaderboard.html` dan `user-dashboard.html`).
@@ -60,7 +60,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 - Tata letak: PC dua kolom (kiri pilih soal; kanan pratinjau + pengaturan + Mulai), HP satu kolom. Kelas `app wide`, `setup-grid`, `side`, `narrow` di `game-ui.css`.
 - Kotak cari & filter muncul otomatis jika paket ≥ 6 atau ada lebih dari satu jenjang/level.
-- Batas waktu: saran = jumlah kata × detik per kata (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
+- Batas waktu: saran = jumlah soal × detik per soal (Kuis 8, Kartu 12, Hafalan Tanpa Salah 15, Kata Kerja 20, Susun Kalimat 25), dibulatkan ke menit (1–30). Default aktif di Kuis & Kartu, mati di Hafalan Tanpa Salah. Waktu habis di Hafalan Tanpa Salah = belum tuntas, skor tidak disimpan.
 - Pilihan siswa (paket, kata sendiri, pengaturan) diingat di browser (`localStorage`, kunci `ec-k2`, `ec-k2-settings`, dst.).
 
 ## Cara menyambungkan game ke skor & papan peringkat
@@ -104,6 +104,6 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 ## Rencana berikutnya
 
-1. ~~Bank soal + paket resmi~~ (selesai: Kuis Kosakata, Kartu Hafalan, Hafalan Tanpa Salah, Kata Kerja V1-V2-V3). Berikutnya: Scramble (`kalimat`); pakai `game-ui.css` + `word-source.js` (opsi `type`) agar seragam.
-2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Masih perlu: Kosakata 4, Scramble, Kartu Arti, Pertanyaan Acak, Chat belum memakai gaya baru; putuskan nasib Kartu Arti (mirip Kartu Hafalan) & Chat (tanpa login, project Firebase lain).
+1. ~~Bank soal + paket resmi~~ (selesai untuk semua game berpoin, termasuk Susun Kalimat).
+2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Masih perlu: Kartu Arti, Pertanyaan Acak, Chat belum memakai gaya baru; putuskan nasib Kartu Arti (mirip Kartu Hafalan) & Chat (tanpa login, project Firebase lain).
 3. Game baru dari paket soal: Pilihan Ganda Cepat, Tantangan Harian, Dengarkan & Tulis, Cocokkan Pasangan.

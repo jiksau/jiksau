@@ -5,6 +5,8 @@
 //     cari & filter paket (jenjang, level), tag, dan pratinjau isi paket.
 //  2) mountPlaySettings: arah soal, acak urutan, batas waktu (+ saran).
 //
+//  type: "kosakata" (default), "verb", atau "kalimat" (Susun Kalimat).
+//
 //  Contoh (lihat kosakata 5.html):
 //    const source = mountWordSource($("source"), {
 //        gameKey: "k5", maxOwn: 10, previewEl: $("preview"), onChange });
@@ -60,7 +62,8 @@ function tagsHtml(pack) {
 export function wordTableHtml(words, fields) {
     const head = fields.length > 2
         ? `<thead><tr><th></th>${fields.map((f) => `<th>${f.label}</th>`).join("")}</tr></thead>` : "";
-    return `<table class="word-table${fields.length > 2 ? " cols" : ""}">${head}<tbody>${words.map((w, i) =>
+    const cls = fields.length > 2 ? " cols" : fields.length === 1 ? " one" : "";
+    return `<table class="word-table${cls}">${head}<tbody>${words.map((w, i) =>
         `<tr><td>${i + 1}</td>${fields.map((f) => `<td>${escapeHtml(w[f.key])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
@@ -76,15 +79,28 @@ export const PACK_FIELDS = {
         { key: "v2", label: "V2", example: "ate" },
         { key: "v3", label: "V3", example: "eaten" },
     ],
+    kalimat: [
+        { key: "text", label: "Kalimat", example: "I go to school every day." },
+    ],
 };
+
+const UNITS = { kosakata: "kata", verb: "kata kerja", kalimat: "kalimat" };
+
+// Kalimat: 2-20 kata, maks. 200 huruf (sama dengan aturan paket di admin)
+function isValidSentence(text) {
+    const t = String(text || "").trim().replace(/\s+/g, " ");
+    const n = t ? t.split(" ").length : 0;
+    return n >= 2 && n <= 20 && t.length <= 200;
+}
 
 // =====================================================================
 //  Pilih soal
 // =====================================================================
 export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100, previewEl = null, onChange = () => {} }) {
     const FIELDS = PACK_FIELDS[type];
-    const unit = type === "verb" ? "kata kerja" : "kata";
-    const isComplete = (w) => FIELDS.every((f) => typeof w?.[f.key] === "string" && w[f.key].trim());
+    const unit = UNITS[type] || "kata";
+    const isComplete = (w) => FIELDS.every((f) => typeof w?.[f.key] === "string" && w[f.key].trim())
+        && (type !== "kalimat" || isValidSentence(w.text));
     const KEY = `ec-${gameKey}`;
     const saved = store.get(KEY) || {};
     const state = {
@@ -102,7 +118,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
     root.innerHTML = `
         <div class="segmented" role="tablist">
             <button type="button" data-src="pack">Paket Guru</button>
-            <button type="button" data-src="own">Kata Sendiri</button>
+            <button type="button" data-src="own">${type === "kalimat" ? "Kalimat Sendiri" : "Kata Sendiri"}</button>
         </div>
         <p class="source-note" data-note></p>
         <div data-pack-area>
@@ -178,7 +194,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
             login: 'Masuk dulu untuk memakai paket guru. <a href="index.html">Masuk</a>',
             inactive: "Akun ini tidak aktif. Hubungi guru.",
             error: "Paket gagal dimuat. Periksa internet, lalu muat ulang halaman.",
-            empty: "Belum ada paket untuk jenjangmu. Coba tab Kata Sendiri.",
+            empty: `Belum ada paket untuk jenjangmu. Coba tab ${type === "kalimat" ? "Kalimat" : "Kata"} Sendiri.`,
         };
         const status = state.packStatus === "ok" && !state.packs.length ? "empty" : state.packStatus;
         $("[data-pack-count]").textContent = "";
@@ -304,7 +320,10 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         // Pesan jika belum bisa mulai (null = siap)
         problem() {
             if (state.mode === "pack" && !state.pack) return "Pilih paket soal dulu.";
-            if (!api.words().length) return FIELDS.length > 2 ? "Isi minimal satu baris lengkap." : "Isi minimal satu pasang kata dan arti.";
+            if (!api.words().length) {
+                if (type === "kalimat") return "Isi minimal satu kalimat (2–20 kata).";
+                return FIELDS.length > 2 ? "Isi minimal satu baris lengkap." : "Isi minimal satu pasang kata dan arti.";
+            }
             return null;
         },
     };
@@ -346,10 +365,10 @@ export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDef
 
     root.innerHTML = `
         <div class="opts">
-            <label class="field">Arah soal
+            <label class="field" data-dir-field>Arah soal
                 <select class="input" data-dir>
-                    <option value="qa">${directions[0]}</option>
-                    <option value="aq">${directions[1]}</option>
+                    <option value="qa">${directions?.[0] || ""}</option>
+                    <option value="aq">${directions?.[1] || ""}</option>
                 </select>
             </label>
             <div class="opt-row">
@@ -364,6 +383,10 @@ export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDef
             </div>
         </div>`;
     const $ = (sel) => root.querySelector(sel);
+
+    // directions: null = game tanpa pilihan arah (mis. Susun Kalimat)
+    $("[data-dir-field]").hidden = !directions;
+    if (!directions) state.reverse = false;
 
     const suggested = () => Math.min(30, Math.max(1, Math.ceil((count() * secondsPerWord) / 60)));
     const persist = () => store.set(KEY, state);

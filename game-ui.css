@@ -1,7 +1,7 @@
 /* =====================================================================
    game-ui.css - Tampilan bersama game ExtraCourse
-   Dipakai oleh game kosakata (Kuis Kosakata, Kartu Hafalan,
-   Hafalan Tanpa Salah) agar tata letak, tombol, dan ukuran seragam.
+   Dipakai oleh semua game berpoin (kosakata, kata kerja, Susun Kalimat)
+   agar tata letak, tombol, dan ukuran seragam.
    ===================================================================== */
 
 :root {
@@ -218,6 +218,8 @@ body {
 .word-rows { display: grid; gap: 8px; }
 .word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--control-h); gap: 8px; }
 .word-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--control-h); gap: 8px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+/* Kalimat sendiri: satu kolom */
+.word-row.f1, .word-head.f1 { grid-template-columns: minmax(0, 1fr) var(--control-h); }
 /* Kata kerja: Arti, V1, V2, V3 */
 .word-row.f4, .word-head.f4 { grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)) var(--control-h); }
 
@@ -232,6 +234,7 @@ body {
 .word-table td:nth-child(2) { font-weight: 600; width: 45%; }
 .word-table th { padding: 8px 4px; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; }
 .word-table.cols td:nth-child(2) { width: auto; }
+.word-table.one td:nth-child(2) { width: auto; font-weight: 400; }
 .word-table.cols td { overflow-wrap: anywhere; }
 .word-scroll { max-height: 280px; overflow-y: auto; margin-top: 12px; border-top: 1px solid var(--line); }
 
@@ -284,6 +287,45 @@ body {
 .verb-fields .field { font-size: 0.8rem; }
 .verb-fields .key { min-height: 1.2em; font-size: 0.85rem; font-weight: 600; color: var(--bad); }
 .prompt-hint { margin: -10px 0 16px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+
+/* Susun Kalimat: kotak kata */
+.sentence-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+    gap: 8px;
+    min-height: 112px;
+    padding: 12px;
+    border: 2px dashed var(--line-strong);
+    border-radius: var(--radius);
+    background: #fafafa;
+}
+.sentence-box.filled { border-style: solid; border-color: #c7d2fe; background: var(--surface); }
+.sentence-box.is-ok { border: 2px solid var(--ok); background: #f0fdf4; }
+.sentence-box.is-bad { border: 2px solid var(--bad); background: #fef2f2; }
+.sentence-box .placeholder { color: var(--muted); font-size: 0.9rem; }
+.sentence-box .last { display: inline-flex; align-items: center; gap: 4px; }
+.sentence-box .end { font-size: 1.1rem; font-weight: 700; }
+.tile-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+.tile {
+    min-height: var(--control-h);
+    padding: 6px 14px;
+    border: 1px solid #c7d2fe;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+.tile:hover { border-color: var(--accent); }
+.tile:disabled { cursor: default; }
+.tile.used { visibility: hidden; }
+.sentence-box .tile { background: var(--surface); }
+.sentence-box.is-ok .tile, .sentence-box.is-bad .tile { border-color: var(--line-strong); color: var(--text); }
 
 /* Hasil akhir */
 .result { text-align: center; }

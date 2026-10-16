@@ -1,1231 +1,259 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scramble Sentences Game - Enhanced</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 20px;
-            background-color: white;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        h2, h3 {
-            color: #555;
-            margin: 20px 0;
-        }
-
-        .input-box {
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        input[type="text"], 
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 5px 0;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        select:focus,
-        textarea:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 1em;
-            cursor: pointer;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        button.secondary {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
-        }
-
-        button.warning {
-            background: linear-gradient(135deg, #ff9a44, #fc6076);
-        }
-
-        button.success {
-            background: linear-gradient(135deg, #00b09b, #96c93d);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Sentence List Styles */
-        .sentence-list-container {
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 2px solid #e0e0e0;
-        }
-
-        .sentence-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .sentence-items {
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-        }
-
-        .sentence-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            transition: background-color 0.3s ease;
-            animation: slideIn 0.3s ease;
-        }
-
-        .sentence-item:last-child {
-            border-bottom: none;
-        }
-
-        .sentence-item:hover {
-            background-color: #f1f3f5;
-        }
-
-        .sentence-text {
-            flex: 1;
-            text-align: left;
-            font-size: 14px;
-            color: #333;
-            word-break: break-word;
-            padding-right: 10px;
-        }
-
-        .sentence-actions {
-            display: flex;
-            gap: 5px;
-            flex-shrink: 0;
-        }
-
-        .sentence-actions button {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            background: #f8f9fa;
-            color: #333;
-            box-shadow: none;
-        }
-
-        .sentence-actions button:hover {
-            transform: translateY(-1px);
-        }
-
-        .sentence-actions button.delete-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .sentence-actions button.edit-btn {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        /* Game Area Styles */
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .timer {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #dc3545;
-            background: #f8f9fa;
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .timer.warning {
-            color: #ffc107;
-            animation: pulse 1s infinite;
-        }
-
-        .timer.danger {
-            color: #dc3545;
-            animation: pulse 0.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .score-board {
-            font-size: 1.3em;
-            color: #28a745;
-            background: #f8f9fa;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: bold;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .difficulty-selector {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .game-mode-selector {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .mode-btn {
-            padding: 10px 20px;
-            background: #e0e0e0;
-            color: #333;
-            box-shadow: none;
-        }
-
-        .mode-btn.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        .sentence-row {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
-            transition: all 0.3s ease;
-            animation: slideIn 0.5s ease;
-            position: relative;
-        }
-
-        .sentence-row:hover {
-            border-color: #667eea;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .scrambled-text {
-            font-size: 1.2em;
-            color: #667eea;
-            font-weight: 500;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: #f1f3f5;
-            border-radius: 8px;
-            word-break: break-word;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .input-group input {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .hint-btn {
-            background: #ffc107;
-            color: #212529;
-            padding: 10px 20px;
-            white-space: nowrap;
-        }
-
-        .word-count {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 5px;
-            text-align: right;
-        }
-
-        .feedback {
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 5px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .correct {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .incorrect {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .correct-flash {
-            animation: correctFlash 0.5s ease;
-        }
-
-        @keyframes correctFlash {
-            0%, 100% { background-color: transparent; }
-            50% { background-color: #d4edda; border-color: #c3e6cb; }
-        }
-
-        .progress-container {
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00b09b, #96c93d);
-            transition: width 0.3s ease;
-            border-radius: 5px;
-        }
-
-        .progress-text {
-            margin-top: 5px;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .lives {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-            margin: 10px 0;
-        }
-
-        .heart {
-            color: #dc3545;
-            font-size: 1.5em;
-            transition: all 0.3s ease;
-        }
-
-        .heart.lost {
-            opacity: 0.3;
-            transform: scale(0.8);
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .pause-btn {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .pause-btn.paused {
-            background: #28a745;
-            color: white;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 600px) {
-            .container {
-                padding: 15px;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 2em;
-            }
-
-            button {
-                width: 100%;
-                margin: 5px 0;
-            }
-
-            .game-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .timer, .score-board {
-                text-align: center;
-            }
-
-            .input-group {
-                flex-direction: column;
-            }
-
-            .sentence-actions {
-                flex-direction: column;
-            }
-
-            .sentence-item {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .sentence-text {
-                text-align: center;
-                padding-right: 0;
-            }
-
-            .sentence-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .sentence-actions button {
-                flex: 1;
-            }
-        }
-
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Tooltip */
-        [data-tooltip] {
-            position: relative;
-            cursor: help;
-        }
-
-        [data-tooltip]:before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 5px 10px;
-            background: #333;
-            color: white;
-            font-size: 0.8em;
-            border-radius: 5px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        [data-tooltip]:hover:before {
-            opacity: 1;
-            visibility: visible;
-        }
-    </style>
+    <title>Susun Kalimat - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
 </head>
 <body>
-    <div id="setupArea" class="container">
-        <h1>🎮 Scramble Sentences Game</h1>
-        
-        <div class="input-box">
-            <label for="sentence">📝 Enter your sentence:</label>
-            <input type="text" id="sentence" placeholder="Type a sentence here" maxlength="200">
-            <div class="word-count" id="wordCount">0 words</div>
+    <header class="topbar">
+        <div class="topbar-inner wide">
+            <a href="gamelist.html">← Game</a>
+            <h1>Susun Kalimat</h1>
         </div>
+    </header>
 
-        <div class="button-group">
-            <button onclick="addSentence()" class="success">➕ Add Sentence</button>
-            <button onclick="clearAllSentences()" class="warning">🗑️ Clear All</button>
-        </div>
-
-        <!-- Daftar Sentences -->
-        <div id="sentenceListContainer" class="sentence-list-container hidden">
-            <div class="sentence-stats">
-                <span id="sentenceCount">Total: 0 sentences</span>
-                <span id="totalWords">Total words: 0</span>
+    <main class="app wide">
+        <!-- ===== Persiapan ===== -->
+        <section id="setup" class="setup-grid">
+            <div class="card">
+                <h2>Pilih soal</h2>
+                <div id="source"></div>
             </div>
-            <div id="sentenceItems" class="sentence-items"></div>
-        </div>
-
-        <div class="difficulty-selector">
-            <label for="difficulty">⚡ Difficulty Level:</label>
-            <select id="difficulty">
-                <option value="easy">Easy (More time, hints available)</option>
-                <option value="medium" selected>Medium (Standard)</option>
-                <option value="hard">Hard (Scrambled letters, less time)</option>
-            </select>
-        </div>
-
-        <div class="game-mode-selector">
-            <button class="mode-btn active" onclick="setGameMode('timed')" id="modeTimed">⏱️ Timed</button>
-            <button class="mode-btn" onclick="setGameMode('practice')" id="modePractice">📚 Practice</button>
-            <button class="mode-btn" onclick="setGameMode('challenge')" id="modeChallenge">⚔️ Challenge (3 Lives)</button>
-        </div>
-
-        <div class="input-box">
-            <label for="timeLimit">⏰ Set Timer (minutes):</label>
-            <input type="number" id="timeLimit" placeholder="Enter minutes (e.g., 2)" min="1" max="60" value="2">
-        </div>
-
-        <div class="button-group">
-            <button onclick="startChallenge()">🚀 Start Challenge</button>
-        </div>
-    </div>
-
-    <div id="challengeArea" class="container hidden">
-        <h1>🎯 Unscramble the Sentences!</h1>
-        
-        <div class="game-header">
-            <div class="timer" id="timer">⏱️ Time Left: 00:00</div>
-            <div class="score-board" id="scoreBoard">🏆 Score: 0</div>
-        </div>
-
-        <div id="livesContainer" class="lives hidden">
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-        </div>
-
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+                </div>
             </div>
-            <div class="progress-text" id="progressText">0/0 sentences completed</div>
-        </div>
+        </section>
 
-        <div id="sentenceList" class="sentence-list"></div>
+        <!-- ===== Bermain ===== -->
+        <section id="play" class="card narrow" hidden>
+            <div class="play-head">
+                <span class="badge" id="progressBadge">1 / 1</span>
+                <span class="badge" id="timer" hidden>00:00</span>
+            </div>
+            <div class="progress"><span id="bar"></span></div>
+            <div class="sentence-box" id="answerBox"></div>
+            <div class="tile-pool" id="pool"></div>
+            <div id="feedback" class="feedback"></div>
+            <div class="actions" style="margin-top:16px">
+                <button type="button" class="btn secondary" id="clearBtn">Kosongkan</button>
+                <button type="button" class="btn" id="actionBtn">Periksa</button>
+            </div>
+        </section>
 
-        <div class="game-controls">
-            <button onclick="checkAnswers()" class="success">✅ Check Answers</button>
-            <button onclick="showHint()" class="warning" id="hintBtn">💡 Hint (3 left)</button>
-            <button onclick="pauseTimer()" class="pause-btn" id="pauseBtn">⏸️ Pause</button>
-            <button onclick="goBackToSetup()" class="secondary">🏠 Back to Home</button>
-        </div>
-    </div>
+        <!-- ===== Hasil ===== -->
+        <section id="done" class="stack narrow" hidden>
+            <div class="card result">
+                <div class="big" id="doneScore">0/0</div>
+                <p class="sub" id="doneSub"></p>
+                <div class="actions" style="margin-top:16px">
+                    <button type="button" class="btn" id="againBtn">Main lagi</button>
+                    <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
+                </div>
+            </div>
+            <div class="card" id="missedCard">
+                <h2>Perlu diulang</h2>
+                <div id="missedList"></div>
+            </div>
+        </section>
+    </main>
 
-    <script>
-        // Game State
-        let sentences = [];
-        let scrambledSentences = [];
-        let originalSentences = [];
-        let timerInterval;
-        let isChallengeActive = false;
-        let isPaused = false;
-        let currentDifficulty = 'medium';
-        let currentGameMode = 'timed';
-        let score = 0;
-        let maxScore = 0;
-        let hintsRemaining = 3;
-        let lives = 3;
-        let timeLeft = 0;
-        let totalTime = 0;
-        let completedSentences = 0;
-        let pausedTimeLeft = 0;
+    <script type="module">
+        import { mountWordSource, mountPlaySettings, shuffled, formatClock, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js";
+        import { escapeHtml } from "./ec-common.js";
 
-        // Initialize
-        function init() {
-            updateSentenceListDisplay();
-            loadDummyData(); // Untuk testing, hapus jika tidak diperlukan
-        }
+        const $ = (id) => document.getElementById(id);
 
-        // Load dummy data untuk testing
-        function loadDummyData() {
-            if (sentences.length === 0) {
-                sentences = [
-                    "The cat sits on the mat",
-                    "I love to play football",
-                    "She reads a book every day",
-                    "They are going to the market",
-                    "He writes a letter to his friend"
-                ];
-                updateSentenceListDisplay();
-            }
-        }
-
-        // Word count
-        document.getElementById('sentence').addEventListener('input', function(e) {
-            const words = e.target.value.trim().split(/\s+/).filter(w => w.length > 0);
-            document.getElementById('wordCount').textContent = words.length + ' words';
+        let settings = null;
+        const source = mountWordSource($("source"), {
+            gameKey: "scr",
+            type: "kalimat",
+            maxOwn: 30,
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "scr", secondsPerWord: 25, timerDefault: true,
+            count: () => source.words().length,
+            directions: null,
         });
 
-        // Sentence Management
-        function addSentence() {
-            const sentenceInput = document.getElementById("sentence").value.trim();
-            if (sentenceInput === "") {
-                showAlert("Please enter a sentence!", "warning");
-                return;
-            }
+        let sentences = [];
+        let index = 0;
+        let correct = 0;
+        let missed = [];
+        let parts = null;      // { words, end } kalimat sekarang
+        let tiles = [];        // kata acak: [{ text, used }]
+        let picked = [];       // urutan susunan siswa (indeks tiles)
+        let checked = false;
+        let limit = null;      // detik, null = tanpa batas waktu
+        let secondsLeft = 0;
+        let timerId = null;
+        let finished = true;
 
-            if (sentenceInput.split(/\s+/).length < 2) {
-                showAlert("Sentence must have at least 2 words!", "warning");
-                return;
-            }
-
-            sentences.push(sentenceInput);
-            document.getElementById("sentence").value = "";
-            document.getElementById("wordCount").textContent = "0 words";
-            updateSentenceListDisplay();
-            showAlert(`Added: "${sentenceInput}"`, "success");
+        function show(section) {
+            ["setup", "play", "done"].forEach((id) => { $(id).hidden = id !== section; });
+            window.scrollTo(0, 0);
         }
 
-        function updateSentenceListDisplay() {
-            const container = document.getElementById("sentenceListContainer");
-            const listElement = document.getElementById("sentenceItems");
-            const sentenceCount = document.getElementById("sentenceCount");
-            const totalWords = document.getElementById("totalWords");
-            
-            if (sentences.length === 0) {
-                container.classList.add("hidden");
-                return;
+        // Pisahkan kalimat menjadi kata. Tanda baca akhir (. ? !) tidak ikut
+        // diacak, tetapi selalu tampil di ujung kalimat.
+        function splitSentence(text) {
+            const words = String(text).trim().split(/\s+/);
+            let end = "";
+            const last = words[words.length - 1];
+            const m = last.match(/[.?!]+$/);
+            if (m) {
+                end = m[0];
+                const rest = last.slice(0, -end.length);
+                if (rest) words[words.length - 1] = rest; else words.pop();
             }
-
-            container.classList.remove("hidden");
-            
-            // Hitung total words
-            const wordCount = sentences.reduce((total, sentence) => {
-                return total + sentence.split(/\s+/).length;
-            }, 0);
-
-            sentenceCount.textContent = `Total: ${sentences.length} sentences`;
-            totalWords.textContent = `Total words: ${wordCount}`;
-
-            listElement.innerHTML = '';
-            sentences.forEach((sentence, index) => {
-                const item = document.createElement("div");
-                item.className = "sentence-item";
-                item.innerHTML = `
-                    <span class="sentence-text">${index + 1}. ${sentence}</span>
-                    <div class="sentence-actions">
-                        <button class="edit-btn" onclick="editSentence(${index})" data-tooltip="Edit sentence">✏️</button>
-                        <button class="delete-btn" onclick="deleteSentence(${index})" data-tooltip="Delete sentence">🗑️</button>
-                    </div>
-                `;
-                listElement.appendChild(item);
-            });
+            return { words, end };
         }
 
-        function deleteSentence(index) {
-            const deleted = sentences[index];
-            sentences.splice(index, 1);
-            updateSentenceListDisplay();
-            showAlert(`Deleted: "${deleted}"`, "info");
+        // Acak kata, usahakan tidak sama dengan urutan aslinya
+        function scrambleWords(words) {
+            let out = shuffled(words);
+            for (let i = 0; i < 10 && words.length > 1 && out.join(" ") === words.join(" "); i++) out = shuffled(words);
+            return out;
         }
 
-        function editSentence(index) {
-            const newSentence = prompt("Edit sentence:", sentences[index]);
-            if (newSentence && newSentence.trim() !== "") {
-                sentences[index] = newSentence.trim();
-                updateSentenceListDisplay();
-                showAlert("Sentence updated!", "success");
-            }
-        }
-
-        function clearAllSentences() {
-            if (sentences.length > 0 && confirm("Are you sure you want to clear all sentences?")) {
-                sentences = [];
-                updateSentenceListDisplay();
-                showAlert("All sentences cleared!", "info");
-            }
-        }
-
-        // Game Mode
-        function setGameMode(mode) {
-            currentGameMode = mode;
-            
-            // Update button states
-            document.getElementById("modeTimed").classList.remove("active");
-            document.getElementById("modePractice").classList.remove("active");
-            document.getElementById("modeChallenge").classList.remove("active");
-            
-            document.getElementById(`mode${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add("active");
-            
-            // Update UI berdasarkan mode
-            const timeInput = document.getElementById("timeLimit");
-            const livesContainer = document.getElementById("livesContainer");
-            
-            if (mode === 'practice') {
-                timeInput.disabled = true;
-                livesContainer.classList.add("hidden");
-                showAlert("Practice mode: No time limit!", "info");
-            } else {
-                timeInput.disabled = false;
-                if (mode === 'challenge') {
-                    livesContainer.classList.remove("hidden");
-                    showAlert("Challenge mode: You have 3 lives!", "info");
-                } else {
-                    livesContainer.classList.add("hidden");
-                }
-            }
-        }
-
-        // Scrambling Functions
-        function scrambleSentence(sentence, difficulty) {
-            const words = sentence.split(" ");
-            
-            if (difficulty === 'hard') {
-                // Hard mode: scramble huruf dalam kata
-                return words.map(word => {
-                    if (word.length > 3) {
-                        // Abaikan tanda baca di akhir kata
-                        const punctuation = word.match(/[.,!?;:]$/);
-                        const cleanWord = word.replace(/[.,!?;:]$/, '');
-                        
-                        let scrambled = cleanWord.split('');
-                        // Jangan acak huruf pertama dan terakhir jika kata panjang
-                        if (cleanWord.length > 4) {
-                            const middle = scrambled.slice(1, -1);
-                            for (let i = middle.length - 1; i > 0; i--) {
-                                const j = Math.floor(Math.random() * (i + 1));
-                                [middle[i], middle[j]] = [middle[j], middle[i]];
-                            }
-                            scrambled = [scrambled[0], ...middle, scrambled[scrambled.length - 1]];
-                        } else {
-                            for (let i = scrambled.length - 1; i > 0; i--) {
-                                const j = Math.floor(Math.random() * (i + 1));
-                                [scrambled[i], scrambled[j]] = [scrambled[j], scrambled[i]];
-                            }
-                        }
-                        
-                        return scrambled.join('') + (punctuation ? punctuation[0] : '');
-                    }
-                    return word;
-                }).join(" ");
-            } else {
-                // Easy/Medium: acak urutan kata
-                for (let i = words.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [words[i], words[j]] = [words[j], words[i]];
-                }
-                return words.join(" ");
-            }
-        }
-
-        function scrambleAll() {
-            scrambledSentences = sentences.map(s => scrambleSentence(s, currentDifficulty));
-            originalSentences = [...sentences];
-        }
-
-        // Start Challenge
-        function startChallenge() {
-            if (sentences.length === 0) {
-                showAlert("Please add some sentences first!", "warning");
-                return;
-            }
-
-            if (isChallengeActive) {
-                showAlert("Challenge already in progress!", "warning");
-                return;
-            }
-
-            const timeInput = document.getElementById("timeLimit").value.trim();
-            const timeLimit = parseInt(timeInput, 10);
-
-            if (currentGameMode !== 'practice' && (isNaN(timeLimit) || timeLimit <= 0)) {
-                showAlert("Please enter a valid time in minutes!", "warning");
-                return;
-            }
-
-            // Reset game state
-            score = 0;
-            lives = 3;
-            hintsRemaining = 3;
-            completedSentences = 0;
-            isPaused = false;
-            
-            document.getElementById("scoreBoard").textContent = `🏆 Score: 0`;
-            document.getElementById("hintBtn").innerHTML = `💡 Hint (${hintsRemaining} left)`;
-            
-            // Update lives display
-            updateLivesDisplay();
-
-            // Scramble sentences
-            scrambleAll();
-
-            // Switch to Challenge Area
-            document.getElementById("setupArea").classList.add("hidden");
-            document.getElementById("challengeArea").classList.remove("hidden");
-
-            // Populate sentences
-            updateSentenceList();
-
-            // Set timer
-            if (currentGameMode !== 'practice') {
-                timeLeft = timeLimit * 60;
-                totalTime = timeLeft;
-                const timerDisplay = document.getElementById("timer");
-                isChallengeActive = true;
-
-                startTimer();
-            } else {
-                document.getElementById("timer").textContent = "⏱️ Practice Mode - No Time Limit";
-                isChallengeActive = true;
-            }
-
-            updateProgress();
+        function start() {
+            const problem = source.problem();
+            if (problem) { $("setupMsg").textContent = problem; return; }
+            const s = settings.get();
+            const list = source.words();
+            sentences = s.shuffle ? shuffled(list) : list;
+            limit = s.seconds;
+            index = 0;
+            correct = 0;
+            missed = [];
+            finished = false;
+            show("play");
+            startTimer();
+            renderQuestion();
         }
 
         function startTimer() {
-            const timerDisplay = document.getElementById("timer");
-            
-            timerInterval = setInterval(() => {
-                if (!isPaused && isChallengeActive) {
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        timerDisplay.textContent = "⏱️ Time's Up!";
-                        timerDisplay.classList.add("danger");
-                        isChallengeActive = false;
-                        checkAnswers();
-                    } else {
-                        const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                        const seconds = (timeLeft % 60).toString().padStart(2, '0');
-                        timerDisplay.textContent = `⏱️ Time Left: ${minutes}:${seconds}`;
-                        
-                        // Warning class
-                        if (timeLeft <= 30) {
-                            timerDisplay.classList.add("danger");
-                        } else if (timeLeft <= 60) {
-                            timerDisplay.classList.add("warning");
-                        }
-                        
-                        timeLeft--;
-                    }
-                }
+            clearInterval(timerId);
+            $("timer").hidden = limit === null;
+            if (limit === null) return;
+            secondsLeft = limit;
+            renderTimer();
+            timerId = setInterval(() => {
+                secondsLeft--;
+                renderTimer();
+                if (secondsLeft <= 0) finish(true);
             }, 1000);
         }
 
-        function pauseTimer() {
-            if (!isChallengeActive || currentGameMode === 'practice') return;
-            
-            isPaused = !isPaused;
-            const pauseBtn = document.getElementById("pauseBtn");
-            
-            if (isPaused) {
-                pauseBtn.innerHTML = "▶️ Resume";
-                pauseBtn.classList.add("paused");
-                showAlert("Game paused", "info");
-            } else {
-                pauseBtn.innerHTML = "⏸️ Pause";
-                pauseBtn.classList.remove("paused");
-                showAlert("Game resumed", "info");
-            }
+        function renderTimer() {
+            $("timer").textContent = formatClock(secondsLeft);
+            $("timer").className = "badge" + (secondsLeft <= 30 ? " bad" : secondsLeft <= 60 ? " warn" : "");
         }
 
-        function updateSentenceList() {
-            const listContainer = document.getElementById("sentenceList");
-            listContainer.innerHTML = "";
+        function renderQuestion() {
+            parts = splitSentence(sentences[index].text);
+            tiles = scrambleWords(parts.words).map((text) => ({ text, used: false }));
+            picked = [];
+            checked = false;
+            $("progressBadge").textContent = `${index + 1} / ${sentences.length}`;
+            $("bar").style.width = `${(index / sentences.length) * 100}%`;
+            $("feedback").className = "feedback";
+            $("feedback").textContent = "";
+            $("answerBox").className = "sentence-box";
+            $("actionBtn").textContent = "Periksa";
+            renderTiles();
+        }
 
-            scrambledSentences.forEach((scrambled, index) => {
-                const sentenceRow = document.createElement("div");
-                sentenceRow.className = "sentence-row";
-                sentenceRow.id = `row-${index}`;
+        function renderTiles() {
+            const box = $("answerBox");
+            box.classList.toggle("filled", picked.length > 0);
+            const placed = picked.map((t, i) => `<button type="button" class="tile" data-placed="${i}"${checked ? " disabled" : ""}>${escapeHtml(tiles[t].text)}</button>`);
+            // Tanda baca akhir menempel pada kata terakhir agar tidak turun sendirian
+            if (placed.length && parts.end) placed.push(`<span class="last">${placed.pop()}<span class="end">${escapeHtml(parts.end)}</span></span>`);
+            box.innerHTML = placed.length ? placed.join("") : '<span class="placeholder">Ketuk kata di bawah sesuai urutan.</span>';
+            $("pool").innerHTML = tiles.map((t, i) =>
+                `<button type="button" class="tile${t.used ? " used" : ""}" data-tile="${i}"${t.used || checked ? " disabled" : ""}>${escapeHtml(t.text)}</button>`).join("");
+            $("clearBtn").disabled = checked || picked.length === 0;
+            $("actionBtn").disabled = !checked && picked.length < tiles.length;
+        }
 
-                const scrambledLabel = document.createElement("div");
-                scrambledLabel.className = "scrambled-text";
-                scrambledLabel.textContent = `🔀 ${scrambled}`;
-                sentenceRow.appendChild(scrambledLabel);
+        function check() {
+            const answer = picked.map((t) => tiles[t].text).join(" ");
+            const ok = normalizeAnswer(answer) === normalizeAnswer(parts.words.join(" "));
+            checked = true;
+            if (ok) correct++;
+            else missed.push(sentences[index]);
+            renderTiles();
+            $("answerBox").classList.add(ok ? "is-ok" : "is-bad");
+            $("feedback").className = "feedback " + (ok ? "ok" : "bad");
+            $("feedback").textContent = ok ? "Benar." : `Jawaban: ${sentences[index].text}`;
+            $("actionBtn").textContent = index + 1 < sentences.length ? "Berikutnya" : "Lihat hasil";
+            $("actionBtn").focus();
+        }
 
-                const inputGroup = document.createElement("div");
-                inputGroup.className = "input-group";
+        function next() {
+            index++;
+            if (index >= sentences.length) finish(false);
+            else renderQuestion();
+        }
 
-                const inputBox = document.createElement("input");
-                inputBox.type = "text";
-                inputBox.placeholder = "Type the correct sentence here...";
-                inputBox.id = `answer-${index}`;
-                inputBox.addEventListener('input', () => checkLiveProgress());
-                inputGroup.appendChild(inputBox);
-
-                if (currentDifficulty === 'easy' || currentGameMode === 'practice') {
-                    const hintBtn = document.createElement("button");
-                    hintBtn.className = "hint-btn";
-                    hintBtn.textContent = "💡 Hint";
-                    hintBtn.onclick = () => giveHint(index);
-                    inputGroup.appendChild(hintBtn);
-                }
-
-                sentenceRow.appendChild(inputGroup);
-
-                // Feedback div
-                const feedbackDiv = document.createElement("div");
-                feedbackDiv.id = `feedback-${index}`;
-                feedbackDiv.className = "feedback hidden";
-                sentenceRow.appendChild(feedbackDiv);
-
-                listContainer.appendChild(sentenceRow);
+        function finish(timeUp) {
+            if (finished) return;
+            finished = true;
+            clearInterval(timerId);
+            // Saat waktu habis, kalimat yang belum diperiksa dihitung perlu diulang
+            if (timeUp) missed.push(...sentences.slice(checked ? index + 1 : index));
+            $("doneScore").textContent = `${correct}/${sentences.length}`;
+            $("doneSub").textContent = `benar${timeUp ? " · waktu habis" : ""}`;
+            $("missedCard").hidden = missed.length === 0;
+            $("missedList").innerHTML = wordTableHtml(missed, PACK_FIELDS.kalimat);
+            show("done");
+            window.saveGameScore?.({
+                gameId: "scramble", gameName: "Susun Kalimat",
+                correct, total: sentences.length, mode: "susun-kata",
+                ...source.scoreInfo(),
             });
         }
 
-        function checkLiveProgress() {
-            let completed = 0;
-            sentences.forEach((_, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                if (input && input.value.trim() !== "") {
-                    completed++;
-                }
-            });
-            completedSentences = completed;
-            updateProgress();
-        }
+        // Ketuk kata di bawah: pindah ke susunan. Ketuk kata di susunan: kembalikan.
+        $("pool").addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-tile]");
+            if (!btn || checked) return;
+            const i = Number(btn.dataset.tile);
+            if (tiles[i].used) return;
+            tiles[i].used = true;
+            picked.push(i);
+            renderTiles();
+        });
+        $("answerBox").addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-placed]");
+            if (!btn || checked) return;
+            const [t] = picked.splice(Number(btn.dataset.placed), 1);
+            tiles[t].used = false;
+            renderTiles();
+        });
+        $("clearBtn").addEventListener("click", () => {
+            if (checked) return;
+            tiles.forEach((t) => { t.used = false; });
+            picked = [];
+            renderTiles();
+        });
+        $("actionBtn").addEventListener("click", () => {
+            if (finished) return;
+            if (checked) next(); else check();
+        });
 
-        function updateProgress() {
-            const total = sentences.length;
-            const percentage = total > 0 ? (completedSentences / total) * 100 : 0;
-            
-            document.getElementById("progressBar").style.width = `${percentage}%`;
-            document.getElementById("progressText").textContent = 
-                `${completedSentences}/${total} sentences completed`;
-        }
-
-        function updateLivesDisplay() {
-            const hearts = document.querySelectorAll('.heart');
-            hearts.forEach((heart, index) => {
-                if (index < lives) {
-                    heart.classList.remove('lost');
-                } else {
-                    heart.classList.add('lost');
-                }
-            });
-        }
-
-        function showHint() {
-            if (hintsRemaining <= 0) {
-                showAlert("No hints remaining!", "warning");
-                return;
-            }
-
-            // Cari sentence yang belum dijawab dengan benar
-            const unanswered = [];
-            sentences.forEach((_, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                const feedback = document.getElementById(`feedback-${index}`);
-                if (input && !feedback.classList.contains('correct')) {
-                    unanswered.push(index);
-                }
-            });
-
-            if (unanswered.length === 0) {
-                showAlert("All sentences are already correct!", "info");
-                return;
-            }
-
-            const randomIndex = unanswered[Math.floor(Math.random() * unanswered.length)];
-            giveHint(randomIndex);
-        }
-
-        function giveHint(index) {
-            if (hintsRemaining <= 0) {
-                showAlert("No hints remaining!", "warning");
-                return;
-            }
-
-            const correctAnswer = sentences[index];
-            const words = correctAnswer.split(" ");
-            
-            // Tampilkan huruf pertama setiap kata
-            const hint = words.map(word => word[0] + "...").join(" ");
-            
-            // Tampilkan hint di feedback
-            const feedback = document.getElementById(`feedback-${index}`);
-            feedback.classList.remove("hidden", "correct", "incorrect");
-            feedback.innerHTML = `💡 Hint: Starts with "${hint}"`;
-            feedback.style.backgroundColor = "#fff3cd";
-            feedback.style.color = "#856404";
-            
-            hintsRemaining--;
-            document.getElementById("hintBtn").innerHTML = `💡 Hint (${hintsRemaining} left)`;
-            
-            // Animasi
-            const row = document.getElementById(`row-${index}`);
-            row.style.backgroundColor = "#fff3cd";
-            setTimeout(() => {
-                row.style.backgroundColor = "";
-            }, 1000);
-        }
-
-        function checkAnswers() {
-            if (!isChallengeActive && scrambledSentences.length === 0) {
-                showAlert("No challenge to check!", "warning");
-                return;
-            }
-
-            clearInterval(timerInterval);
-            isChallengeActive = false;
-            
-            let correctCount = 0;
-            const totalSentences = sentences.length;
-
-            scrambledSentences.forEach((_, index) => {
-                const userAnswer = document.getElementById(`answer-${index}`).value.trim();
-                const correctAnswer = sentences[index];
-                const feedback = document.getElementById(`feedback-${index}`);
-                const inputField = document.getElementById(`answer-${index}`);
-                const row = document.getElementById(`row-${index}`);
-
-                feedback.classList.remove("hidden");
-
-                if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-                    feedback.textContent = "✅ Correct!";
-                    feedback.className = "feedback correct";
-                    correctCount++;
-                    
-                    // Animasi untuk jawaban benar
-                    row.classList.add("correct-flash");
-                    setTimeout(() => {
-                        row.classList.remove("correct-flash");
-                    }, 500);
-                    
-                    // Tambah score
-                    if (currentGameMode !== 'practice') {
-                        const timeBonus = currentGameMode === 'timed' ? Math.floor((timeLeft / totalTime) * 50) : 0;
-                        const points = 100 + timeBonus;
-                        score += points;
-                        
-                        // Animasi score
-                        const scoreBoard = document.getElementById("scoreBoard");
-                        scoreBoard.innerHTML = `🏆 Score: ${score} <span style="font-size: 0.7em; color: #28a745;">+${points}</span>`;
-                        setTimeout(() => {
-                            scoreBoard.innerHTML = `🏆 Score: ${score}`;
-                        }, 1000);
-                    }
-                } else {
-                    if (currentGameMode === 'challenge') {
-                        lives--;
-                        updateLivesDisplay();
-                        
-                        if (lives <= 0) {
-                            showAlert("Game Over! No lives remaining!", "danger");
-                            feedback.textContent = `❌ Game Over! Correct answer: "${correctAnswer}"`;
-                            feedback.className = "feedback incorrect";
-                            
-                            // Disable semua input
-                            document.querySelectorAll('input[type="text"]').forEach(input => {
-                                input.disabled = true;
-                            });
-                            return;
-                        }
-                    }
-                    
-                    feedback.textContent = `❌ Incorrect! Correct answer: "${correctAnswer}"`;
-                    feedback.className = "feedback incorrect";
-                }
-                
-                inputField.disabled = true;
-            });
-
-            // Update score
-            document.getElementById("scoreBoard").textContent = `🏆 Score: ${score}`;
-            
-            if (maxScore < score) {
-                maxScore = score;
-            }
-
-            // Simpan skor ke akun siswa
-            window.saveGameScore?.({ gameId: "scramble", gameName: "Scramble Sentences", correct: correctCount, total: totalSentences, points: score, mode: currentGameMode });
-
-            // Show results
-            const accuracy = (correctCount / totalSentences * 100).toFixed(1);
-            showAlert(`✅ ${correctCount}/${totalSentences} correct! Accuracy: ${accuracy}%`, "success");
-        }
-
-        function showHint() {
-            if (hintsRemaining <= 0) {
-                showAlert("No hints remaining!", "warning");
-                return;
-            }
-
-            // Cari sentence yang belum dijawab
-            const unanswered = [];
-            sentences.forEach((_, index) => {
-                const input = document.getElementById(`answer-${index}`);
-                if (input && !input.disabled) {
-                    unanswered.push(index);
-                }
-            });
-
-            if (unanswered.length === 0) {
-                showAlert("All sentences are already answered!", "info");
-                return;
-            }
-
-            const randomIndex = unanswered[Math.floor(Math.random() * unanswered.length)];
-            giveHint(randomIndex);
-        }
-
-        function showAlert(message, type) {
-            // Buat alert kustom
-            const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 20px;
-                background-color: ${type === 'success' ? '#d4edda' : type === 'warning' ? '#fff3cd' : type === 'danger' ? '#f8d7da' : '#d1ecf1'};
-                color: ${type === 'success' ? '#155724' : type === 'warning' ? '#856404' : type === 'danger' ? '#721c24' : '#0c5460'};
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                animation: slideInRight 0.3s ease;
-                max-width: 300px;
-            `;
-            alertDiv.textContent = message;
-            
-            document.body.appendChild(alertDiv);
-            
-            setTimeout(() => {
-                alertDiv.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => {
-                    document.body.removeChild(alertDiv);
-                }, 300);
-            }, 3000);
-        }
-
-        function goBackToSetup() {
-            clearInterval(timerInterval);
-            isChallengeActive = false;
-            isPaused = false;
-            
-            document.getElementById("challengeArea").classList.add("hidden");
-            document.getElementById("setupArea").classList.remove("hidden");
-            
-            // Reset pause button
-            const pauseBtn = document.getElementById("pauseBtn");
-            pauseBtn.innerHTML = "⏸️ Pause";
-            pauseBtn.classList.remove("paused");
-        }
-
-        // Initialize on load
-        window.onload = init;
-
-        // Tambahkan CSS untuk animasi alert
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            
-            @keyframes slideOutRight {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+        $("startBtn").addEventListener("click", start);
+        $("againBtn").addEventListener("click", start);
+        $("doneBackBtn").addEventListener("click", () => show("setup"));
     </script>
-    <script type="module" src="game-scores.js"></script>
 </body>
 </html>
