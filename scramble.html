@@ -25,6 +25,7 @@
                 <div class="card" id="preview"></div>
                 <div class="card">
                     <div id="settings"></div>
+                    <p class="note" style="margin-top:12px">Tiap kalimat punya 3 kesempatan.</p>
                     <div id="setupMsg" class="feedback bad"></div>
                     <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
                 </div>
@@ -84,6 +85,8 @@
             directions: null,
         });
 
+        const MAX_TRIES = 3;
+
         let sentences = [];
         let index = 0;
         let correct = 0;
@@ -91,7 +94,9 @@
         let parts = null;      // { words, end } kalimat sekarang
         let tiles = [];        // kata acak: [{ text, used }]
         let picked = [];       // urutan susunan siswa (indeks tiles)
-        let checked = false;
+        let checked = false;   // kalimat sekarang sudah benar / kesempatan habis
+        let tries = 0;
+        let lastWrong = "";    // susunan salah terakhir (agar tidak terhitung dua kali)
         let limit = null;      // detik, null = tanpa batas waktu
         let secondsLeft = 0;
         let timerId = null;
@@ -163,6 +168,8 @@
             tiles = scrambleWords(parts.words).map((text) => ({ text, used: false }));
             picked = [];
             checked = false;
+            tries = 0;
+            lastWrong = "";
             $("progressBadge").textContent = `${index + 1} / ${sentences.length}`;
             $("bar").style.width = `${(index / sentences.length) * 100}%`;
             $("feedback").className = "feedback";
@@ -175,6 +182,7 @@
         function renderTiles() {
             const box = $("answerBox");
             box.classList.toggle("filled", picked.length > 0);
+            if (!checked) box.classList.remove("is-bad"); // merah hilang saat susunan diubah
             const placed = picked.map((t, i) => `<button type="button" class="tile" data-placed="${i}"${checked ? " disabled" : ""}>${escapeHtml(tiles[t].text)}</button>`);
             // Tanda baca akhir menempel pada kata terakhir agar tidak turun sendirian
             if (placed.length && parts.end) placed.push(`<span class="last">${placed.pop()}<span class="end">${escapeHtml(parts.end)}</span></span>`);
@@ -186,15 +194,31 @@
         }
 
         function check() {
-            const answer = picked.map((t) => tiles[t].text).join(" ");
-            const ok = normalizeAnswer(answer) === normalizeAnswer(parts.words.join(" "));
+            const answer = normalizeAnswer(picked.map((t) => tiles[t].text).join(" "));
+            const ok = answer === normalizeAnswer(parts.words.join(" "));
+            if (!ok) {
+                if (answer === lastWrong) {
+                    $("feedback").className = "feedback info";
+                    $("feedback").textContent = "Ubah susunannya dulu.";
+                    return;
+                }
+                lastWrong = answer;
+                tries++;
+                if (tries < MAX_TRIES) {
+                    // Susunan tetap di tempat agar siswa bisa memperbaikinya
+                    $("answerBox").classList.add("is-bad");
+                    $("feedback").className = "feedback bad";
+                    $("feedback").textContent = `Belum tepat. Sisa ${MAX_TRIES - tries} kesempatan.`;
+                    return;
+                }
+            }
             checked = true;
             if (ok) correct++;
             else missed.push(sentences[index]);
             renderTiles();
             $("answerBox").classList.add(ok ? "is-ok" : "is-bad");
             $("feedback").className = "feedback " + (ok ? "ok" : "bad");
-            $("feedback").textContent = ok ? "Benar." : `Jawaban: ${sentences[index].text}`;
+            $("feedback").textContent = ok ? "Benar." : `Kesempatan habis. Jawaban: ${sentences[index].text}`;
             $("actionBtn").textContent = index + 1 < sentences.length ? "Berikutnya" : "Lihat hasil";
             $("actionBtn").focus();
         }

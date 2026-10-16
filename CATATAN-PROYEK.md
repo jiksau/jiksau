@@ -37,7 +37,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `kosakata 3.html` (Kartu Hafalan) | `kosakata-3` | Ya, memakai paket soal |
 | `kosakata 4.html` (Kata Kerja V1-V2-V3) | `kosakata-4` | Ya, memakai paket jenis `verb`. Benar jika ketiga bentuk tepat. Arah: Arti → V1,V2,V3 atau V1 → V2,V3 |
 | `kosakata 5.html` (Hafalan Tanpa Salah) | `kosakata-5` | Ya, memakai paket soal (`points` = jumlah salah sebelum tuntas; kata sendiri maks. 10) |
-| `scramble.html` (Susun Kalimat) | `scramble` | Ya, memakai paket jenis `kalimat`. Satu kalimat per layar, siswa mengetuk kotak kata untuk menyusun. Tanda baca akhir (. ? !) tidak diacak. Benar jika urutan sama persis dengan kalimat paket (huruf besar/kecil diabaikan) |
+| `scramble.html` (Susun Kalimat) | `scramble` | Ya, memakai paket jenis `kalimat`. Satu kalimat per layar, siswa mengetuk kotak kata untuk menyusun. Tanda baca akhir (. ? !) tidak diacak. Benar jika urutan sama persis dengan kalimat paket (huruf besar/kecil diabaikan). 3 kesempatan per kalimat (`MAX_TRIES`); benar di kesempatan mana pun = 1 poin; susunan salah yang sama tidak mengurangi kesempatan |
 | `kosakatapart2.html` | – | Tidak (tanpa skor) |
 | `question.html` | – | Tidak (pengacak pertanyaan) |
 | `chat real 1.html` | – | Tidak (memakai project Firebase lain: `ask-me-questions-25b22`) |
