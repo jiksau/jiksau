@@ -40,23 +40,25 @@
         .rule { margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--soft); font-size: 13.5px; line-height: 1.5; animation: drop .18s ease-out; }
         @keyframes drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
-        /* Peringkatku */
-        .my-rank { border-radius: var(--radius); padding: 16px 16px 14px 18px; background: var(--accent-soft); color: var(--text); }
-        .my-rank .head { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
-        .my-rank .big { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        /* Peringkatku: strip angka + bilah mengejar */
+        .my-rank { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; color: var(--text); }
+        .my-rank .strip { display: grid; grid-template-columns: repeat(3, 1fr); }
+        .my-rank .strip > div { padding: 14px 6px 12px; text-align: center; border-left: 1px solid var(--line); }
+        .my-rank .strip > div:first-child { border-left: 0; }
+        .my-rank .strip .me-cell { background: var(--accent-soft); }
+        .my-rank .strip b { display: block; font-size: 26px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .my-rank .strip .me-cell b { color: var(--accent); }
+        .my-rank .strip span { font-size: 12px; color: var(--muted); font-weight: 600; }
+        .my-rank.empty { padding: 16px 16px 14px 18px; }
         .my-rank .kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-        .my-rank .pts { display: block; font-size: 19px; line-height: 1.3; color: var(--accent); }
+        .my-rank .pts { display: block; font-size: 19px; line-height: 1.3; }
         .my-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
-        .my-rank.empty { background: var(--surface); border: 1px solid var(--line); }
-        .my-rank.empty .pts { color: var(--text); }
-        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .pill { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 99px; background: var(--surface); font-size: 12px; font-weight: 600; color: var(--muted); }
-        .chase { margin-top: 14px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); font-size: 13.5px; }
+        .chase { padding: 12px 14px 14px; border-top: 1px solid var(--line); font-size: 13.5px; }
         .chase.done { color: var(--accent); font-weight: 600; }
         .chase-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
         .chase-top b { color: var(--accent); }
         .chase .num { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .cbar { height: 8px; border-radius: 99px; background: var(--surface); margin-top: 8px; overflow: hidden; }
+        .cbar { height: 8px; border-radius: 99px; background: var(--soft); margin-top: 8px; overflow: hidden; }
         .cbar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
         #myRank:empty { display: none; }
 
@@ -398,9 +400,10 @@
                         chase = `<div class="chase"><div class="chase-top"><span><b>${need} poin lagi</b> ${label}</span><span class="num">${me.points}/${target}</span></div>
                             <div class="cbar"><i style="width:${Math.max(4, Math.round((me.points / target) * 100))}%"></i></div></div>`;
                     }
-                    $('myRank').innerHTML = `<div class="my-rank"><div class="head"><div class="big">#${me.rank}</div>
-                        <div class="txt"><small class="kicker">Peringkatmu</small><b class="pts">${me.points} poin</b>
-                        <div class="pills"><span class="pill">${me.packs} paket</span><span class="pill">dari ${list.length} siswa</span></div></div></div>${chase}</div>`;
+                    $('myRank').innerHTML = `<div class="my-rank"><div class="strip">
+                        <div class="me-cell"><b>#${me.rank}</b><span>Peringkat</span></div>
+                        <div><b>${me.points}</b><span>Poin</span></div>
+                        <div><b>${me.packs}</b><span>Paket</span></div></div>${chase}</div>`;
                 }
             }
 

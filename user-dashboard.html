@@ -11,23 +11,29 @@
     <style>
         body { visibility: hidden; } /* tampil setelah status login diketahui */
 
-        /* Peringkat minggu ini */
+        /* Peringkat minggu ini: lencana lingkaran + angka poin */
         .week-rank {
-            display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center;
-            padding: 16px 14px 16px 18px; border-radius: var(--radius); text-decoration: none;
-            background: var(--accent-soft); color: var(--text);
+            display: grid; grid-template-columns: 1fr 1fr 24px; align-items: stretch;
+            background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+            box-shadow: var(--shadow); color: var(--text); text-decoration: none; overflow: hidden;
         }
+        .week-rank.two { grid-template-columns: 1fr 1fr 1fr 24px; }
         .week-rank:active { transform: scale(0.99); }
-        .week-rank .big { font-size: 34px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: var(--accent); font-variant-numeric: tabular-nums; }
-        .week-rank .txt { min-width: 0; }
-        .week-rank .txt:first-child { grid-column: 1 / 3; }
+        .week-rank .cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 4px 12px; text-align: center; border-left: 1px solid var(--line); min-width: 0; }
+        .week-rank .cell:first-child { border-left: 0; }
+        .week-rank .cell > span { font-size: 11.5px; color: var(--muted); font-weight: 600; line-height: 1.25; }
+        .ring { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--accent) var(--p), var(--soft) 0); }
+        .ring > div { width: 54px; height: 54px; border-radius: 50%; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+        .ring b { font-size: 19px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .ring small { font-size: 9.5px; font-weight: 700; color: var(--muted); margin-top: 3px; }
+        .week-rank .num { background: var(--accent-soft); }
+        .week-rank .num b { font-size: 30px; line-height: 66px; height: 66px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .week-rank .go { display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); padding-right: 6px; }
+        .week-rank.empty { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 14px 14px 16px; }
+        .week-rank.empty .go { background: none; padding: 0; }
         .week-rank .kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-        .week-rank .pts { display: block; font-size: 19px; line-height: 1.3; color: var(--accent); }
+        .week-rank .pts { display: block; font-size: 18px; line-height: 1.3; }
         .week-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
-        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: 99px; background: var(--surface); font-size: 12px; color: var(--muted); font-weight: 600; }
-        .pill b { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11.5px; font-variant-numeric: tabular-nums; }
-        .week-rank .go { color: var(--accent); display: grid; }
 
         /* Nilai terbaik & riwayat */
         .rows { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -201,12 +207,17 @@
                 const g = rankOf(all);
                 const box = $('weekRank');
                 if (g.mine > 0) {
-                    const pill = (label, r) => `<span class="pill"><span>${label}</span><b>${r.rank}/${r.total}</b></span>`;
-                    box.innerHTML = `<div class="big">#${g.rank}</div>
-                        <div class="txt"><small class="kicker">Peringkat minggu ini</small><b class="pts">${g.mine} poin</b>
-                        <div class="pills">${pill('Semua jenjang', g)}${level ? pill(escapeHtml(levelLabel(level)), rankOf(same)) : ''}</div></div>
+                    // Lencana lingkaran: makin dekat ke juara 1, makin penuh
+                    const ring = (r, label) => {
+                        const fill = r.total <= 1 ? 100 : Math.max(6, Math.round(((r.total - r.rank) / (r.total - 1)) * 100));
+                        return `<div class="cell"><div class="ring" style="--p:${fill}%"><div><b>#${r.rank}</b><small>dari ${r.total}</small></div></div><span>${label}</span></div>`;
+                    };
+                    box.innerHTML = `${ring(g, 'Semua jenjang')}${level ? ring(rankOf(same), `Jenjang ${escapeHtml(levelLabel(level))}`) : ''}
+                        <div class="cell num"><b>${g.mine}</b><span>Poin</span></div>
                         <span class="go">${CHEV}</span>`;
+                    box.classList.toggle('two', !!level);
                 } else {
+                    box.classList.add('empty');
                     box.innerHTML = `<div class="txt"><small class="kicker">Peringkat minggu ini</small><b class="pts">Belum ada poin</b><small class="hint">Mainkan paket soal dari guru untuk masuk peringkat.</small></div><span class="go">${CHEV}</span>`;
                 }
                 box.hidden = false;
