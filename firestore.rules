@@ -65,12 +65,15 @@ service cloud.firestore {
             && isValidLevel(request.resource.data.level)
             && isActiveCodeFor(request.resource.data.classCode, request.resource.data.level));
 
-      // Siswa hanya boleh memperbarui waktu masuk terakhir.
-      // Nama, jenjang, dan peran hanya bisa diubah admin.
+      // Siswa hanya boleh memperbarui waktu masuk terakhir dan waktu
+      // terakhir menekan "Mengerti" di pengumuman (announceSeenAt, harus
+      // waktu sekarang). Nama, jenjang, dan peran hanya bisa diubah admin.
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['lastLoginAt']));
+                 .hasOnly(['lastLoginAt', 'announceSeenAt'])
+            && (!('announceSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
+                || request.resource.data.announceSeenAt == request.time));
 
       allow delete: if isAdmin();
     }
@@ -110,6 +113,28 @@ service cloud.firestore {
         && request.resource.data.items.size() > 0
         && request.resource.data.items.size() <= 200
         && request.resource.data.itemCount == request.resource.data.items.size();
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Pengumuman: announcements/{id} ----------
+    // Ditulis admin, tampil di dashboard siswa sampai siswa menekan "Mengerti".
+    // Siswa yang profilnya aktif boleh membaca pengumuman yang AKTIF.
+    match /announcements/{newsId} {
+      allow read: if isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && resource.data.active == true);
+
+      allow create, update: if isAdmin()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 2000
+        && (request.resource.data.level == 'SEMUA' || isValidLevel(request.resource.data.level))
+        && request.resource.data.active is bool;
 
       allow delete: if isAdmin();
     }

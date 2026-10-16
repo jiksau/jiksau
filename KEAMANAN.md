@@ -8,9 +8,10 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 
 | Data | Isi | Siswa | Admin | Belum login |
 |---|---|---|---|---|
-| Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif; hanya bisa mengubah waktu masuk terakhir | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
+| Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif; hanya bisa mengubah waktu masuk terakhir & waktu terakhir menekan "Mengerti" di pengumuman | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
 | Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, aktif/nonaktif | Membaca paket yang aktif | Semua | Tidak bisa |
+| Pengumuman (`announcements`) | Judul, isi, untuk jenjang, aktif/nonaktif | Membaca pengumuman yang aktif | Semua | Tidak bisa |
 | Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
@@ -63,6 +64,15 @@ Jika muncul pesan *"Missing or insufficient permissions"*, catat langkah mana ya
 - [ ] Nonaktifkan paket di admin → paket hilang dari game siswa
 
 Jika game menampilkan "Paket soal gagal dimuat", kemungkinan aturan terbaru belum dipasang.
+
+## Uji pengumuman (setelah memasang aturan terbaru)
+
+- [ ] Admin → tab **Pengumuman** → isi judul & isi → **Terbitkan** → muncul di Daftar Pengumuman
+- [ ] Login sebagai siswa → jendela pengumuman muncul di dashboard → tekan **Mengerti** → jendela tertutup
+- [ ] Muat ulang dashboard / masuk dari HP lain → pengumuman itu tidak muncul lagi
+- [ ] Ubah pengumuman dengan centang "Tampilkan lagi" (atau nonaktifkan lalu aktifkan) → siswa melihatnya lagi
+
+Jika tab Pengumuman menampilkan "Gagal memuat pengumuman", aturan terbaru belum dipasang.
 
 ## Uji notifikasi paket baru
 

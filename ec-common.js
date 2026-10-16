@@ -248,3 +248,26 @@ export function shortName(name) {
     const parts = String(name || "Siswa").trim().split(/\s+/);
     return parts.length > 1 ? `${parts[0]} ${parts[1][0].toUpperCase()}.` : parts[0];
 }
+
+// ---------- Pengumuman ----------
+export const ANNOUNCE_TITLE_MAX = 80;
+export const ANNOUNCE_BODY_MAX = 2000;
+
+// Teks pengumuman -> HTML aman. Paragraf dipisah baris kosong;
+// baris yang diawali "- " menjadi daftar berpoin.
+export function announcementHtml(text) {
+    return String(text || "").trim().split(/\n\s*\n/).map((block) => {
+        const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+        const out = [];
+        let list = [];
+        const flush = () => { if (list.length) { out.push(`<ul>${list.join("")}</ul>`); list = []; } };
+        let para = [];
+        const flushPara = () => { if (para.length) { out.push(`<p>${para.join("<br>")}</p>`); para = []; } };
+        lines.forEach((l) => {
+            if (l.startsWith("- ")) { flushPara(); list.push(`<li>${escapeHtml(l.slice(2))}</li>`); }
+            else { flush(); para.push(escapeHtml(l)); }
+        });
+        flushPara(); flush();
+        return out.join("");
+    }).join("");
+}

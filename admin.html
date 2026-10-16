@@ -178,6 +178,18 @@
         .pack-check b { color: var(--text); }
         .pack-errors { margin: 6px 0 0; padding-left: 18px; color: var(--red); font-size: 0.82rem; }
         .pack-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        /* Pengumuman */
+        .news-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 14px; }
+        textarea.news-text { min-height: 160px; font: 0.95rem/1.5 inherit; font-family: inherit; }
+        .check-line { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.9rem; cursor: pointer; }
+        .check-line input { width: 17px; height: 17px; accent-color: var(--indigo); }
+        .check-line[hidden], .news-preview[hidden] { display: none; }
+        .news-preview { margin-top: 12px; padding: 14px 16px; border: 1px dashed #c7d2fe; border-radius: 10px; background: #fafaff; font-size: 0.92rem; line-height: 1.55; }
+        .news-preview .lbl { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+        .news-preview h3 { margin: 0 0 6px; font-size: 1.05rem; }
+        .news-preview p { margin: 0 0 8px; }
+        .news-preview ul { margin: 0 0 8px; padding-left: 20px; }
+        #panel-news td:not(:first-child) { white-space: nowrap; }
         #panel-packs th, #packsBody td:not(:first-child) { white-space: nowrap; overflow-wrap: normal; }
 
         @media (max-width: 960px) {
@@ -191,6 +203,7 @@
         @media (max-width: 680px) {
             .form-grid { grid-template-columns: 1fr; }
             .pack-grid { grid-template-columns: 1fr; }
+            .news-grid { grid-template-columns: 1fr; }
             .field-label { white-space: normal; }
             .actions { justify-content: flex-end; flex-wrap: wrap; }
             header.topbar { padding: 12px 16px; }
@@ -231,6 +244,7 @@
         <button data-panel="students" class="active">Siswa</button>
         <button data-panel="codes">Kode Kelas</button>
         <button data-panel="packs">Paket Soal</button>
+        <button data-panel="news">Pengumuman</button>
         <button data-panel="scores">Skor Game</button>
     </nav>
 
@@ -397,6 +411,51 @@
             </div>
         </section>
 
+        <!-- ================= PENGUMUMAN ================= -->
+        <section class="panel" id="panel-news">
+            <div class="card" id="newsFormCard">
+                <h2 id="newsFormTitle">Buat Pengumuman</h2>
+                <p class="desc">Muncul di dashboard siswa saat mereka masuk, sampai mereka menekan "Mengerti".</p>
+                <form id="newsForm" autocomplete="off">
+                    <div class="news-grid">
+                        <label class="field"><span class="field-label">Judul</span>
+                            <input type="text" id="newsTitle" maxlength="80" placeholder="contoh: Fitur baru: lonceng notifikasi" required>
+                        </label>
+                        <label class="field"><span class="field-label">Untuk</span>
+                            <select id="newsLevel"></select>
+                        </label>
+                    </div>
+                    <label class="field" style="margin-top:10px"><span class="field-label">Isi</span>
+                        <small style="margin:2px 0 0">Pisahkan paragraf dengan baris kosong. Awali baris dengan "- " untuk daftar berpoin.</small>
+                        <textarea id="newsBody" class="pack-text news-text" maxlength="2000"></textarea>
+                    </label>
+                    <label class="check-line" id="newsResendRow" hidden><input type="checkbox" id="newsResend"> Tampilkan lagi ke siswa yang sudah membaca</label>
+                    <div class="news-preview" id="newsPreview" hidden></div>
+                    <div class="pack-buttons">
+                        <button class="btn" type="submit" id="newsSubmitBtn">Terbitkan</button>
+                        <button class="btn ghost" type="button" id="newsCancelBtn" hidden>Batal ubah</button>
+                    </div>
+                </form>
+                <div class="form-msg" id="newsMsg"></div>
+            </div>
+            <div class="card">
+                <h2>Daftar Pengumuman</h2>
+                <p class="desc">Pengumuman nonaktif tidak muncul ke siswa. Mengaktifkan lagi = siswa melihatnya lagi.</p>
+                <table class="responsive">
+                    <thead>
+                        <tr>
+                            <th>Judul</th>
+                            <th>Untuk</th>
+                            <th>Terbit</th>
+                            <th>Status</th>
+                            <th class="col-actions">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newsBodyList"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
         <!-- ================= SKOR GAME ================= -->
         <section class="panel" id="panel-scores">
             <div class="card">
@@ -454,7 +513,7 @@
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
             loginIdToEmail, usernameFromEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
-            parsePackText, packToText, PACK_TIERS
+            parsePackText, packToText, PACK_TIERS, announcementHtml
         } from "./ec-common.js";
 
         const app = initializeApp(firebaseConfig);
@@ -484,6 +543,7 @@
                 document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + btn.dataset.panel));
                 if (btn.dataset.panel === 'scores') startScores();
                 if (btn.dataset.panel === 'packs') startPacks();
+                if (btn.dataset.panel === 'news') startNews();
             });
         });
 
@@ -916,6 +976,127 @@
                     if (!confirm(`Hapus paket "${p.title}"?\n\nSkor yang sudah tersimpan tetap ada. Jika hanya ingin menyembunyikan sementara, pilih Nonaktifkan.`)) return;
                     await deleteDoc(doc(db, 'questionPacks', p.id));
                     if (editingPackId === p.id) resetPackForm();
+                }
+            } catch (err) {
+                alert('Gagal: ' + err.message);
+            }
+        });
+
+        // ================= PENGUMUMAN =================
+        let news = [];
+        let newsStarted = false;
+        let editingNewsId = null;
+        $('newsLevel').innerHTML = `<option value="${PACK_ALL_LEVELS}">Semua siswa</option>` + levelOptions(false);
+
+        function startNews() {
+            if (newsStarted) return;
+            newsStarted = true;
+            onSnapshot(collection(db, 'announcements'), (snap) => {
+                const t = (x) => x.publishedAt?.toMillis?.() ?? x.createdAt?.toMillis?.() ?? Date.now();
+                news = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => t(b) - t(a));
+                renderNews();
+            }, (e) => {
+                console.error(e);
+                newsStarted = false;
+                const hint = e.code === 'permission-denied' ? ' Pastikan aturan keamanan terbaru (firestore.rules) sudah dipasang di Firebase Console.' : '';
+                $('newsBodyList').innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat pengumuman: ${escapeHtml(e.message)}.${hint}</td></tr>`;
+            });
+        }
+
+        function updateNewsPreview() {
+            const title = $('newsTitle').value.trim();
+            const body = $('newsBody').value.trim();
+            $('newsPreview').hidden = !title && !body;
+            $('newsPreview').innerHTML = `<div class="lbl">Pratinjau</div>`
+                + (title ? `<h3>${escapeHtml(title)}</h3>` : '') + announcementHtml(body);
+        }
+        $('newsTitle').addEventListener('input', updateNewsPreview);
+        $('newsBody').addEventListener('input', updateNewsPreview);
+
+        function resetNewsForm() {
+            editingNewsId = null;
+            $('newsForm').reset();
+            $('newsFormTitle').textContent = 'Buat Pengumuman';
+            $('newsSubmitBtn').textContent = 'Terbitkan';
+            $('newsCancelBtn').hidden = true;
+            $('newsResendRow').hidden = true;
+            updateNewsPreview();
+        }
+        $('newsCancelBtn').addEventListener('click', () => { resetNewsForm(); setMsg('newsMsg', '', true); });
+
+        $('newsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = $('newsTitle').value.trim();
+            const body = $('newsBody').value.trim();
+            const level = $('newsLevel').value;
+            if (!title) return setMsg('newsMsg', 'Judul wajib diisi.', false);
+            if (!body) return setMsg('newsMsg', 'Isi pengumuman wajib diisi.', false);
+            $('newsSubmitBtn').disabled = true;
+            try {
+                const data = { title, body, level, updatedAt: serverTimestamp() };
+                if (editingNewsId) {
+                    if ($('newsResend').checked) data.publishedAt = serverTimestamp();
+                    await updateDoc(doc(db, 'announcements', editingNewsId), data);
+                    setMsg('newsMsg', `Pengumuman diperbarui${$('newsResend').checked ? ' dan akan tampil lagi ke siswa' : ''}.`, true);
+                } else {
+                    await addDoc(collection(db, 'announcements'), { ...data, active: true, createdAt: serverTimestamp(), publishedAt: serverTimestamp() });
+                    setMsg('newsMsg', `Pengumuman terbit untuk ${level === PACK_ALL_LEVELS ? 'semua siswa' : 'jenjang ' + levelLabel(level)}.`, true);
+                }
+                resetNewsForm();
+            } catch (err) {
+                console.error(err);
+                setMsg('newsMsg', 'Gagal menyimpan pengumuman: ' + err.message, false);
+            } finally {
+                $('newsSubmitBtn').disabled = false;
+            }
+        });
+
+        function renderNews() {
+            if (news.length === 0) {
+                $('newsBodyList').innerHTML = '<tr><td colspan="5" class="empty">Belum ada pengumuman. Buat satu di atas.</td></tr>';
+                return;
+            }
+            $('newsBodyList').innerHTML = news.map((n) => `
+                <tr>
+                    <td data-label="Judul"><b>${escapeHtml(n.title)}</b></td>
+                    <td data-label="Untuk">${n.level === PACK_ALL_LEVELS ? 'Semua siswa' : escapeHtml(levelLabel(n.level))}</td>
+                    <td data-label="Terbit">${fmtDate(n.publishedAt || n.createdAt)}</td>
+                    <td data-label="Status"><span class="pill ${n.active ? 'on' : 'off'}">${n.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Aksi" class="col-actions"><span class="actions">
+                        <button class="btn ghost" data-edit-news="${n.id}">Ubah</button>
+                        <button class="btn ghost" data-toggle-news="${n.id}">${n.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                        <button class="btn danger" data-delete-news="${n.id}">Hapus</button>
+                    </span></td>
+                </tr>`).join('');
+        }
+
+        $('newsBodyList').addEventListener('click', async (e) => {
+            const { editNews, toggleNews, deleteNews } = e.target.dataset;
+            const n = news.find((x) => x.id === (editNews || toggleNews || deleteNews));
+            if (!n) return;
+            try {
+                if (editNews) {
+                    editingNewsId = n.id;
+                    $('newsTitle').value = n.title || '';
+                    $('newsBody').value = n.body || '';
+                    $('newsLevel').value = n.level;
+                    $('newsResend').checked = false;
+                    $('newsResendRow').hidden = false;
+                    $('newsFormTitle').textContent = 'Ubah Pengumuman';
+                    $('newsSubmitBtn').textContent = 'Simpan Perubahan';
+                    $('newsCancelBtn').hidden = false;
+                    updateNewsPreview();
+                    setMsg('newsMsg', '', true);
+                    $('newsFormCard').scrollIntoView({ behavior: 'smooth' });
+                } else if (toggleNews) {
+                    // Mengaktifkan lagi = terbit ulang, siswa melihatnya lagi
+                    await updateDoc(doc(db, 'announcements', n.id), n.active
+                        ? { active: false, updatedAt: serverTimestamp() }
+                        : { active: true, updatedAt: serverTimestamp(), publishedAt: serverTimestamp() });
+                } else if (deleteNews) {
+                    if (!confirm(`Hapus pengumuman "${n.title}"?`)) return;
+                    await deleteDoc(doc(db, 'announcements', n.id));
+                    if (editingNewsId === n.id) resetNewsForm();
                 }
             } catch (err) {
                 alert('Gagal: ' + err.message);
