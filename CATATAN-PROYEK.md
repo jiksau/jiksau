@@ -21,7 +21,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 |---|---|
 | `index.html` | Masuk (email **atau** nama pengguna) & daftar (nama, email, password, **kode kelas**) |
 | `user-dashboard.html` | Dashboard siswa: akun, peringkat minggu ini, progres latihan game |
-| `leaderboard.html` | Papan peringkat mingguan: Semua Jenjang (default) / per jenjang, minggu ini / lalu, kartu poster 1080×1350 untuk diunduh |
+| `leaderboard.html` | Papan peringkat mingguan: Semua Jenjang (default) / per jenjang, Minggu Ini / Minggu Lalu / **Musim**, kartu poster 1080×1350 untuk diunduh |
 | `admin.html` | Admin: siswa (buat akun tanpa email, ubah jenjang/nama, hapus akun), kode kelas, **paket soal**, **pengumuman**, skor game |
 | `admin-login.html` | Login admin |
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
@@ -104,6 +104,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Beranda: kartu peringkat = 2 lencana lingkaran (#rank dari total; Semua jenjang & jenjang siswa, makin dekat juara 1 makin penuh) + kotak Poin + ikon >; nilai terbaik maks. 3 game, latihan terakhir maks. 5.
 - Peringkat: kartu minggu (tanggal, sisa waktu, 7 kotak hari, aturan poin di balik tombol "i"), kartu posisi strip angka (#Peringkat · Poin · Paket) + bilah "x poin lagi untuk mengejar NAMA", nama siswa KAPITAL, jenjang di bawah nama (podium & daftar 4-10). Poster: "Top 10 Minggu Ini" / "Juara Minggu Ini", jenjang di depan nama untuk peringkat 4-10.
 
+- **Musim bulanan** (tab Musim di Peringkat): satu musim = satu bulan, berisi minggu yang hari Seninnya jatuh di bulan itu (kunci `YYYY-MM`, `seasonWeeks`). Poin musim = jumlah poin mingguan (`seasonRanking`; `loadSeasonWeeks` di `weekly-results.js`). Kartu musim: rentang tanggal, sisa waktu, satu kotak per minggu (angka = tanggal Senin); strip #Peringkat · Poin · Minggu (jumlah minggu bermain). Poster: "Musim Oktober". Rekap Senin pertama musim baru menampilkan Juara Musim + gelar juara musim di judul.
 - Riwayat juara (Peringkat, di bawah daftar): kartu "Paling sering juara 1" (hanya jika ada yang ≥2 kali; nama kembar semua) + "Prestasimu" (jumlah 🥇🥈🥉), lalu juara 1–3 per minggu (4 minggu, tombol "Lihat minggu sebelumnya"). Mengikuti papan yang dipilih (Semua/jenjang). Riwayat dimulai `FIRST_WEEK` = 2026-10-12.
 
 ## Preferensi pemilik
@@ -126,5 +127,5 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 1. ~~Bank soal + paket resmi~~ (selesai untuk semua game berpoin, termasuk Susun Kalimat).
 2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Kartu Arti (`kosakatapart2.html`) dan Chat (`chat real 1.html`) dihapus karena kurang menarik. Pertanyaan Acak belum memakai gaya baru.
-3. ~~Reset mingguan lebih seru: rekap minggu lalu + riwayat juara~~ (selesai). Ide berikutnya: musim bulanan, rangkaian minggu aktif, target bersama, paket bonus.
+3. ~~Reset mingguan lebih seru: rekap minggu lalu + riwayat juara~~ (selesai). ~~Musim bulanan~~ (selesai). Ide berikutnya: rangkaian minggu aktif, target bersama, paket bonus, riwayat juara musim.
 4. Game baru dari paket soal: ~~Cocokkan Pasangan~~ (selesai). Berikutnya: Pilihan Ganda Cepat, Dengarkan & Tulis, Tantangan Harian.

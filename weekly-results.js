@@ -15,7 +15,7 @@ import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.j
 import {
     getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { weeklyPoints, rankPlayers, finishedWeeks } from "./ec-common.js";
+import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js";
 
 const db = () => getFirestore(getApp());
 const slim = (r) => ({ uid: r.uid, name: r.name || "Siswa", level: r.level || null, points: r.points, packs: r.packs, rank: r.rank });
@@ -52,6 +52,15 @@ export async function loadHistory() {
     const live = await Promise.all(missing.map((k) => computeWeek(k).catch(() => null)));
     missing.forEach((k, i) => { if (live[i]) saved[k] = live[i]; });
     return weeks.filter((k) => saved[k]).map((k) => ({ week: k, ranking: saved[k] }));
+}
+
+// Peringkat tiap minggu dalam satu musim yang sudah berjalan: [{week, ranking}].
+// Minggu ini selalu dihitung langsung; minggu yang akan datang dilewati.
+export async function loadSeasonWeeks(season) {
+    const now = weekKeyFor();
+    const keys = seasonWeeks(season).filter((k) => k <= now && k >= FIRST_WEEK);
+    const lists = await Promise.all(keys.map((k) => k === now ? computeWeek(k) : getWeekResult(k)));
+    return keys.map((k, i) => ({ week: k, ranking: lists[i] }));
 }
 
 // Khusus admin: bekukan minggu selesai yang belum tersimpan

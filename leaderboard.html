@@ -199,6 +199,7 @@
             <div class="seg" id="weekSeg" role="tablist">
                 <button data-week="this" class="active" role="tab">Minggu Ini</button>
                 <button data-week="last" role="tab">Minggu Lalu</button>
+                <button data-week="season" role="tab">Musim</button>
             </div>
             <div class="seg" id="scopeSeg" role="tablist" hidden>
                 <button data-scope="all" class="active" role="tab">Semua Jenjang</button>
@@ -258,9 +259,9 @@
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
             weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints,
-            rankPlayers, levelRanking
+            rankPlayers, levelRanking, seasonKeyFor, seasonWeeks, seasonLabel, seasonRangeLabel, seasonRanking
         } from "./ec-common.js";
-        import { loadHistory, archiveFinishedWeeks } from "./weekly-results.js";
+        import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks } from "./weekly-results.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -275,7 +276,10 @@
             get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
             set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* abaikan */ } },
         };
-        const weekKey = () => state.week === 'this' ? weekKeyFor() : previousWeekKey(weekKeyFor());
+        const weekKey = () => state.week === 'last' ? previousWeekKey(weekKeyFor()) : weekKeyFor();
+        const isSeason = () => state.week === 'season';
+        const season = () => seasonKeyFor(weekKeyFor());
+        const seasonName = () => seasonLabel(season()).split(' ')[0]; // contoh: Oktober
 
         // ---------- Login ----------
         onAuthStateChanged(auth, async (user) => {
@@ -358,7 +362,17 @@
                 return;
             }
             $('list').innerHTML = '<li class="empty-state">Memuat peringkat...</li>';
+            const view = state.week + (state.boardLevel || '');
             try {
+                if (isSeason()) {
+                    // Poin musim = jumlah poin mingguan (seasonRanking di ec-common.js)
+                    const weeks = await loadSeasonWeeks(season());
+                    if (view !== state.week + (state.boardLevel || '')) return; // pilihan sudah berganti
+                    const board = state.boardLevel;
+                    state.ranking = seasonRanking(board ? weeks.map((w) => ({ week: w.week, ranking: levelRanking(w.ranking, board) })) : weeks);
+                    render();
+                    return;
+                }
                 const filters = state.boardLevel
                     ? [where('level', '==', state.boardLevel), where('week', '==', key)]
                     : [where('week', '==', key)];
@@ -373,6 +387,9 @@
 
         // Kartu minggu: tanggal, sisa waktu, dan 7 kotak hari (Senin-Minggu)
         function renderMeta(key) {
+            if (isSeason()) return renderSeasonMeta();
+            $('rule').textContent = RULE_WEEK;
+            $('weekBar').style.gridTemplateColumns = '';
             const isThis = state.week === 'this';
             const end = weekEndMs(key);
             const start = end - 7 * 864e5;
@@ -397,6 +414,27 @@
                 return `<div class="day${i === done && isThis ? ' today' : ''}"><span class="wseg"><i style="width:${fill}%"></i></span><span class="dn">${dn}</span></div>`;
             }).join('');
         }
+        const RULE_WEEK = $('rule').textContent;
+        const RULE_SEASON = 'Poin musim = jumlah poin mingguan selama satu bulan (minggu yang hari Seninnya jatuh di bulan itu). Papan mingguan tetap reset setiap Senin.';
+
+        // Kartu musim: rentang tanggal, sisa waktu, satu kotak per minggu (angka = tanggal Senin)
+        function renderSeasonMeta() {
+            const weeks = seasonWeeks(season());
+            const now = weekKeyFor();
+            const ms = Math.max(0, weekEndMs(weeks[weeks.length - 1]) - Date.now());
+            const d = Math.floor(ms / 864e5), h = Math.floor((ms % 864e5) / 36e5);
+            $('weekLbl').textContent = `Musim ${seasonName()}`;
+            $('weekRange').textContent = seasonRangeLabel(season());
+            $('leftLbl').textContent = 'Berakhir dalam';
+            $('weekLeft').textContent = d > 0 ? `${d} hari ${h} jam` : `${h} jam`;
+            $('rule').textContent = RULE_SEASON;
+            $('weekBar').style.gridTemplateColumns = `repeat(${weeks.length}, 1fr)`;
+            $('weekBar').innerHTML = weeks.map((k) => {
+                const start = weekEndMs(k) - 7 * 864e5;
+                const fill = Math.round(Math.min(1, Math.max(0, (Date.now() - start) / (7 * 864e5))) * 100);
+                return `<div class="day${k === now ? ' today' : ''}"><span class="wseg"><i style="width:${fill}%"></i></span><span class="dn">${Number(k.slice(8))}</span></div>`;
+            }).join('');
+        }
         $('ruleBtn').addEventListener('click', () => {
             const open = $('rule').hidden;
             $('rule').hidden = !open;
@@ -411,8 +449,9 @@
 
         function render() {
             const list = state.ranking;
-            const isThis = state.week === 'this';
+            const isThis = state.week !== 'last'; // minggu ini & musim masih berjalan
             const me = list.find((r) => r.uid === state.uid);
+            const unitOf = (r) => isSeason() ? `${r.weeks} minggu` : `${r.packs} paket`;
 
             // Kartu posisi saya (khusus siswa)
             if (!state.isAdmin) {
@@ -438,13 +477,13 @@
                     $('myRank').innerHTML = `<div class="my-rank"><div class="strip">
                         <div class="me-cell"><b>#${me.rank}</b><span>Peringkat</span></div>
                         <div><b>${me.points}</b><span>Poin</span></div>
-                        <div><b>${me.packs}</b><span>Paket</span></div></div>${chase}</div>`;
+                        <div><b>${isSeason() ? me.weeks : me.packs}</b><span>${isSeason() ? 'Minggu' : 'Paket'}</span></div></div>${chase}</div>`;
                 }
             }
 
             if (list.length === 0) {
                 $('podium').innerHTML = '';
-                $('list').innerHTML = `<li class="empty-state">${isThis ? 'Belum ada poin minggu ini. Jadilah yang pertama!' : 'Tidak ada yang bermain minggu lalu di papan ini.'}</li>`;
+                $('list').innerHTML = `<li class="empty-state">${isSeason() ? 'Belum ada poin di musim ini. Jadilah yang pertama!' : isThis ? 'Belum ada poin minggu ini. Jadilah yang pertama!' : 'Tidak ada yang bermain minggu lalu di papan ini.'}</li>`;
                 return;
             }
 
@@ -459,7 +498,7 @@
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${r.packs} paket</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${unitOf(r)}</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;
@@ -507,7 +546,7 @@
         // ---------- Kartu siap dibagikan ----------
         function posterHtml() {
             const list = state.ranking;
-            const isThis = state.week === 'this';
+            const isThis = state.week !== 'last';
             const top = list.slice(0, 3);
             const p = (r, cls) => r
                 ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(NAME(r))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
@@ -515,12 +554,12 @@
             // Peringkat 4-10: jenjang di depan nama
             const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${medal(r.rank) || r.rank}</span><span class="n">${!state.boardLevel && r.level ? `<span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}${escapeHtml(NAME(r))}</span><span class="p">${r.points} poin</span></div>`).join('');
             return `
-                <div class="ptop"><span class="brand">ExtraCourse</span><span class="date">${weekRangeLabel(weekKey())}</span></div>
+                <div class="ptop"><span class="brand">ExtraCourse</span><span class="date">${isSeason() ? seasonRangeLabel(season()) : weekRangeLabel(weekKey())}</span></div>
                 <div class="kicker">${isThis ? 'Klasemen sementara' : 'Hasil akhir'}</div>
-                <div class="title">${isThis ? 'Top 10 Minggu Ini' : 'Juara Minggu Ini'}</div>
+                <div class="title">${isSeason() ? `Musim ${escapeHtml(seasonName())}` : isThis ? 'Top 10 Minggu Ini' : 'Juara Minggu Ini'}</div>
                 <div class="sub"><b>${escapeHtml(boardLabel())}</b></div>
                 ${list.length ? `<div class="ppodium">${p(top[1], 'p2')}${p(top[0], 'p1')}${p(top[2], 'p3')}</div>` : ''}
-                <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar!' : 'Selamat untuk para juara!'}</div>` : '<div class="pempty">Belum ada poin di minggu ini.<br>Siapa yang jadi juara pertama?</div>')}</div>
+                <div class="plist">${rest || (list.length ? `<div class="pempty">${isThis ? 'Masih ada waktu untuk masuk 10 besar!' : 'Selamat untuk para juara!'}</div>` : `<div class="pempty">Belum ada poin di ${isSeason() ? 'musim' : 'minggu'} ini.<br>Siapa yang jadi juara pertama?</div>`)}</div>
                 <div class="foot"><b>${isThis ? 'Ayo kejar peringkatmu!' : 'Selamat, para juara!'}</b></div>`;
         }
 
@@ -555,7 +594,7 @@
                 clone.remove();
             }
         }
-        const fileName = () => `peringkat-${state.boardLevel || 'semua-jenjang'}-${weekKey()}.png`.toLowerCase();
+        const fileName = () => `peringkat-${state.boardLevel || 'semua-jenjang'}-${isSeason() ? 'musim-' + season() : weekKey()}.png`.toLowerCase();
 
         $('downloadBtn').addEventListener('click', async (e) => {
             e.target.disabled = true;

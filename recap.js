@@ -7,6 +7,8 @@
 //  Saat siswa pertama kali membuka Beranda di minggu baru, muncul jendela:
 //  juara minggu lalu (Semua Jenjang + juara jenjang siswa), peringkat &
 //  poin siswa, dan naik/turun dibanding minggu sebelumnya.
+//  Jika minggu lalu adalah minggu terakhir sebuah musim (bulan), rekap
+//  juga menampilkan juara musim itu dan peringkat musim siswa.
 //  Muncul setelah jendela pengumuman ditutup (window.ecNewsDone).
 //  "Sudah dilihat" disimpan di browser (ec-recap-<uid> = kunci minggu ini).
 // =====================================================================
@@ -16,9 +18,10 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
     firebaseConfig, ADMIN_EMAIL, escapeHtml, levelLabel, shortName, levelRanking,
-    weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK
+    weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
+    seasonKeyFor, seasonLabel, seasonRanking
 } from "./ec-common.js";
-import { getWeekResult } from "./weekly-results.js";
+import { getWeekResult, loadSeasonWeeks } from "./weekly-results.js";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -151,13 +154,28 @@ async function start(user) {
         mine = `<div class="note">Kamu tidak bermain minggu lalu. Poin sudah kembali nol untuk semua, jadi ini kesempatanmu!</div>`;
     }
 
+    // Akhir musim: minggu lalu dan minggu ini beda bulan
+    let seasonHtml = "";
+    const lastSeason = seasonKeyFor(lastWeek);
+    if (lastSeason !== seasonKeyFor(thisWeek)) {
+        const sRank = seasonRanking(await loadSeasonWeeks(lastSeason).catch(() => []));
+        if (sRank.length) {
+            const meS = sRank.find((r) => r.uid === uid);
+            const name = seasonLabel(lastSeason).split(" ")[0];
+            if (meS && meS.rank <= 3) title = `Selamat, kamu Juara ${meS.rank} Musim ${name}!`;
+            seasonHtml = `<div class="sec">Juara Musim ${escapeHtml(name)}</div>${rowsHtml(sRank, uid, true)}`
+                + (meS && meS.rank > 3 ? `<div class="move">Kamu peringkat <b>#${meS.rank}</b> di musim ini dengan ${meS.points} poin.</div>` : "");
+        }
+    }
+
     const lvTop = level && lvList.length ? `<div class="sec">Juara Jenjang ${escapeHtml(levelLabel(level))}</div>${rowsHtml(lvList, uid, false)}` : "";
     const html = `
         <span class="ec-recap-tag">Rekap minggu lalu</span>
         <h3 id="ecRecapTitle">${escapeHtml(title)}</h3>
         <div class="wk">${weekRangeLabel(lastWeek)} · ${ranking.length} pemain</div>
-        ${mine}
-        <div class="sec">Juara Semua Jenjang</div>${rowsHtml(ranking, uid, true)}
+        ${seasonHtml}
+        ${seasonHtml && mine ? '<div class="sec">Hasilmu minggu lalu</div>' : ""}${mine}
+        <div class="sec">${seasonHtml ? "Juara minggu lalu · " : "Juara "}Semua Jenjang</div>${rowsHtml(ranking, uid, true)}
         ${lvTop}`;
 
     // Tunggu jendela pengumuman ditutup lebih dulu

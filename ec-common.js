@@ -268,6 +268,50 @@ export function finishedWeeks(now = new Date()) {
     return out;
 }
 
+// ---------- Musim bulanan ----------
+// Satu musim = satu bulan, berisi minggu-minggu yang hari Seninnya jatuh
+// di bulan itu (satu minggu tidak pernah terbelah dua musim).
+// Kunci musim = "YYYY-MM". Poin musim = jumlah poin mingguan.
+export const seasonKeyFor = (weekKey) => weekKey.slice(0, 7);
+
+// Senin-Senin dalam satu musim, urut dari awal
+export function seasonWeeks(season) {
+    const [y, m] = season.split("-").map(Number);
+    const out = [];
+    for (let d = 1; d <= 31; d++) {
+        const t = new Date(Date.UTC(y, m - 1, d));
+        if (t.getUTCMonth() !== m - 1) break;
+        if (t.getUTCDay() === 1) out.push(t.toISOString().slice(0, 10));
+    }
+    return out;
+}
+
+// "Oktober 2026"
+export function seasonLabel(season) {
+    return new Date(Date.parse(season + "-01T00:00:00Z")).toLocaleDateString("id-ID", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+// "5 Okt – 1 Nov 2026" (Senin pertama sampai Minggu terakhir musim)
+export function seasonRangeLabel(season) {
+    const weeks = seasonWeeks(season);
+    const start = new Date(Date.parse(weeks[0] + "T00:00:00Z"));
+    const end = new Date(Date.parse(weeks[weeks.length - 1] + "T00:00:00Z") + 6 * DAY_MS);
+    const f = (d) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
+    return `${f(start)} – ${f(end)} ${end.getUTCFullYear()}`;
+}
+
+// Gabungkan peringkat beberapa minggu menjadi peringkat musim.
+// weeks: [{week, ranking}] -> peringkat dengan points, packs, weeks (jumlah minggu bermain)
+export function seasonRanking(weeks) {
+    const by = {};
+    weeks.forEach((w) => (w.ranking || []).forEach((r) => {
+        const s = by[r.uid] ||= { uid: r.uid, name: r.name, level: r.level, points: 0, packs: 0, weeks: 0, last: "" };
+        s.points += r.points; s.packs += r.packs || 0; s.weeks += 1;
+        if (w.week >= s.last) { s.last = w.week; s.name = r.name || s.name; s.level = r.level || s.level; }
+    }));
+    return rankPlayers(Object.values(by));
+}
+
 // "Aisyah Putri Ramadhani" -> "Aisyah P." (privasi di papan peringkat)
 export function shortName(name) {
     const parts = String(name || "Siswa").trim().split(/\s+/);
