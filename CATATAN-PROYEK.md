@@ -29,6 +29,8 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `word-source.js` | `mountWordSource` (opsi `type`: "kosakata" / "verb" / "kalimat", kolom di `PACK_FIELDS`): tab Paket Guru / Kata Sendiri, cari + filter (jenjang, level), tag, pratinjau paket, isian kata sendiri. `mountPlaySettings`: arah soal (`directions: null` = tanpa pilihan arah), acak urutan, batas waktu (on/off) + waktu saran. Juga `isAnswerCorrect`, `shuffled`, `formatClock` |
 | `announcements.js` | Jendela pengumuman di `user-dashboard.html`: pengumuman aktif (jenjang siswa + Semua siswa) yang terbit setelah siswa terakhir menekan "Mengerti" (`users.announceSeenAt`, cadangan localStorage); belum pernah = 30 hari terakhir; maks. 5 sekaligus. Format isi: `announcementHtml` di `ec-common.js` (paragraf dipisah baris kosong, baris "- " jadi daftar berpoin) |
 | `game-scores.js` | Modul simpan skor + muat paket soal + `loadPlayedPackIds()` (Set paket yang pernah dimainkan siswa, game apa pun; dipakai lonceng & titik merah di daftar paket; event `ec-pack-played` setelah skor berpaket tersimpan) |
+| `weekly-results.js` | Hasil akhir tiap minggu: `getWeekResult(key)`, `loadHistory()`, `archiveFinishedWeeks()` (admin). Minggu selesai dibekukan ke `weeklyResults` saat admin membuka `admin.html` atau papan peringkat; sebelum itu dihitung langsung dari `gameScores` |
+| `recap.js` | Jendela "Rekap minggu lalu" di Beranda, sekali per minggu (localStorage `ec-recap-<uid>`), muncul setelah jendela pengumuman (`window.ecNewsDone`): judul juara jika siswa juara 1–3, strip #Semua jenjang · #Jenjang · Poin, naik/turun dari minggu sebelumnya, juara 1–3 Semua Jenjang + jenjang siswa. Tidak muncul jika minggu lalu tidak ada yang bermain |
 | `notifications.js` | Lonceng notifikasi paket baru (di `user-dashboard.html` & `gamelist.html`, wadah `<span id="notif">`; atribut `data-light` untuk latar terang). Paket aktif jenjang siswa + Semua jenjang yang dirilis ≤ 30 hari, maks. 20. Angka merah = paket baru yang belum pernah dimainkan siswa (belum ada `gameScores` miliknya dengan `packId` itu, game apa pun); membuka lonceng tidak menghapus angka. Tombol game memakai `?paket=<id>` sehingga paket langsung terpilih (`word-source.js`). Daftar game per jenis paket: `PACK_GAMES` di `ec-common.js` (tambahkan di sini setiap ada game baru) |
 
 ## Game yang ada
@@ -87,6 +89,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - `classCodes/{KODE}`: level, note, active, createdAt
 - `questionPacks/{id}`: title, type ("kosakata"/"verb"/"kalimat"), level (jenjang atau "SEMUA"), tier (1–5, opsional untuk paket lama), active, items[], itemCount, createdAt, updatedAt, publishedAt (diisi saat dibuat & saat diaktifkan lagi; dasar notifikasi, paket lama memakai createdAt)
 - `announcements/{id}`: title (≤80), body (≤2000), level (jenjang atau "SEMUA"), active, createdAt, updatedAt, publishedAt (diisi saat terbit, saat diaktifkan lagi, atau saat diubah dengan centang "Tampilkan lagi")
+- `weeklyResults/{week}`: week, ranking [{uid, name, level, points, packs, rank}] (papan Semua Jenjang; papan jenjang = `levelRanking`), players, savedAt. Hanya admin yang menulis
 - `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, week ("YYYY-MM-DD" Senin), timestamp
 - Akun tanpa email memakai email sintetis `<namapengguna>@siswa.extra-course-d02c2.firebaseapp.com`.
 
@@ -101,6 +104,8 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Beranda: kartu peringkat = 2 lencana lingkaran (#rank dari total; Semua jenjang & jenjang siswa, makin dekat juara 1 makin penuh) + kotak Poin + ikon >; nilai terbaik maks. 3 game, latihan terakhir maks. 5.
 - Peringkat: kartu minggu (tanggal, sisa waktu, 7 kotak hari, aturan poin di balik tombol "i"), kartu posisi strip angka (#Peringkat · Poin · Paket) + bilah "x poin lagi untuk mengejar NAMA", nama siswa KAPITAL, jenjang di bawah nama (podium & daftar 4-10). Poster: "Top 10 Minggu Ini" / "Juara Minggu Ini", jenjang di depan nama untuk peringkat 4-10.
 
+- Riwayat juara (Peringkat, di bawah daftar): kartu "Paling sering juara 1" (hanya jika ada yang ≥2 kali; nama kembar semua) + "Prestasimu" (jumlah 🥇🥈🥉), lalu juara 1–3 per minggu (4 minggu, tombol "Lihat minggu sebelumnya"). Mengikuti papan yang dipilih (Semua/jenjang). Riwayat dimulai `FIRST_WEEK` = 2026-10-12.
+
 ## Preferensi pemilik
 
 - Tampilan harus **rapi di HP dan PC** (cek kedua ukuran, juga mode gelap). Suka tampilan Monitor Kelas (hijau, kartu simetris, kotak cari jelas).
@@ -108,6 +113,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - Bahasa Indonesia di semua teks untuk siswa.
 - Kerjakan pelan-pelan, satu fitur per langkah; jelaskan dengan bahasa sederhana.
 - Fitur berat yang tidak perlu (mis. tombol Bagikan) lebih baik ditiadakan.
+- **Kabari pemilik** jika suatu fitur butuh upgrade berbayar atau layanan pihak lain (mis. server/Cloud Functions Firebase).
 
 ## Keterbatasan yang diketahui
 
@@ -120,4 +126,5 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 
 1. ~~Bank soal + paket resmi~~ (selesai untuk semua game berpoin, termasuk Susun Kalimat).
 2. ~~Daftar game dirapikan~~ (nama Indonesia, tanpa emoji). Kartu Arti (`kosakatapart2.html`) dan Chat (`chat real 1.html`) dihapus karena kurang menarik. Pertanyaan Acak belum memakai gaya baru.
-3. Game baru dari paket soal: ~~Cocokkan Pasangan~~ (selesai). Berikutnya: Pilihan Ganda Cepat, Dengarkan & Tulis, Tantangan Harian.
+3. ~~Reset mingguan lebih seru: rekap minggu lalu + riwayat juara~~ (selesai). Ide berikutnya: musim bulanan, rangkaian minggu aktif, target bersama, paket bonus.
+4. Game baru dari paket soal: ~~Cocokkan Pasangan~~ (selesai). Berikutnya: Pilihan Ganda Cepat, Dengarkan & Tulis, Tantangan Harian.

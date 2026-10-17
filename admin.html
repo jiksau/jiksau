@@ -540,6 +540,7 @@
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
             parsePackText, packToText, PACK_TIERS, announcementHtml
         } from "./ec-common.js";
+        import { archiveFinishedWeeks } from "./weekly-results.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -583,6 +584,8 @@
             document.body.style.visibility = 'visible';
             startStudents();
             startCodes();
+            // Bekukan hasil minggu yang sudah selesai (rekap & riwayat juara)
+            archiveFinishedWeeks().catch((e) => console.warn('Gagal menyimpan hasil mingguan:', e));
         });
         $('logoutButton').addEventListener('click', async () => {
             await signOut(auth);

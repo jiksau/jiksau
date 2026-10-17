@@ -97,6 +97,31 @@
         #list .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 4px 0; border-top: 1px solid var(--line); }
         #list .empty-state { text-align: center; color: var(--muted); padding: 28px 12px; }
 
+        /* Riwayat juara */
+        #fame:empty { display: none; }
+        .fame { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
+        .fame > div { padding: 12px 14px; min-width: 0; }
+        .fame > div + div { border-left: 1px solid var(--line); }
+        .fame small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .fame b { display: block; font-size: 15px; overflow-wrap: anywhere; letter-spacing: .02em; }
+        .fame span { font-size: 12.5px; color: var(--muted); }
+        .fame .mine { background: var(--accent-soft); }
+        .fame .mine b { color: var(--accent); letter-spacing: 0; }
+        .hist-list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .hist-list:empty { display: none; }
+        .hw { padding: 12px 14px; border-top: 1px solid var(--line); }
+        .hw:first-child { border-top: 0; }
+        .hw .wk { font-size: 12.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .hw .wk em { font-style: normal; color: var(--accent); margin-left: 6px; }
+        .hw .w { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: center; margin-top: 4px; }
+        .hw .w .m { font-size: 17px; line-height: 1; }
+        .hw .w .n { font-weight: 700; letter-spacing: .02em; overflow-wrap: anywhere; min-width: 0; }
+        .hw .w .n small { font-weight: 600; font-size: 11.5px; color: var(--muted); letter-spacing: 0; margin-left: 6px; }
+        .hw .w .p { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .hw .w.me .n { color: var(--accent); }
+        .hw .none { margin-top: 4px; font-size: 13.5px; color: var(--muted); }
+        #moreHistory { margin-top: 8px; }
+
         /* ---------- Kartu siap dibagikan (1080x1350, ditampilkan 540x675) ---------- */
         .overlay {
             position: fixed; inset: 0; z-index: 50;
@@ -198,6 +223,13 @@
         <div class="actions">
             <button class="btn secondary" id="shareBtn" type="button">Tampilan untuk dibagikan</button>
         </div>
+
+        <section id="historySec" hidden>
+            <div class="sec">Riwayat juara</div>
+            <div id="fame"></div>
+            <div id="history" class="hist-list"></div>
+            <button class="btn ghost block" id="moreHistory" type="button" hidden>Lihat minggu sebelumnya</button>
+        </section>
     </main>
 
     <nav class="tabs" aria-label="Menu"><div class="in">
@@ -225,8 +257,10 @@
         import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
-            weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints
+            weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints,
+            rankPlayers, levelRanking
         } from "./ec-common.js";
+        import { loadHistory, archiveFinishedWeeks } from "./weekly-results.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -276,7 +310,10 @@
                 $('scopeSeg').hidden = false;
             }
             document.body.style.visibility = 'visible';
+            if (state.isAdmin) await archiveFinishedWeeks().catch((e) => console.warn('Gagal menyimpan hasil mingguan:', e));
             load();
+            history = loadHistory().catch((e) => { console.warn(e); return []; });
+            renderHistory();
         });
 
         // ---------- Kontrol ----------
@@ -294,22 +331,20 @@
             setScope(b.dataset.scope);
             pref.set('lbScope', b.dataset.scope);
             load();
+            renderHistory();
         }));
         $('levelSelect').addEventListener('change', (e) => {
             state.boardLevel = e.target.value === 'ALL' ? null : e.target.value;
             pref.set('lbBoard', e.target.value);
             load();
+            renderHistory();
         });
         const boardLabel = () => state.boardLevel ? `Jenjang ${levelLabel(state.boardLevel)}` : 'Semua Jenjang';
 
         // ---------- Data ----------
         // Poin: hanya paket soal guru, hasil terbaik per paket (lihat weeklyPoints di ec-common.js)
         function buildRanking(docs) {
-            const list = weeklyPoints(docs.map((d) => d.data())).filter((r) => r.points > 0)
-                .sort((a, b) => b.points - a.points || b.packs - a.packs || shortName(a.name).localeCompare(shortName(b.name), 'id'));
-            // Poin sama = peringkat sama (1, 2, 2, 4, ...)
-            list.forEach((r, i) => { r.rank = i > 0 && r.points === list[i - 1].points ? list[i - 1].rank : i + 1; });
-            return list;
+            return rankPlayers(weeklyPoints(docs.map((d) => d.data())));
         }
 
         async function load() {
@@ -429,6 +464,45 @@
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;
         }
+
+        // ---------- Riwayat juara (minggu yang sudah selesai) ----------
+        let history = Promise.resolve([]);
+        let historyShown = 4;
+        async function renderHistory() {
+            const weeks = await history;
+            const board = state.boardLevel;
+            const rows = weeks.map((w) => ({ week: w.week, ranking: board ? levelRanking(w.ranking, board) : w.ranking }));
+            if (!rows.length) { $('historySec').hidden = true; return; }
+            $('historySec').hidden = false;
+
+            // Hitung berapa kali tiap siswa juara 1, dan prestasi saya
+            const wins = {};
+            const mine = { 1: 0, 2: 0, 3: 0 };
+            rows.forEach((w) => w.ranking.forEach((r) => {
+                if (r.rank === 1) (wins[r.uid] ||= { name: r.name, n: 0 }).n++;
+                if (r.uid === state.uid && r.rank <= 3) mine[r.rank]++;
+            }));
+            // Baru tampil jika ada yang juara 1 minimal 2 kali; nama kembar ditampilkan semua
+            const top = Math.max(0, ...Object.values(wins).map((w) => w.n));
+            const champs = Object.values(wins).filter((w) => w.n === top);
+            const cells = [];
+            if (top >= 2) cells.push(`<div><small>Paling sering juara 1</small><b>${champs.map((w) => escapeHtml(NAME(w))).join(', ')}</b><span>${top} kali</span></div>`);
+            if (!state.isAdmin) {
+                const got = [1, 2, 3].filter((k) => mine[k]).map((k) => `${medal(k)} ${mine[k]}`);
+                cells.push(`<div class="mine"><small>Prestasimu</small><b>${got.length ? got.join('&nbsp;&nbsp;') : 'Belum ada'}</b><span>${got.length ? 'kali juara' : 'Ayo jadi juara!'}</span></div>`);
+            }
+            $('fame').innerHTML = cells.length ? `<div class="fame">${cells.join('')}</div>` : '';
+
+            $('history').innerHTML = rows.slice(0, historyShown).map((w) => {
+                const top = w.ranking.filter((r) => r.rank <= 3);
+                const lv = (r) => !board && r.level ? `<small>${escapeHtml(levelLabel(r.level))}</small>` : '';
+                return `<div class="hw"><div class="wk">${weekRangeLabel(w.week)}${w.ranking.length ? `<em>${w.ranking.length} pemain</em>` : ''}</div>${top.length
+                    ? top.map((r) => `<div class="w${r.uid === state.uid ? ' me' : ''}"><span class="m">${medal(r.rank)}</span><span class="n">${escapeHtml(NAME(r))}${lv(r)}</span><span class="p">${r.points} poin</span></div>`).join('')
+                    : '<div class="none">Tidak ada yang bermain.</div>'}</div>`;
+            }).join('');
+            $('moreHistory').hidden = rows.length <= historyShown;
+        }
+        $('moreHistory').addEventListener('click', () => { historyShown += 8; renderHistory(); });
 
         // ---------- Kartu siap dibagikan ----------
         function posterHtml() {

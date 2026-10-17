@@ -12,6 +12,7 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
 | Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, aktif/nonaktif | Membaca paket yang aktif | Semua | Tidak bisa |
 | Pengumuman (`announcements`) | Judul, isi, untuk jenjang, aktif/nonaktif | Membaca pengumuman yang aktif | Semua | Tidak bisa |
+| Hasil akhir mingguan (`weeklyResults`) | Peringkat akhir tiap minggu yang sudah selesai (nama, jenjang, poin) | Membaca (untuk rekap & riwayat juara) | Semua; tersimpan otomatis saat admin membuka halaman admin | Tidak bisa |
 | Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
@@ -80,6 +81,12 @@ Jika tab Pengumuman menampilkan "Gagal memuat pengumuman", aturan terbaru belum 
 - [ ] Siswa membuka lonceng → angka tetap; tombol game membuka game dengan paket itu sudah terpilih
 - [ ] Mainkan paket itu sampai selesai, kembali ke daftar game → angka berkurang satu, paket bertanda "Sudah dimainkan"
 - [ ] Muat ulang halaman / masuk dari HP lain → angka tetap sama
+
+## Uji rekap & riwayat juara (setelah memasang aturan terbaru)
+
+1. Setelah minggu berganti (Senin), buka halaman admin sekali: hasil minggu lalu tersimpan otomatis ke koleksi `weeklyResults`.
+2. Masuk sebagai siswa → Beranda: jendela "Rekap minggu lalu" muncul sekali (setelah pengumuman, jika ada).
+3. Halaman Peringkat → bagian "Riwayat juara" di bawah daftar.
 
 ## Papan peringkat
 

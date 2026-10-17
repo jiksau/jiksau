@@ -18,6 +18,11 @@ import { firebaseConfig, escapeHtml, announcementHtml, PACK_ALL_LEVELS } from ".
 const DAYS = 30;
 const MAX_SHOWN = 5;
 
+// Jendela lain (rekap mingguan) menunggu janji ini agar tidak bertumpuk:
+// selesai saat tidak ada pengumuman, atau setelah siswa menekan "Mengerti".
+let newsDone;
+window.ecNewsDone = new Promise((resolve) => { newsDone = resolve; });
+
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -98,9 +103,9 @@ async function start(user) {
     let profile;
     try {
         const snap = await getDoc(doc(db, "users", user.uid));
-        if (!snap.exists()) return;
+        if (!snap.exists()) return false;
         profile = snap.data();
-    } catch { return; }
+    } catch { return false; }
 
     let seen = ms(profile.announceSeenAt);
     try { seen = Math.max(seen, Number(localStorage.getItem(LOCAL)) || 0); } catch { /* abaikan */ }
@@ -114,22 +119,27 @@ async function start(user) {
         items = snaps.flatMap((s) => s.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (e) {
         console.warn("Gagal memuat pengumuman:", e);
-        return;
+        return false;
     }
 
     const list = items.filter((n) => publishedMs(n) > since)
         .sort((a, b) => publishedMs(b) - publishedMs(a))
         .slice(0, MAX_SHOWN);
-    if (!list.length) return;
+    if (!list.length) return false;
 
     show(list, () => {
+        newsDone();
         try { localStorage.setItem(LOCAL, String(Date.now())); } catch { /* abaikan */ }
         updateDoc(doc(db, "users", user.uid), { announceSeenAt: serverTimestamp() })
             .catch((e) => console.warn("Gagal menyimpan status pengumuman:", e));
     });
+    return true;
 }
 
 let started = false;
 onAuthStateChanged(auth, (user) => {
-    if (user && !started) { started = true; start(user); }
+    if (user && !started) {
+        started = true;
+        start(user).then((shown) => { if (!shown) newsDone(); }, () => newsDone());
+    }
 });

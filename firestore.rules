@@ -188,6 +188,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---------- Hasil akhir mingguan: weeklyResults/{week} ----------
+    // Peringkat minggu yang sudah selesai, dibekukan otomatis saat admin
+    // membuka halaman admin. Dipakai untuk rekap minggu lalu & riwayat juara.
+    match /weeklyResults/{week} {
+      allow read: if isAdmin()
+        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
+      allow create, update: if isAdmin()
+        && request.resource.data.week == week
+        && request.resource.data.ranking is list;
+      allow delete: if isAdmin();
+    }
+
     // Semua koleksi lain: ditolak (default Firestore).
   }
 }

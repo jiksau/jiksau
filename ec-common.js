@@ -243,6 +243,31 @@ export function weeklyPoints(scores) {
     });
 }
 
+// Urutkan hasil weeklyPoints menjadi peringkat (hanya yang punya poin).
+// Poin sama = peringkat sama (1, 2, 2, 4, ...).
+export function rankPlayers(rows) {
+    const list = rows.filter((r) => r.points > 0)
+        .sort((a, b) => b.points - a.points || b.packs - a.packs || shortName(a.name).localeCompare(shortName(b.name), "id"));
+    list.forEach((r, i) => { r.rank = i > 0 && r.points === list[i - 1].points ? list[i - 1].rank : i + 1; });
+    return list;
+}
+
+// Peringkat satu jenjang dari peringkat semua jenjang
+export function levelRanking(ranking, level) {
+    return rankPlayers((ranking || []).filter((r) => r.level === level).map((r) => ({ ...r })));
+}
+
+// ---------- Riwayat mingguan ----------
+// Senin minggu pertama papan peringkat; riwayat juara dimulai dari sini.
+export const FIRST_WEEK = "2026-10-12";
+
+// Minggu yang sudah selesai, terbaru dulu (tidak termasuk minggu ini).
+export function finishedWeeks(now = new Date()) {
+    const out = [];
+    for (let k = previousWeekKey(weekKeyFor(now)); k >= FIRST_WEEK; k = previousWeekKey(k)) out.push(k);
+    return out;
+}
+
 // "Aisyah Putri Ramadhani" -> "Aisyah P." (privasi di papan peringkat)
 export function shortName(name) {
     const parts = String(name || "Siswa").trim().split(/\s+/);
