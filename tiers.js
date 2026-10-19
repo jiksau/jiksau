@@ -7,7 +7,7 @@
 //  Ubah batas XP di TIERS bila terlalu cepat/lambat.
 // =====================================================================
 
-import { escapeHtml } from "./ec-common.js";
+import { escapeHtml, weekBonus } from "./ec-common.js";
 
 // Kelompok tier: warna lencana tetap sama di mode terang & gelap
 export const TIER_GROUPS = [
@@ -54,6 +54,18 @@ export function xpByUser(weeks, current = []) {
     (current || []).forEach(add);
     return xp;
 }
+
+// Koin yang pernah didapat seorang siswa: 1 koin per poin mingguan
+// + bonus peringkat 1-5 Semua Jenjang di minggu yang sudah selesai
+// (sama dengan bonus musim). Koin terpakai = harga barang yang dimiliki.
+export function coinsEarned(weeks, current, uid) {
+    let c = 0;
+    (weeks || []).forEach((w) => (w.ranking || []).forEach((r) => { if (r.uid === uid) c += (r.points || 0) + weekBonus(r.rank); }));
+    (current || []).forEach((r) => { if (r.uid === uid) c += r.points || 0; });
+    return c;
+}
+
+export const COIN_ICON = '<svg class="coin-ico" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#f6cf4a" stroke="#c9961a" stroke-width="1.5"/><circle cx="10" cy="10" r="5.2" fill="none" stroke="#c9961a" stroke-width="1.2" opacity=".7"/><path d="M8.6 6.8h2.8M10 6.8v6.4M8.6 13.2h2.8" stroke="#a87a0f" stroke-width="1.4" stroke-linecap="round"/></svg>';
 
 // Lencana tier (perisai SVG). size dalam px.
 export function tierBadge(tier, size = 40) {

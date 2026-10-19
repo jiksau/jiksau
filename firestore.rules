@@ -48,6 +48,21 @@ service cloud.firestore {
         && pet.name.size() <= 16;
     }
 
+    // Toko: items = daftar barang yang dimiliki (maks. 50),
+    // equipped = barang yang dipakai per slot, harus termasuk barang miliknya.
+    // Catatan: tanpa server, harga & saldo koin dicek di browser siswa
+    // (barang hanya tampilan, tidak memengaruhi poin/peringkat).
+    function isValidShop(d) {
+      return (!('items' in d) || (d.items is list && d.items.size() <= 50))
+        && (!('equipped' in d)
+            || (d.equipped is map
+                && d.equipped.keys().hasOnly(['head', 'face', 'neck', 'bg'])
+                && (!('head' in d.equipped) || d.equipped.head in d.items)
+                && (!('face' in d.equipped) || d.equipped.face in d.items)
+                && (!('neck' in d.equipped) || d.equipped.neck in d.items)
+                && (!('bg' in d.equipped) || d.equipped.bg in d.items)));
+    }
+
     // Kode kelas ada, aktif, dan jenjangnya sama dengan yang dipakai siswa.
     function isActiveCodeFor(code, level) {
       let path = /databases/$(database)/documents/classCodes/$(code);
@@ -82,11 +97,12 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['lastLoginAt', 'announceSeenAt', 'pet'])
+                 .hasOnly(['lastLoginAt', 'announceSeenAt', 'pet', 'items', 'equipped'])
             && (!('announceSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
                 || request.resource.data.announceSeenAt == request.time)
             && (!('pet' in request.resource.data.diff(resource.data).affectedKeys())
-                || isValidPet(request.resource.data.pet)));
+                || isValidPet(request.resource.data.pet))
+            && isValidShop(request.resource.data));
 
       allow delete: if isAdmin();
     }

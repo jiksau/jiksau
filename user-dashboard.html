@@ -49,6 +49,10 @@
         .pet-sub { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
         .tier-line { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; font-weight: 600; }
         .tier-line b { font-variant-numeric: tabular-nums; }
+        .shop-link { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+        .shop-link .coin-ico { justify-self: center; }
+        .shop-link span { font-variant-numeric: tabular-nums; }
+        .shop-link b { padding: 4px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 13px; }
         .tier-line .up { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; vertical-align: 1px; }
         .pet-stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
         .pet-stages div { display: grid; justify-items: center; font-size: 11px; color: var(--muted); font-weight: 600; }
@@ -156,9 +160,9 @@
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
         import { loadHistory } from "./weekly-results.js";
-        import { TIERS, tierFor, xpByUser, tierBadge } from "./tiers.js";
-        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf } from "./pets.js";
-        let myPet = null, myUid = null, tierRender = null;
+        import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js";
+        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById } from "./pets.js";
+        let myPet = null, myUid = null, tierRender = null, myItems = [], myEquipped = {};
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -188,6 +192,8 @@
                 if (snap.exists()) {
                     const data = snap.data();
                     myPet = data.pet || null;
+                    myItems = Array.isArray(data.items) ? data.items : [];
+                    myEquipped = data.equipped || {};
                     myUid = user.uid;
                     $('userName').textContent = data.name || '-';
                     $('greetName').textContent = (data.name || 'Siswa').split(' ')[0];
@@ -281,6 +287,7 @@
             try {
                 const weeks = await loadHistory();
                 const xp = xpByUser(weeks, current)[uid] || 0;
+                const coins = Math.max(0, coinsEarned(weeks, current, uid) - myItems.reduce((s, id) => s + (itemById(id)?.price || 0), 0));
                 const t = tierFor(xp);
                 // Naik tier sejak terakhir membuka Beranda? (disimpan di browser)
                 const KEY = `ec-tier-${uid}`;
@@ -296,11 +303,12 @@
                     : `${t.need.toLocaleString('id-ID')} XP lagi ke <b>${escapeHtml(t.next.label)}</b>`;
                 box.innerHTML = `
                     <div class="pet-row">
-                        <button type="button" class="pet-stage" id="petBtn" aria-label="${myPet ? 'Sapa ' + escapeHtml(myPet.name) : 'Pilih hewan'}">${petSvg(myPet?.species || 'kucing', myPet ? stage : 0, 112)}</button>
+                        <button type="button" class="pet-stage" id="petBtn" aria-label="${myPet ? 'Sapa ' + escapeHtml(myPet.name) : 'Pilih hewan'}">${petSvg(myPet?.species || 'kucing', myPet ? stage : 0, 112, 'pet-svg', myPet ? myEquipped : {})}</button>
                         <div class="pet-info">${myPet
                             ? `<b class="pet-name">${escapeHtml(myPet.name)}</b><span class="pet-sub">${escapeHtml(sp.name)} · ${STAGES[stage]}</span>`
                             : `<b class="pet-name">Telur misterius</b><span class="pet-sub">Pilih hewan peliharaanmu. Ia akan tumbuh setiap kamu naik tier.</span><button type="button" class="btn" id="petPick" style="margin-top:10px;height:40px">Pilih hewan</button>`}
                             <div class="tier-line">${tierBadge(t, 26)}<span>${escapeHtml(t.label)}${up ? '<span class="up">Naik!</span>' : ''}</span><b>${xp.toLocaleString('id-ID')} XP</b></div>
+                            ${myPet ? `<a class="shop-link" href="toko.html">${COIN_ICON}<span>${coins.toLocaleString('id-ID')} koin</span><b>Toko</b></a>` : ''}
                         </div>
                     </div>
                     <div class="tier-bar"><i style="width:${Math.max(3, Math.round(t.progress * 100))}%;background:linear-gradient(90deg, ${t.light}, ${t.color})"></i></div>

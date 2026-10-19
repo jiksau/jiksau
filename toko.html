@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Toko - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
+    <style>
+        body { visibility: hidden; }
+        .coin-ico { vertical-align: -4px; flex: none; }
+
+        /* Pratinjau hewan */
+        .preview { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; }
+        .preview .stage svg { width: 100%; height: auto; display: block; }
+        .preview .stage { min-width: 0; line-height: 0; border-radius: 18px; background: radial-gradient(circle at 50% 54%, var(--accent-soft) 0 50%, transparent 51%); }
+        .preview .pname { display: block; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+        .preview .psub { display: block; font-size: 13px; color: var(--muted); }
+        .wallet { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 12px; border-radius: 99px; background: var(--soft); font-weight: 700; font-variant-numeric: tabular-nums; }
+        .wallet small { font-weight: 600; color: var(--muted); }
+        .try { margin-top: 12px; display: grid; gap: 8px; }
+        .try .msg { font-size: 13px; color: var(--muted); min-height: 18px; }
+        .try .msg.bad { color: var(--bad); }
+        .try .msg.ok { color: var(--ok); font-weight: 600; }
+        .try .row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .try .btn { height: 42px; flex: 1 1 120px; }
+
+        /* Slot */
+        .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--soft); border-radius: var(--radius-sm); padding: 4px; }
+        .seg button { border: 0; background: transparent; font-weight: 600; font-size: 14px; padding: 9px 4px; border-radius: 9px; cursor: pointer; color: var(--muted); }
+        .seg button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(23,32,28,.12); }
+
+        /* Barang */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .it { position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 8px 10px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); cursor: pointer; text-align: center; color: var(--text); font: inherit; }
+        .it.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .it .thumb { width: 72px; height: 72px; line-height: 0; display: grid; place-items: center; }
+        .it .nm { font-weight: 700; font-size: 14px; line-height: 1.25; }
+        .it .pr { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .it .tag { font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+        .it .tag.own { background: var(--soft); color: var(--muted); }
+        .it .tag.on { background: var(--accent); color: var(--accent-ink); }
+        .it.locked .thumb, .it.locked .nm { opacity: .45; }
+        .it .tag.lock { background: var(--soft); color: var(--muted); }
+        .it.none .thumb { color: var(--muted); font-size: 13px; font-weight: 600; }
+        .note { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
+        @media (max-width: 420px) { .preview { grid-template-columns: 120px 1fr; } }
+    </style>
+</head>
+<body class="has-tabs">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="logo" href="user-dashboard.html" aria-label="Ke Beranda">EC</a>
+            <div class="brand"><b>Toko</b><small>Aksesori untuk hewanmu</small></div>
+            <span id="notif"></span>
+        </div>
+    </header>
+
+    <main class="app">
+        <div id="content"><div class="empty">Memuat...</div></div>
+    </main>
+
+    <nav class="tabs" aria-label="Menu"><div class="in">
+        <a href="user-dashboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Beranda</a>
+        <a href="gamelist.html"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 11.5h.01M18 14h.01"/></svg>Game</a>
+        <a href="leaderboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>Peringkat</a>
+    </div></nav>
+
+    <script type="module">
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor } from "./ec-common.js";
+        import { loadHistory, computeWeek } from "./weekly-results.js";
+        import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js";
+        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES } from "./pets.js";
+
+        const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const $ = (id) => document.getElementById(id);
+
+        // st: data siswa; tryOn: barang yang sedang dicoba (belum disimpan)
+        const st = { uid: null, pet: null, items: [], equipped: {}, earned: 0, tier: null, slot: 'head', selected: null, busy: false };
+        const spent = () => st.items.reduce((sum, id) => sum + (itemById(id)?.price || 0), 0);
+        const balance = () => Math.max(0, st.earned - spent());
+        const fmt = (n) => n.toLocaleString('id-ID');
+
+        let started = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { location.href = 'index.html'; return; }
+            if (user.email === ADMIN_EMAIL) { location.href = 'admin.html'; return; }
+            if (started) return;
+            started = true;
+            st.uid = user.uid;
+            try {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (!snap.exists()) { location.href = 'user-dashboard.html'; return; }
+                const d = snap.data();
+                st.pet = d.pet || null;
+                st.items = Array.isArray(d.items) ? d.items.filter((id) => itemById(id)) : [];
+                st.equipped = { ...(d.equipped || {}) };
+                // Koin & tier dihitung dari poin mingguan (sama dengan papan peringkat)
+                const [weeks, now] = await Promise.all([loadHistory(), computeWeek(weekKeyFor()).catch(() => [])]);
+                st.earned = coinsEarned(weeks, now, user.uid);
+                st.tier = tierFor(xpByUser(weeks, now)[user.uid] || 0);
+                const want = new URLSearchParams(location.search).get('slot');
+                if (SHOP_SLOTS.some((s) => s.key === want)) st.slot = want;
+                render();
+            } catch (e) {
+                console.error(e);
+                $('content').innerHTML = `<div class="empty">Gagal memuat toko: ${escapeHtml(e.message)}</div>`;
+            }
+            document.body.style.visibility = 'visible';
+        });
+
+        // Barang yang tampil di pratinjau: yang dipakai + yang sedang dipilih
+        function wearing() {
+            const w = { ...st.equipped };
+            if (st.selected === `none:${st.slot}`) delete w[st.slot];
+            else if (st.selected) w[itemById(st.selected).slot] = st.selected;
+            return w;
+        }
+
+        function render(msg = '', kind = '') {
+            if (!st.pet) {
+                $('content').innerHTML = `<div class="card" style="text-align:center">${petSvg('kucing', 0, 120)}
+                    <h2 style="margin:6px 0 4px">Pilih hewan dulu</h2><p class="note">Barang di toko dipakai oleh hewan peliharaanmu.</p>
+                    <a class="btn block" href="user-dashboard.html" style="margin-top:14px">Ke Beranda</a></div>`;
+                return;
+            }
+            const stage = stageForTier(st.tier.index);
+            const sp = speciesOf(st.pet.species);
+            const sel = st.selected && !st.selected.startsWith('none:') ? itemById(st.selected) : null;
+            const owned = sel && st.items.includes(sel.id);
+            const on = sel && st.equipped[sel.slot] === sel.id;
+            const locked = sel && (sel.minTier || 0) > st.tier.index;
+            let actions = '';
+            if (st.selected?.startsWith('none:')) {
+                actions = st.equipped[st.slot] ? `<button class="btn" data-act="unequip">Lepas</button>` : '';
+            } else if (sel) {
+                actions = on ? `<button class="btn secondary" data-act="unequip">Lepas</button>`
+                    : owned ? `<button class="btn" data-act="equip">Pakai</button>`
+                    : locked ? `<button class="btn" disabled>Terbuka di ${escapeHtml(TIERS[sel.minTier].label)}</button>`
+                    : `<button class="btn" data-act="buy" ${balance() < sel.price ? 'disabled' : ''}>Beli ${COIN_ICON} ${fmt(sel.price)}</button>`;
+                if (actions) actions += `<button class="btn ghost" data-act="cancel">Batal</button>`;
+            }
+            if (!msg && sel && !owned && !locked && balance() < sel.price) { msg = `Butuh ${fmt(sel.price - balance())} koin lagi.`; kind = 'bad'; }
+            if (!msg && st.selected && !on) msg = 'Sedang dicoba.';
+
+            const slotItems = SHOP_ITEMS.filter((i) => i.slot === st.slot)
+                .sort((a, b) => (a.minTier || 0) - (b.minTier || 0) || a.price - b.price);
+            $('content').innerHTML = `
+                <div class="preview">
+                    <div class="stage">${petSvg(st.pet.species, stage, 150, 'pet-svg', stage ? wearing() : {})}</div>
+                    <div>
+                        <b class="pname">${escapeHtml(st.pet.name)}</b><span class="psub">${escapeHtml(sp.name)} · ${STAGES[stage]}</span>
+                        <div class="wallet">${COIN_ICON} ${fmt(balance())} <small>koin</small></div>
+                        <div class="try"><div class="msg ${kind}">${escapeHtml(msg)}</div>${actions ? `<div class="row">${actions}</div>` : ''}</div>
+                    </div>
+                </div>
+                ${stage === 0 ? '<p class="note">Hewanmu masih telur. Barang bisa dibeli sekarang dan terlihat setelah menetas.</p>' : ''}
+                <div class="seg" role="tablist">${SHOP_SLOTS.map((s) => `<button role="tab" data-slot="${s.key}" class="${s.key === st.slot ? 'active' : ''}">${s.name}</button>`).join('')}</div>
+                <div class="grid">
+                    <button class="it none${st.selected === `none:${st.slot}` ? ' sel' : ''}" data-none="${st.slot}"><span class="thumb">Tanpa</span><span class="nm">Tanpa ${SHOP_SLOTS.find((s) => s.key === st.slot).name.toLowerCase()}</span>${!st.equipped[st.slot] ? '<span class="tag on">Dipakai</span>' : ''}</button>
+                    ${slotItems.map((i) => {
+                        const own = st.items.includes(i.id), isOn = st.equipped[i.slot] === i.id, lock = (i.minTier || 0) > st.tier.index;
+                        const tag = isOn ? '<span class="tag on">Dipakai</span>' : own ? '<span class="tag own">Dimiliki</span>'
+                            : lock ? `<span class="tag lock">${escapeHtml(TIERS[i.minTier].label)}</span>` : `<span class="pr">${COIN_ICON} ${fmt(i.price)}</span>`;
+                        return `<button class="it${st.selected === i.id ? ' sel' : ''}${lock && !own ? ' locked' : ''}" data-id="${i.id}"><span class="thumb">${itemSvg(i.id, 72)}</span><span class="nm">${escapeHtml(i.name)}</span>${tag}</button>`;
+                    }).join('')}
+                </div>
+                <p class="note">Koin didapat dari 1 jawaban benar di paket soal guru = 1 koin, ditambah bonus untuk peringkat 1–5 mingguan. Barang hanya mengubah tampilan, tidak menambah poin.</p>`;
+        }
+
+        $('content').addEventListener('click', async (e) => {
+            const slotBtn = e.target.closest('[data-slot]');
+            if (slotBtn) { st.slot = slotBtn.dataset.slot; st.selected = null; return render(); }
+            const it = e.target.closest('[data-id]');
+            if (it) { st.selected = st.selected === it.dataset.id ? null : it.dataset.id; return render(); }
+            const none = e.target.closest('[data-none]');
+            if (none) { st.selected = `none:${none.dataset.none}`; return render(); }
+            const act = e.target.closest('[data-act]')?.dataset.act;
+            if (!act || st.busy) return;
+            if (act === 'cancel') { st.selected = null; return render(); }
+
+            const sel = itemById(st.selected);
+            const items = [...st.items];
+            const equipped = { ...st.equipped };
+            let done = '';
+            if (act === 'buy') {
+                if (!sel || balance() < sel.price) return;
+                items.push(sel.id);
+                equipped[sel.slot] = sel.id; // langsung dipakai
+                done = `${sel.name} dibeli dan dipakai.`;
+            } else if (act === 'equip') {
+                equipped[sel.slot] = sel.id;
+                done = `${sel.name} dipakai.`;
+            } else if (act === 'unequip') {
+                delete equipped[sel ? sel.slot : st.slot];
+                done = 'Dilepas.';
+            }
+            st.busy = true;
+            try {
+                await updateDoc(doc(db, 'users', st.uid), { items, equipped });
+                st.items = items;
+                st.equipped = equipped;
+                st.selected = null;
+                render(done, 'ok');
+            } catch (err) {
+                render('Gagal menyimpan: ' + err.message, 'bad');
+            } finally {
+                st.busy = false;
+            }
+        });
+    </script>
+    <script type="module" src="notifications.js"></script>
+</body>
+</html>

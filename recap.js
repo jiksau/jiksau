@@ -162,7 +162,7 @@ async function start(user) {
             const pet = profile.pet;
             const st = stageForTier(tAfter.index);
             const grew = pet && st > stageForTier(tBefore.index);
-            mine += `<div class="tier-up">${grew ? petSvg(pet.species, st, 56) : tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!${grew
+            mine += `<div class="tier-up">${grew ? petSvg(pet.species, st, 56, "pet-svg", profile.equipped || {}) : tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!${grew
                 ? `<br>${escapeHtml(pet.name)} ${st === 1 ? "menetas" : `tumbuh jadi ${STAGES[st]}`}.` : ""}</span></div>`;
         }
         if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonLabel(seasonKeyFor(lastWeek)).split(" ")[0])}.</div>`;
