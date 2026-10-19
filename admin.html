@@ -485,7 +485,7 @@
         <section class="panel" id="panel-scores">
             <div class="card">
                 <h2>Ringkasan per Siswa</h2>
-                <p class="desc">Dari 500 latihan terakhir. Diurutkan dari yang paling rajin minggu ini.</p>
+                <p class="desc">Dari <span id="scoreCount">100</span> latihan terakhir. Diurutkan dari yang paling rajin minggu ini.</p>
                 <div class="toolbar">
                     <select id="scoreLevelFilter"></select>
                 </div>
@@ -520,6 +520,7 @@
                     </thead>
                     <tbody id="gameScoresBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
                 </table>
+                <button class="btn secondary block" id="moreScores" type="button" style="margin-top:12px" hidden>Tampilkan lebih banyak</button>
             </div>
         </section>
     </main>
@@ -1143,11 +1144,16 @@
         // Jenjang siswa: pakai data profil terbaru, jika tidak ada pakai yang tersimpan di skor
         const levelOf = (uid, fallback) => students.find((s) => s.id === uid)?.level || fallback || null;
 
+        // Hemat kuota baca: muat 100 skor terbaru dulu, tampilkan 50 baris.
+        // "Tampilkan lebih banyak" menambah 50 baris; jika habis, muat 100 skor lagi.
+        const SCORE_PAGE = 100, ROW_PAGE = 50;
+        let scoreLimit = SCORE_PAGE, rowsShown = ROW_PAGE, stopScores = null;
+
         function startScores() {
             if (scoresStarted) return;
             scoresStarted = true;
-            const q = query(collection(db, 'gameScores'), orderBy('timestamp', 'desc'), limit(500));
-            onSnapshot(q, (snap) => {
+            const q = query(collection(db, 'gameScores'), orderBy('timestamp', 'desc'), limit(scoreLimit));
+            stopScores = onSnapshot(q, (snap) => {
                 scores = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
                 renderScores();
             }, (e) => {
@@ -1159,6 +1165,7 @@
 
         function renderScores() {
             if (!scoresStarted) return;
+            $('scoreCount').textContent = scores.length;
             const lvl = $('scoreLevelFilter').value;
             const inLevel = scores.filter((s) => lvl === 'all' || levelOf(s.userId, s.level) === lvl);
 
@@ -1200,7 +1207,9 @@
             filter.value = by[selected] ? selected : 'all';
 
             const rows = filter.value === 'all' ? inLevel : inLevel.filter((i) => i.userId === filter.value);
-            $('gameScoresBody').innerHTML = rows.slice(0, 200).map((i) => `<tr>
+            const canLoadMore = scores.length >= scoreLimit;
+            $('moreScores').hidden = rows.length <= rowsShown && !canLoadMore;
+            $('gameScoresBody').innerHTML = rows.slice(0, rowsShown).map((i) => `<tr>
                     <td data-label="Waktu">${fmtDate(i.timestamp)}</td>
                     <td data-label="Nama">${escapeHtml(by[i.userId]?.name || i.userName)}</td>
                     <td data-label="Game"><span>${escapeHtml(i.gameName)}<br><span class="sub">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : 'Latihan bebas (tanpa poin)'}</span></span></td>
@@ -1209,8 +1218,21 @@
                 </tr>`).join('');
         }
 
-        $('scoreLevelFilter').addEventListener('change', renderScores);
-        $('scoreStudentFilter').addEventListener('change', renderScores);
+        const resetRows = () => { rowsShown = ROW_PAGE; renderScores(); };
+        $('scoreLevelFilter').addEventListener('change', resetRows);
+        $('scoreStudentFilter').addEventListener('change', resetRows);
+        $('moreScores').addEventListener('click', () => {
+            rowsShown += ROW_PAGE;
+            if (rowsShown > scores.length && scores.length >= scoreLimit) {
+                // Muat skor lama berikutnya
+                scoreLimit += SCORE_PAGE;
+                stopScores?.();
+                scoresStarted = false;
+                startScores();
+            } else {
+                renderScores();
+            }
+        });
         $('gameScoresBody').addEventListener('click', async (e) => {
             const id = e.target.dataset.deleteScore;
             if (!id || !confirm('Hapus catatan skor ini?')) return;

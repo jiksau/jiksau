@@ -23,6 +23,7 @@ Ringkasan untuk melanjutkan pengembangan di chat baru. Baca file ini dulu sebelu
 | `user-dashboard.html` | Dashboard siswa: akun, peringkat minggu ini, progres latihan game |
 | `leaderboard.html` | Papan peringkat mingguan: Semua Jenjang (default) / per jenjang, Minggu Ini / Minggu Lalu / **Musim**, kartu poster 1080×1350 untuk diunduh |
 | `admin.html` | Admin: siswa (buat akun tanpa email, ubah jenjang/nama, hapus akun), kode kelas, **paket soal**, **pengumuman**, skor game |
+| (admin, tab Skor) | Hemat kuota: memuat 100 skor terbaru, tampil 50 baris; "Tampilkan lebih banyak" +50 baris, memuat +100 skor jika perlu. Ringkasan per siswa dihitung dari skor yang sudah dimuat |
 | `admin-login.html` | Login admin |
 | `gamelist.html` | Daftar game (Berpoin / Latihan) |
 | `game-ui.css` | **Gaya bersama seluruh website** (lihat "Tampilan" di bawah): token warna + mode gelap, header, navigasi bawah, kartu, tombol, isian, komponen game. `admin.html` punya salinan token sendiri di `<style>` (karena kelas `nav.tabs` admin berbeda) |
@@ -117,6 +118,8 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - **Kabari pemilik** jika suatu fitur butuh upgrade berbayar atau layanan pihak lain (mis. server/Cloud Functions Firebase).
 
 ## Keterbatasan yang diketahui
+
+- Kuota gratis Firestore 50.000 baca/hari. Beranda & Peringkat membaca semua skor minggu ini setiap dibuka; lonceng & riwayat membaca semua skor milik siswa. Aman untuk puluhan siswa; jika siswa aktif mendekati 80–100, perlu penghematan (simpan ringkasan, jangan hitung ulang dari nol). Cek di Firebase Console → Firestore → Usage.
 
 - Password akun nama pengguna tidak bisa direset dari website (Firebase gratis, tanpa server).
 - Hapus akun dari admin menghapus profil + skor; akun login terhapus saat siswa mencoba masuk lagi.
