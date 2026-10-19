@@ -262,7 +262,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
             weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints,
@@ -270,7 +270,7 @@
         } from "./ec-common.js";
         import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks, computeWeek } from "./weekly-results.js";
         import { tierFor, xpByUser, tierBadge } from "./tiers.js";
-        import { petSvg, stageForTier } from "./pets.js";
+        import { petSvg, stageForTier, publicPet } from "./pets.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -314,6 +314,8 @@
                     const snap = await getDoc(doc(db, 'users', user.uid));
                     if (!snap.exists()) { window.location.href = 'user-dashboard.html'; return; }
                     state.level = snap.data().level || null;
+                    // Hewan sendiri dari profil (cadangan jika salinan publik belum ada)
+                    state.myPet = publicPet(snap.data().pet, snap.data().equipped);
                 } catch (e) {
                     console.error(e);
                 }
@@ -329,7 +331,16 @@
             renderHistory();
             // XP semua siswa untuk lencana tier di samping nama
             // dan hewan peliharaan (koleksi pets, wujud mengikuti tier)
-            const petsLoad = getDocs(collection(db, 'pets')).then((s) => Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))).catch(() => ({}));
+            const petsLoad = getDocs(collection(db, 'pets')).then((s) => Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))).catch(() => ({}))
+                .then((pets) => {
+                    // Salinan publik hewan sendiri belum ada / berbeda: buat sekarang
+                    const mine = state.myPet;
+                    if (mine && JSON.stringify(pets[state.uid]) !== JSON.stringify(mine)) {
+                        setDoc(doc(db, 'pets', state.uid), mine).catch((e) => console.warn('Gagal menyalin hewan:', e));
+                        pets[state.uid] = mine;
+                    }
+                    return pets;
+                });
             Promise.all([history, computeWeek(weekKeyFor()).catch(() => []), petsLoad]).then(([weeks, now, pets]) => {
                 state.xp = xpByUser(weeks, now);
                 state.pets = pets;
