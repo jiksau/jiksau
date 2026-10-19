@@ -13,19 +13,38 @@
         .coin-ico { vertical-align: -4px; flex: none; }
 
         /* Pratinjau hewan */
-        .preview { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; }
-        .preview .stage svg { width: 100%; height: auto; display: block; }
+        .preview { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 16px 12px 12px; display: grid; grid-template-columns: 128px 1fr; gap: 14px; align-items: center; }
         .preview .stage { min-width: 0; line-height: 0; border-radius: 18px; background: radial-gradient(circle at 50% 54%, var(--accent-soft) 0 50%, transparent 51%); }
-        .preview .pname { display: block; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
-        .preview .psub { display: block; font-size: 13px; color: var(--muted); }
-        .wallet { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 12px; border-radius: 99px; background: var(--soft); font-weight: 700; font-variant-numeric: tabular-nums; }
-        .wallet small { font-weight: 600; color: var(--muted); }
-        .try { margin-top: 12px; display: grid; gap: 8px; }
-        .try .msg { font-size: 13px; color: var(--muted); min-height: 18px; }
-        .try .msg.bad { color: var(--bad); }
-        .try .msg.ok { color: var(--ok); font-weight: 600; }
-        .try .row { display: flex; gap: 8px; flex-wrap: wrap; }
-        .try .btn { height: 42px; flex: 1 1 120px; }
+        .preview .stage svg { width: 100%; height: auto; display: block; }
+        .preview .pname { display: block; font-size: 20px; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
+        .preview .psub { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+        .wallet { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; height: 34px; padding: 0 14px 0 10px; border-radius: 99px; background: var(--soft); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+        .wallet small { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+        .hint { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+        .flash { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--ok); }
+        .flash.bad { color: var(--bad); }
+
+        /* Bilah aksi (muncul saat barang dipilih), di atas navigasi bawah */
+        .actionbar { position: fixed; left: 0; right: 0; z-index: 29; padding: 0 12px 10px; pointer-events: none; }
+        .actionbar .in { pointer-events: auto; max-width: 616px; margin: 0 auto; display: grid; grid-template-columns: 60px 1fr; gap: 10px 12px; align-items: center; padding: 10px 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(10,16,13,.18); animation: barUp .18s ease-out; }
+        @keyframes barUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .actionbar .mini { width: 60px; height: 60px; border-radius: 12px; background: var(--soft); display: grid; place-items: center; line-height: 0; }
+        .actionbar .txt { min-width: 0; }
+        .actionbar .txt b { display: block; font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+        .actionbar .txt span { display: block; font-size: 12.5px; color: var(--muted); }
+        .actionbar .txt span.bad { color: var(--bad); font-weight: 600; }
+        .actionbar .btns { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+        .actionbar .btns.one { grid-template-columns: 1fr; }
+        .actionbar .btn { height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        @media (min-width: 560px) {
+            .actionbar .in { grid-template-columns: 60px 1fr auto; }
+            .actionbar .btns { grid-column: auto; display: flex; }
+            .actionbar .btn { min-width: 110px; }
+            .actionbar .btn.primary-wide { min-width: 150px; }
+        }
+        body.bar-open main.app { padding-bottom: 150px; }
+        .toast { position: fixed; left: 50%; transform: translateX(-50%); z-index: 31; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 99px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.2); animation: barUp .18s ease-out; }
+        .toast.bad { background: var(--bad); color: #fff; }
 
         /* Slot */
         .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--soft); border-radius: var(--radius-sm); padding: 4px; }
@@ -36,17 +55,19 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
         .it { position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 8px 10px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); cursor: pointer; text-align: center; color: var(--text); font: inherit; }
         .it.sel { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .it { min-height: 150px; align-content: start; }
+        .it .tag, .it .pr { margin-top: 2px; }
         .it .thumb { width: 72px; height: 72px; line-height: 0; display: grid; place-items: center; }
         .it .nm { font-weight: 700; font-size: 14px; line-height: 1.25; }
         .it .pr { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
         .it .tag { font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
         .it .tag.own { background: var(--soft); color: var(--muted); }
         .it .tag.on { background: var(--accent); color: var(--accent-ink); }
-        .it.locked .thumb, .it.locked .nm { opacity: .45; }
+        .it.locked .thumb, .it.locked .nm { opacity: .55; }
         .it .tag.lock { background: var(--soft); color: var(--muted); }
-        .it.none .thumb { color: var(--muted); font-size: 13px; font-weight: 600; }
-        .note { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
-        @media (max-width: 420px) { .preview { grid-template-columns: 120px 1fr; } }
+        .it.none .thumb { color: var(--line-strong); }
+        .note { font-size: 12.5px; line-height: 1.5; color: var(--muted); margin: 0 2px; }
+        @media (max-width: 380px) { .preview { grid-template-columns: 108px 1fr; } }
     </style>
 </head>
 <body class="has-tabs">
@@ -58,9 +79,8 @@
         </div>
     </header>
 
-    <main class="app">
-        <div id="content"><div class="empty">Memuat...</div></div>
-    </main>
+    <main class="app" id="content"><div class="empty">Memuat...</div></main>
+    <div class="actionbar" id="bar" hidden></div>
 
     <nav class="tabs" aria-label="Menu"><div class="in">
         <a href="user-dashboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Beranda</a>
@@ -137,45 +157,83 @@
             const owned = sel && st.items.includes(sel.id);
             const on = sel && st.equipped[sel.slot] === sel.id;
             const locked = sel && (sel.minTier || 0) > st.tier.index;
-            let actions = '';
-            if (st.selected?.startsWith('none:')) {
-                actions = st.equipped[st.slot] ? `<button class="btn" data-act="unequip">Lepas</button>` : '';
-            } else if (sel) {
-                actions = on ? `<button class="btn secondary" data-act="unequip">Lepas</button>`
-                    : owned ? `<button class="btn" data-act="equip">Pakai</button>`
-                    : locked ? `<button class="btn" disabled>Terbuka di ${escapeHtml(TIERS[sel.minTier].label)}</button>`
-                    : `<button class="btn" data-act="buy" ${balance() < sel.price ? 'disabled' : ''}>Beli ${COIN_ICON} ${fmt(sel.price)}</button>`;
-                if (actions) actions += `<button class="btn ghost" data-act="cancel">Batal</button>`;
+            // Bilah aksi bawah
+            let bar = '';
+            if (st.selected) {
+                const isNone = st.selected.startsWith('none:');
+                const slotName = SHOP_SLOTS.find((x) => x.key === st.slot).name.toLowerCase();
+                const title = isNone ? `Tanpa ${slotName}` : sel.name;
+                let sub = '', subCls = '', btn = '';
+                if (isNone) {
+                    sub = st.equipped[st.slot] ? `Lepas ${escapeHtml(itemById(st.equipped[st.slot]).name.toLowerCase())}` : 'Tidak ada yang dipakai';
+                    btn = st.equipped[st.slot] ? `<button class="btn" data-act="unequip">Lepas</button>` : '';
+                } else if (on) {
+                    sub = 'Sedang dipakai'; btn = `<button class="btn secondary" data-act="unequip">Lepas</button>`;
+                } else if (owned) {
+                    sub = 'Sudah dimiliki'; btn = `<button class="btn primary-wide" data-act="equip">Pakai</button>`;
+                } else if (locked) {
+                    sub = `Terbuka di tier ${escapeHtml(TIERS[sel.minTier].label)}`; subCls = 'bad';
+                } else if (balance() < sel.price) {
+                    sub = `Butuh ${fmt(sel.price - balance())} koin lagi`; subCls = 'bad';
+                    btn = `<button class="btn primary-wide" disabled>Beli ${COIN_ICON} ${fmt(sel.price)}</button>`;
+                } else {
+                    sub = 'Sedang dicoba'; btn = `<button class="btn primary-wide" data-act="buy">Beli ${COIN_ICON} ${fmt(sel.price)}</button>`;
+                }
+                // Hewan memakai barang yang dicoba (tetap terlihat walau daftar digulir)
+                const mini = stage ? petSvg(st.pet.species, stage, 60, 'pet-svg', wearing())
+                    : isNone ? '' : itemSvg(sel.id, 46);
+                bar = `<div class="in"><span class="mini">${mini}</span><div class="txt"><b>${escapeHtml(title)}</b><span class="${subCls}">${sub}</span></div>
+                    <div class="btns${btn ? '' : ' one'}"><button class="btn secondary" data-act="cancel">${btn ? 'Batal' : 'Tutup'}</button>${btn}</div></div>`;
             }
-            if (!msg && sel && !owned && !locked && balance() < sel.price) { msg = `Butuh ${fmt(sel.price - balance())} koin lagi.`; kind = 'bad'; }
-            if (!msg && st.selected && !on) msg = 'Sedang dicoba.';
 
             const slotItems = SHOP_ITEMS.filter((i) => i.slot === st.slot)
                 .sort((a, b) => (a.minTier || 0) - (b.minTier || 0) || a.price - b.price);
+            const slotName = SHOP_SLOTS.find((x) => x.key === st.slot).name.toLowerCase();
+            const NONE_ICON = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></svg>';
+            const LOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="vertical-align:-1px;margin-right:3px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
             $('content').innerHTML = `
                 <div class="preview">
-                    <div class="stage">${petSvg(st.pet.species, stage, 150, 'pet-svg', stage ? wearing() : {})}</div>
+                    <div class="stage">${petSvg(st.pet.species, stage, 128, 'pet-svg', stage ? wearing() : {})}</div>
                     <div>
                         <b class="pname">${escapeHtml(st.pet.name)}</b><span class="psub">${escapeHtml(sp.name)} · ${STAGES[stage]}</span>
                         <div class="wallet">${COIN_ICON} ${fmt(balance())} <small>koin</small></div>
-                        <div class="try"><div class="msg ${kind}">${escapeHtml(msg)}</div>${actions ? `<div class="row">${actions}</div>` : ''}</div>
+                        ${stage === 0 ? '<p class="hint">Hewanmu masih telur. Barang terlihat setelah menetas.</p>' : !st.selected ? '<p class="hint">Ketuk barang untuk mencobanya.</p>' : ''}
                     </div>
                 </div>
-                ${stage === 0 ? '<p class="note">Hewanmu masih telur. Barang bisa dibeli sekarang dan terlihat setelah menetas.</p>' : ''}
-                <div class="seg" role="tablist">${SHOP_SLOTS.map((s) => `<button role="tab" data-slot="${s.key}" class="${s.key === st.slot ? 'active' : ''}">${s.name}</button>`).join('')}</div>
+                <div class="seg" role="tablist">${SHOP_SLOTS.map((x) => `<button role="tab" data-slot="${x.key}" class="${x.key === st.slot ? 'active' : ''}">${x.name}</button>`).join('')}</div>
                 <div class="grid">
-                    <button class="it none${st.selected === `none:${st.slot}` ? ' sel' : ''}" data-none="${st.slot}"><span class="thumb">Tanpa</span><span class="nm">Tanpa ${SHOP_SLOTS.find((s) => s.key === st.slot).name.toLowerCase()}</span>${!st.equipped[st.slot] ? '<span class="tag on">Dipakai</span>' : ''}</button>
+                    <button class="it none${st.selected === `none:${st.slot}` ? ' sel' : ''}" data-none="${st.slot}"><span class="thumb">${NONE_ICON}</span><span class="nm">Tanpa ${slotName}</span>${!st.equipped[st.slot] ? '<span class="tag on">Dipakai</span>' : ''}</button>
                     ${slotItems.map((i) => {
                         const own = st.items.includes(i.id), isOn = st.equipped[i.slot] === i.id, lock = (i.minTier || 0) > st.tier.index;
                         const tag = isOn ? '<span class="tag on">Dipakai</span>' : own ? '<span class="tag own">Dimiliki</span>'
-                            : lock ? `<span class="tag lock">${escapeHtml(TIERS[i.minTier].label)}</span>` : `<span class="pr">${COIN_ICON} ${fmt(i.price)}</span>`;
+                            : lock ? `<span class="tag lock">${LOCK}${escapeHtml(TIERS[i.minTier].label)}</span>` : `<span class="pr">${COIN_ICON} ${fmt(i.price)}</span>`;
                         return `<button class="it${st.selected === i.id ? ' sel' : ''}${lock && !own ? ' locked' : ''}" data-id="${i.id}"><span class="thumb">${itemSvg(i.id, 72)}</span><span class="nm">${escapeHtml(i.name)}</span>${tag}</button>`;
                     }).join('')}
                 </div>
-                <p class="note">Koin didapat dari 1 jawaban benar di paket soal guru = 1 koin, ditambah bonus untuk peringkat 1–5 mingguan. Barang hanya mengubah tampilan, tidak menambah poin.</p>`;
+                <p class="note">1 jawaban benar di paket soal guru = 1 koin, ditambah bonus untuk peringkat 1–5 mingguan. Barang hanya mengubah tampilan, tidak menambah poin.</p>`;
+
+            const barEl = $('bar');
+            barEl.innerHTML = bar;
+            barEl.hidden = !bar;
+            document.body.classList.toggle('bar-open', !!bar);
+            // Tepat di atas navigasi bawah
+            const navH = (document.querySelector('nav.tabs')?.offsetHeight || 0) + 8;
+            barEl.style.bottom = `${navH}px`;
+            if (msg) toast(msg, kind, navH);
         }
 
-        $('content').addEventListener('click', async (e) => {
+        let toastTimer;
+        function toast(text, kind, bottom) {
+            document.querySelector('.toast')?.remove();
+            clearTimeout(toastTimer);
+            const t = Object.assign(document.createElement('div'), { className: `toast${kind === 'bad' ? ' bad' : ''}`, textContent: text });
+            t.style.bottom = `${bottom}px`;
+            t.setAttribute('role', 'status');
+            document.body.appendChild(t);
+            toastTimer = setTimeout(() => t.remove(), kind === 'bad' ? 5000 : 2500);
+        }
+
+        const onClick = async (e) => {
             const slotBtn = e.target.closest('[data-slot]');
             if (slotBtn) { st.slot = slotBtn.dataset.slot; st.selected = null; return render(); }
             const it = e.target.closest('[data-id]');
@@ -216,7 +274,9 @@
             } finally {
                 st.busy = false;
             }
-        });
+        };
+        $('content').addEventListener('click', onClick);
+        $('bar').addEventListener('click', onClick);
     </script>
     <script type="module" src="notifications.js"></script>
 </body>
