@@ -28,7 +28,14 @@ export function stageForTier(tierIndex) {
     return 5;
 }
 
-export const speciesOf = (key) => PET_SPECIES.find((s) => s.key === key) || PET_SPECIES[0];
+// Siswa yang belum memilih hewan: telur abu-abu
+const NO_PET = { key: "none", name: "Belum memilih", body: "#d6ddd9", dark: "#aab5af", belly: "#f1f4f2", accent: "#c3ccc7" };
+export const speciesOf = (key) => key === "none" ? NO_PET : PET_SPECIES.find((s) => s.key === key) || PET_SPECIES[0];
+
+// Data hewan yang boleh dilihat siswa lain (koleksi pets/{uid})
+export function publicPet(pet, equipped) {
+    return pet ? { species: pet.species, name: pet.name, equipped: equipped || {} } : null;
+}
 
 // Tier pertama untuk wujud berikutnya (untuk teks "x XP lagi sampai tumbuh")
 export function nextStageTier(tierIndex) {

@@ -85,7 +85,7 @@
 
         /* Daftar */
         #list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-        #list .row { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
+        #list .row { display: grid; grid-template-columns: 30px 40px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--line); }
         #list .row:first-child { border-top: 0; }
         #list:empty { display: none; }
         #list .rank { font-weight: 700; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
@@ -94,6 +94,9 @@
         #list .who small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
         #list .pts { font-weight: 700; color: var(--accent); white-space: nowrap; font-variant-numeric: tabular-nums; }
         #list .row.me { background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+        #list .ava { width: 40px; height: 40px; line-height: 0; }
+        .pod .pet { height: 64px; line-height: 0; margin: 0 auto -6px; position: relative; z-index: 1; }
+        .pod .pet:empty { height: 0; }
         #list .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 4px 0; border-top: 1px solid var(--line); }
         #list .empty-state { text-align: center; color: var(--muted); padding: 28px 12px; }
 
@@ -155,25 +158,27 @@
         .poster .ptop { display: flex; justify-content: space-between; align-items: center; font-size: 13px; line-height: 1.4; }
         .poster .ptop .brand { flex: none; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; opacity: .9; }
         .poster .ptop .date { font-weight: 600; opacity: .85; }
-        .poster .kicker { margin-top: 18px; font-size: 13px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #f6d36b; }
+        .poster .kicker { margin-top: 12px; font-size: 13px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #f6d36b; }
         .poster .title { font-size: 44px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; margin: 4px 0 10px; }
         .poster .sub { font-size: 15px; font-weight: 500; opacity: .95; }
         .poster .sub b { background: rgba(255,255,255,.2); padding: 2px 10px; border-radius: 999px; margin-right: 6px; }
-        .poster .ppodium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; margin: 22px 0 14px; }
+        .poster .ppodium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; margin: 12px 0 10px; }
         .poster .ppod { text-align: center; min-width: 0; }
         .poster .ppod .m { font-size: 30px; line-height: 1; }
         .poster .ppod .n { font-size: 16px; font-weight: 700; margin: 6px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .poster .ppod .p { font-size: 13px; opacity: .9; margin-bottom: 6px; }
         .poster .ppod .b { border-radius: 14px 14px 0 0; display: flex; justify-content: center; padding-top: 8px; font-size: 26px; font-weight: 800; color: rgba(255,255,255,.95); }
-        .poster .ppod.p1 .b { height: 104px; }
-        .poster .ppod.p2 .b { height: 76px; }
-        .poster .ppod.p3 .b { height: 58px; }
+        .poster .ppod.p1 .b { height: 80px; }
+        .poster .ppod.p2 .b { height: 58px; }
+        .poster .ppod.p3 .b { height: 44px; }
         .poster .ppod .b.r1 { background: linear-gradient(180deg, #f6d36b, #d9a21b); }
         .poster .ppod .b.r2 { background: linear-gradient(180deg, #e3e8e5, #a3aea8); }
         .poster .ppod .b.r3 { background: linear-gradient(180deg, #edb88f, #c0763f); }
         .poster .ppod.blank { visibility: hidden; }
+        .poster .ppod .pt { height: 56px; line-height: 0; margin-bottom: -8px; position: relative; z-index: 1; }
+        .poster .ppod .pt:empty { height: 0; }
         .poster .plist { background: rgba(255,255,255,.12); border-radius: 16px; padding: 8px 14px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
-        .poster .prow { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; font-size: 15px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+        .poster .prow { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; font-size: 15px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
         .poster .prow:last-child { border-bottom: none; }
         .poster .prow .r { font-weight: 800; opacity: .85; }
         .poster .prow .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
@@ -265,6 +270,7 @@
         } from "./ec-common.js";
         import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks, computeWeek } from "./weekly-results.js";
         import { tierFor, xpByUser, tierBadge } from "./tiers.js";
+        import { petSvg, stageForTier } from "./pets.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -322,8 +328,11 @@
             history = loadHistory().catch((e) => { console.warn(e); return []; });
             renderHistory();
             // XP semua siswa untuk lencana tier di samping nama
-            Promise.all([history, computeWeek(weekKeyFor()).catch(() => [])]).then(([weeks, now]) => {
+            // dan hewan peliharaan (koleksi pets, wujud mengikuti tier)
+            const petsLoad = getDocs(collection(db, 'pets')).then((s) => Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))).catch(() => ({}));
+            Promise.all([history, computeWeek(weekKeyFor()).catch(() => []), petsLoad]).then(([weeks, now, pets]) => {
                 state.xp = xpByUser(weeks, now);
+                state.pets = pets;
                 if (state.ranking.length) render();
             });
         });
@@ -452,6 +461,13 @@
         // ---------- Tampilan ----------
         // Nama di papan peringkat & poster: kapital semua agar seragam
         const NAME = (r) => shortName(r.name).toUpperCase();
+        // Hewan siswa (telur abu-abu jika belum memilih). Kosong sampai data termuat.
+        const petOf = (r, size) => {
+            if (!state.pets) return '';
+            const pet = state.pets[r.uid];
+            const stage = pet ? stageForTier(tierFor(state.xp?.[r.uid] || 0).index) : 0;
+            return petSvg(pet?.species || 'none', stage, size, 'pet-svg', stage ? pet?.equipped : {});
+        };
         const tierOf = (r) => state.xp ? tierBadge(tierFor(state.xp[r.uid] || 0), 18) : '';
         const medal = (rank) => ({ 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '');
 
@@ -501,12 +517,12 @@
             const lvTag = (r) => showLevel && r.level ? `<span class="lb-tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
             const lvText = (r) => showLevel && r.level ? `${escapeHtml(levelLabel(r.level))} · ` : '';
             const pod = (r, cls) => r
-                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div>${r.uid === state.uid ? '<div class="you">Kamu</div>' : ''}<div class="name">${tierOf(r)}${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div>${r.uid === state.uid ? '<div class="you">Kamu</div>' : ''}<div class="name">${tierOf(r)}${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="pet">${petOf(r, 64)}</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${tierOf(r)}${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${unitOf(r)}</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="ava">${petOf(r, 40)}</span><span class="who">${tierOf(r)}${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${unitOf(r)}</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;
@@ -557,7 +573,7 @@
             const isThis = state.week !== 'last';
             const top = list.slice(0, 3);
             const p = (r, cls) => r
-                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(NAME(r))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="ppod ${cls}"><div class="m">${medal(r.rank)}</div><div class="n">${escapeHtml(NAME(r))}</div><div class="p">${r.points} poin${!state.boardLevel && r.level ? ` · <span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}</div><div class="pt">${petOf(r, 60)}</div><div class="b r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="ppod ${cls} blank"></div>`;
             // Peringkat 4-10: jenjang di depan nama
             const rest = list.slice(3, TOP_N).map((r) => `<div class="prow"><span class="r">${medal(r.rank) || r.rank}</span><span class="n">${!state.boardLevel && r.level ? `<span class="lv">${escapeHtml(levelLabel(r.level))}</span>` : ''}${escapeHtml(NAME(r))}</span><span class="p">${r.points} poin</span></div>`).join('');

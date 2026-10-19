@@ -692,6 +692,7 @@
                 refs.slice(i, i + 450).forEach((ref) => batch.delete(ref));
                 await batch.commit();
             }
+            await deleteDoc(doc(db, 'pets', uid)).catch(() => {}); // hewan publik (jika ada)
             await deleteDoc(doc(db, 'users', uid));
             alert(`Akun "${name}" dihapus (${refs.length} skor ikut dihapus).`);
         }

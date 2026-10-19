@@ -71,11 +71,11 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor } from "./ec-common.js";
         import { loadHistory, computeWeek } from "./weekly-results.js";
         import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js";
-        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES } from "./pets.js";
+        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES, publicPet } from "./pets.js";
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -207,6 +207,8 @@
                 await updateDoc(doc(db, 'users', st.uid), { items, equipped });
                 st.items = items;
                 st.equipped = equipped;
+                // Salinan publik untuk papan peringkat
+                setDoc(doc(db, 'pets', st.uid), publicPet(st.pet, equipped)).catch((e) => console.warn(e));
                 st.selected = null;
                 render(done, 'ok');
             } catch (err) {

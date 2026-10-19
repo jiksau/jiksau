@@ -229,6 +229,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ---------- Hewan untuk ditampilkan ke siswa lain: pets/{uid} ----------
+    // Salinan publik hewan siswa (jenis, nama, barang dipakai) untuk papan
+    // peringkat & poster. Ditulis oleh pemiliknya sendiri.
+    match /pets/{uid} {
+      allow read: if isAdmin()
+        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
+      allow create, update: if isOwner(uid)
+        && exists(/databases/$(database)/documents/users/$(uid))
+        && request.resource.data.keys().hasOnly(['species', 'name', 'equipped'])
+        && request.resource.data.species in ['kucing', 'kelinci', 'naga']
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 16
+        && (!('equipped' in request.resource.data)
+            || (request.resource.data.equipped is map
+                && request.resource.data.equipped.keys().hasOnly(['head', 'face', 'neck', 'bg'])));
+      allow delete: if isAdmin() || isOwner(uid);
+    }
+
     // Semua koleksi lain: ditolak (default Firestore).
   }
 }

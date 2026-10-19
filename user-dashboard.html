@@ -157,11 +157,21 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, setDoc, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
         import { loadHistory } from "./weekly-results.js";
         import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js";
-        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById } from "./pets.js";
+        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById, publicPet } from "./pets.js";
+        // Salin hewan ke pets/{uid} (dibaca papan peringkat) jika belum sama
+        async function syncPublicPet() {
+            const pub = publicPet(myPet, myEquipped);
+            if (!pub || !myUid) return;
+            try {
+                const snap = await getDoc(doc(db, 'pets', myUid));
+                if (snap.exists() && JSON.stringify(snap.data()) === JSON.stringify(pub)) return;
+                await setDoc(doc(db, 'pets', myUid), pub);
+            } catch (e) { console.warn('Gagal menyalin hewan:', e); }
+        }
         let myPet = null, myUid = null, tierRender = null, myItems = [], myEquipped = {};
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -194,6 +204,7 @@
                     myPet = data.pet || null;
                     myItems = Array.isArray(data.items) ? data.items : [];
                     myEquipped = data.equipped || {};
+                    syncPublicPet();
                     myUid = user.uid;
                     $('userName').textContent = data.name || '-';
                     $('greetName').textContent = (data.name || 'Siswa').split(' ')[0];
@@ -369,6 +380,7 @@
                     const pet = { species: chosen, name: name.slice(0, PET_NAME_MAX) };
                     await updateDoc(doc(db, 'users', myUid), { pet });
                     myPet = pet;
+                    syncPublicPet();
                     close();
                     tierRender?.();
                 } catch (err) {
