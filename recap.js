@@ -19,7 +19,7 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.
 import {
     firebaseConfig, ADMIN_EMAIL, escapeHtml, levelLabel, shortName, levelRanking,
     weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
-    seasonKeyFor, seasonLabel, seasonRanking
+    seasonKeyFor, seasonLabel, seasonRanking, weekBonus
 } from "./ec-common.js";
 import { getWeekResult, loadSeasonWeeks } from "./weekly-results.js";
 
@@ -150,6 +150,7 @@ async function start(user) {
                     : "Peringkatmu sama dengan minggu sebelumnya."}</div>`;
             }
         }
+        if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonLabel(seasonKeyFor(lastWeek)).split(" ")[0])}.</div>`;
     } else if (!isNew) {
         mine = `<div class="note">Kamu tidak bermain minggu lalu. Poin sudah kembali nol untuk semua, jadi ini kesempatanmu!</div>`;
     }
@@ -158,7 +159,7 @@ async function start(user) {
     let seasonHtml = "";
     const lastSeason = seasonKeyFor(lastWeek);
     if (lastSeason !== seasonKeyFor(thisWeek)) {
-        const sRank = seasonRanking(await loadSeasonWeeks(lastSeason).catch(() => []));
+        const sRank = seasonRanking(await loadSeasonWeeks(lastSeason).catch(() => []), thisWeek);
         if (sRank.length) {
             const meS = sRank.find((r) => r.uid === uid);
             const name = seasonLabel(lastSeason).split(" ")[0];

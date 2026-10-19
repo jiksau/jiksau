@@ -368,8 +368,7 @@
                     // Poin musim = jumlah poin mingguan (seasonRanking di ec-common.js)
                     const weeks = await loadSeasonWeeks(season());
                     if (view !== state.week + (state.boardLevel || '')) return; // pilihan sudah berganti
-                    const board = state.boardLevel;
-                    state.ranking = seasonRanking(board ? weeks.map((w) => ({ week: w.week, ranking: levelRanking(w.ranking, board) })) : weeks);
+                    state.ranking = seasonRanking(weeks, weekKeyFor(), state.boardLevel);
                     render();
                     return;
                 }
@@ -415,7 +414,7 @@
             }).join('');
         }
         const RULE_WEEK = $('rule').textContent;
-        const RULE_SEASON = 'Poin musim = jumlah poin mingguan selama satu bulan (minggu yang hari Seninnya jatuh di bulan itu). Papan mingguan tetap reset setiap Senin.';
+        const RULE_SEASON = 'Poin musim = jumlah poin mingguan selama satu bulan, ditambah bonus untuk peringkat 1–5 Semua Jenjang setiap minggu: juara 1 +10, juara 2 +8, juara 3 +6, peringkat 4 +4, peringkat 5 +2. Bonus masuk setelah minggunya selesai.';
 
         // Kartu musim: rentang tanggal, sisa waktu, satu kotak per minggu (angka = tanggal Senin)
         function renderSeasonMeta() {
@@ -451,7 +450,7 @@
             const list = state.ranking;
             const isThis = state.week !== 'last'; // minggu ini & musim masih berjalan
             const me = list.find((r) => r.uid === state.uid);
-            const unitOf = (r) => isSeason() ? `${r.weeks} minggu` : `${r.packs} paket`;
+            const unitOf = (r) => isSeason() ? `${r.weeks} minggu${r.bonus ? ` · +${r.bonus} bonus` : ''}` : `${r.packs} paket`;
 
             // Kartu posisi saya (khusus siswa)
             if (!state.isAdmin) {
@@ -477,7 +476,7 @@
                     $('myRank').innerHTML = `<div class="my-rank"><div class="strip">
                         <div class="me-cell"><b>#${me.rank}</b><span>Peringkat</span></div>
                         <div><b>${me.points}</b><span>Poin</span></div>
-                        <div><b>${isSeason() ? me.weeks : me.packs}</b><span>${isSeason() ? 'Minggu' : 'Paket'}</span></div></div>${chase}</div>`;
+                        <div><b>${isSeason() ? (me.bonus ? '+' + me.bonus : 0) : me.packs}</b><span>${isSeason() ? 'Bonus' : 'Paket'}</span></div></div>${chase}</div>`;
                 }
             }
 

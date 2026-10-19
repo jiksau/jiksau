@@ -300,16 +300,27 @@ export function seasonRangeLabel(season) {
     return `${f(start)} – ${f(end)} ${end.getUTCFullYear()}`;
 }
 
+// Bonus poin musim untuk peringkat 1-5 papan mingguan Semua Jenjang.
+// Diberikan setelah minggu itu selesai. Poin sama = peringkat sama = bonus sama.
+export const WEEK_BONUS = { 1: 10, 2: 8, 3: 6, 4: 4, 5: 2 };
+export const weekBonus = (rank) => WEEK_BONUS[rank] || 0;
+
 // Gabungkan peringkat beberapa minggu menjadi peringkat musim.
-// weeks: [{week, ranking}] -> peringkat dengan points, packs, weeks (jumlah minggu bermain)
-export function seasonRanking(weeks) {
+// weeks: [{week, ranking}] dengan ranking = papan Semua Jenjang.
+// Poin musim = jumlah poin mingguan + bonus peringkat (hanya minggu yang
+// sudah selesai, yaitu sebelum currentWeek).
+// Hasil: peringkat dengan points (total), weekPoints, bonus, packs, weeks.
+// level: jika diisi, hanya siswa jenjang itu (total poin tetap sama).
+export function seasonRanking(weeks, currentWeek = weekKeyFor(), level = null) {
     const by = {};
     weeks.forEach((w) => (w.ranking || []).forEach((r) => {
-        const s = by[r.uid] ||= { uid: r.uid, name: r.name, level: r.level, points: 0, packs: 0, weeks: 0, last: "" };
-        s.points += r.points; s.packs += r.packs || 0; s.weeks += 1;
+        const s = by[r.uid] ||= { uid: r.uid, name: r.name, level: r.level, points: 0, weekPoints: 0, bonus: 0, packs: 0, weeks: 0, last: "" };
+        s.weekPoints += r.points; s.packs += r.packs || 0; s.weeks += 1;
+        if (w.week < currentWeek) s.bonus += weekBonus(r.rank);
         if (w.week >= s.last) { s.last = w.week; s.name = r.name || s.name; s.level = r.level || s.level; }
     }));
-    return rankPlayers(Object.values(by));
+    const all = Object.values(by).map((s) => ({ ...s, points: s.weekPoints + s.bonus }));
+    return rankPlayers(level ? all.filter((s) => s.level === level) : all);
 }
 
 // "Aisyah Putri Ramadhani" -> "Aisyah P." (privasi di papan peringkat)
