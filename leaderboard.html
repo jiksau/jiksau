@@ -103,6 +103,11 @@
         .tier-badge { vertical-align: -4px; margin-right: 4px; flex: none; }
 
         /* Riwayat juara */
+        /* Bagian riwayat: jarak antar-elemen sama dengan halaman (judul .sec memakai margin negatif) */
+        #historySec { display: grid; gap: 16px; }
+        #historySec[hidden] { display: none; }
+        #historySec .fame { margin-bottom: 0; }
+        #historySec #moreHistory { margin-top: 0; }
         #fame:empty { display: none; }
         .fame { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
         .fame > div { padding: 12px 14px; min-width: 0; }
