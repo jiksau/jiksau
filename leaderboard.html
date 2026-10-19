@@ -97,6 +97,8 @@
         #list .gap { text-align: center; color: var(--muted); letter-spacing: 4px; padding: 4px 0; border-top: 1px solid var(--line); }
         #list .empty-state { text-align: center; color: var(--muted); padding: 28px 12px; }
 
+        .tier-badge { vertical-align: -4px; margin-right: 4px; flex: none; }
+
         /* Riwayat juara */
         #fame:empty { display: none; }
         .fame { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
@@ -261,7 +263,8 @@
             weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints,
             rankPlayers, levelRanking, seasonKeyFor, seasonWeeks, seasonLabel, seasonRangeLabel, seasonRanking
         } from "./ec-common.js";
-        import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks } from "./weekly-results.js";
+        import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks, computeWeek } from "./weekly-results.js";
+        import { tierFor, xpByUser, tierBadge } from "./tiers.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -318,6 +321,11 @@
             load();
             history = loadHistory().catch((e) => { console.warn(e); return []; });
             renderHistory();
+            // XP semua siswa untuk lencana tier di samping nama
+            Promise.all([history, computeWeek(weekKeyFor()).catch(() => [])]).then(([weeks, now]) => {
+                state.xp = xpByUser(weeks, now);
+                if (state.ranking.length) render();
+            });
         });
 
         // ---------- Kontrol ----------
@@ -444,6 +452,7 @@
         // ---------- Tampilan ----------
         // Nama di papan peringkat & poster: kapital semua agar seragam
         const NAME = (r) => shortName(r.name).toUpperCase();
+        const tierOf = (r) => state.xp ? tierBadge(tierFor(state.xp[r.uid] || 0), 18) : '';
         const medal = (rank) => ({ 1: '🥇', 2: '🥈', 3: '🥉' }[rank] || '');
 
         function render() {
@@ -492,12 +501,12 @@
             const lvTag = (r) => showLevel && r.level ? `<span class="lb-tag">${escapeHtml(levelLabel(r.level))}</span>` : '';
             const lvText = (r) => showLevel && r.level ? `${escapeHtml(levelLabel(r.level))} · ` : '';
             const pod = (r, cls) => r
-                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div>${r.uid === state.uid ? '<div class="you">Kamu</div>' : ''}<div class="name">${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
+                ? `<div class="pod ${cls}${r.uid === state.uid ? ' me' : ''}"><div class="medal">${medal(r.rank)}</div>${r.uid === state.uid ? '<div class="you">Kamu</div>' : ''}<div class="name">${tierOf(r)}${escapeHtml(NAME(r))}</div>${lvTag(r) ? `<div class="lv">${lvTag(r)}</div>` : ''}<div class="pts">${r.points} poin</div><div class="block r${Math.min(r.rank, 3)}">${r.rank}</div></div>`
                 : `<div class="pod ${cls} blank"></div>`;
             $('podium').innerHTML = pod(top[1], 'p2') + pod(top[0], 'p1') + pod(top[2], 'p3');
 
             // Daftar peringkat 4-10 (+ posisi saya jika di luar 10 besar)
-            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${unitOf(r)}</small></span><span class="pts">${r.points} poin</span></li>`;
+            const row = (r) => `<li class="row${r.uid === state.uid ? ' me' : ''}"><span class="rank">${medal(r.rank) || r.rank}</span><span class="who">${tierOf(r)}${escapeHtml(NAME(r))}${r.uid === state.uid ? ' <em>(kamu)</em>' : ''}<small>${lvText(r)}${unitOf(r)}</small></span><span class="pts">${r.points} poin</span></li>`;
             let html = list.slice(3, TOP_N).map(row).join('');
             if (me && list.indexOf(me) >= TOP_N) html += `<li class="gap">• • •</li>${row(me)}`;
             $('list').innerHTML = html;

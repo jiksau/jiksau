@@ -35,6 +35,27 @@
         .week-rank .pts { display: block; font-size: 18px; line-height: 1.3; }
         .week-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
+        /* Tier */
+        .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 14px 14px 12px; }
+        .tier-top { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; }
+        .tier-top .tier-badge { display: block; }
+        .tier-name small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .tier-name b { display: block; font-size: 19px; line-height: 1.25; }
+        .tier-name .up { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; vertical-align: 3px; }
+        .tier-xp { text-align: right; }
+        .tier-xp b { display: block; font-size: 19px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+        .tier-xp span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+        .tier-bar { height: 8px; border-radius: 99px; background: var(--soft); margin-top: 12px; overflow: hidden; }
+        .tier-bar i { display: block; height: 100%; border-radius: 99px; }
+        .tier-next { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+        .tier-next button { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+        .ladder { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+        .ladder .lr { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 4px 0; font-size: 13.5px; }
+        .ladder .lr.cur { font-weight: 700; }
+        .ladder .lr.locked { opacity: .5; }
+        .ladder .lr span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+        .ladder p { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); }
+
         /* Nilai terbaik & riwayat */
         .rows { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
         .rows .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
@@ -72,6 +93,7 @@
     </header>
 
     <main class="app">
+        <div id="tierCard" class="tier-card" hidden></div>
         <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
 
         <a class="btn block" href="gamelist.html">Main game</a>
@@ -113,6 +135,8 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
+        import { loadHistory } from "./weekly-results.js";
+        import { TIERS, tierFor, xpByUser, tierBadge } from "./tiers.js";
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -197,6 +221,7 @@
                 const snap = await getDocs(query(collection(db, "gameScores"), where("week", "==", weekKeyFor())));
                 // Hanya paket soal guru, hasil terbaik per paket (sama dengan papan peringkat)
                 const scores = snap.docs.map((d) => d.data());
+                renderTier(uid, weeklyPoints(scores));
                 const toMap = (list) => Object.fromEntries(weeklyPoints(list).map((r) => [r.uid, r.points]));
                 const all = toMap(scores);
                 const same = level ? toMap(scores.filter((s) => s.level === level)) : {};
@@ -224,6 +249,40 @@
                 box.hidden = false;
             } catch (e) {
                 console.warn("Gagal memuat peringkat:", e);
+            }
+        }
+
+        // Tier: XP = semua poin mingguan sepanjang masa (lihat tiers.js)
+        async function renderTier(uid, current) {
+            try {
+                const weeks = await loadHistory();
+                const xp = xpByUser(weeks, current)[uid] || 0;
+                const t = tierFor(xp);
+                // Naik tier sejak terakhir membuka Beranda? (disimpan di browser)
+                const KEY = `ec-tier-${uid}`;
+                let seen = null;
+                try { seen = localStorage.getItem(KEY); localStorage.setItem(KEY, String(t.index)); } catch { /* abaikan */ }
+                const up = seen !== null && t.index > Number(seen);
+                const box = $('tierCard');
+                box.innerHTML = `
+                    <div class="tier-top">${tierBadge(t, 52)}
+                        <div class="tier-name"><small>Tier</small><b>${escapeHtml(t.label)}${up ? '<span class="up">Naik!</span>' : ''}</b></div>
+                        <div class="tier-xp"><b>${xp.toLocaleString('id-ID')}</b><span>XP</span></div></div>
+                    <div class="tier-bar"><i style="width:${Math.max(3, Math.round(t.progress * 100))}%;background:linear-gradient(90deg, ${t.light}, ${t.color})"></i></div>
+                    <div class="tier-next"><span>${t.next ? `${t.need.toLocaleString('id-ID')} XP lagi ke <b>${escapeHtml(t.next.label)}</b>` : 'Tier tertinggi. Luar biasa!'}</span><button type="button" id="ladderBtn" aria-expanded="false">Semua tier</button></div>
+                    <div class="ladder" id="ladder" hidden>
+                        ${TIERS.slice().reverse().map((x) => `<div class="lr${x.index === t.index ? ' cur' : ''}${x.index > t.index ? ' locked' : ''}">${tierBadge(x, 26)}<span>${escapeHtml(x.label)}</span><span>${x.xp.toLocaleString('id-ID')} XP</span></div>`).join('')}
+                        <p>1 jawaban benar dari paket soal guru = 1 XP (hasil terbaik per paket tiap minggu). XP tidak berkurang, jadi tier tidak pernah turun.</p>
+                    </div>`;
+                $('ladderBtn').addEventListener('click', (e) => {
+                    const open = $('ladder').hidden;
+                    $('ladder').hidden = !open;
+                    e.target.setAttribute('aria-expanded', String(open));
+                    e.target.textContent = open ? 'Tutup' : 'Semua tier';
+                });
+                box.hidden = false;
+            } catch (e) {
+                console.warn('Gagal memuat tier:', e);
             }
         }
 

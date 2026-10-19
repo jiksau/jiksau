@@ -21,7 +21,8 @@ import {
     weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
     seasonKeyFor, seasonLabel, seasonRanking, weekBonus
 } from "./ec-common.js";
-import { getWeekResult, loadSeasonWeeks } from "./weekly-results.js";
+import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js";
+import { tierFor, xpByUser, tierBadge } from "./tiers.js";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -56,6 +57,8 @@ const CSS = `
 .ec-recap .move b.up { color: var(--ok, #1f8a55); }
 .ec-recap .move b.down { color: var(--bad, #c0392b); }
 .ec-recap .note { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--soft, #eef2f0); font-size: 14px; }
+.ec-recap .tier-up { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft, #e1f0e8); font-size: 14.5px; }
+.ec-recap .tier-up b { color: var(--accent, #1f6f4a); }
 .ec-recap .sec { margin: 18px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #66706b); }
 .ec-recap .row { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line, #e2e7e4); }
 .ec-recap .row:first-of-type { border-top: 0; }
@@ -149,6 +152,13 @@ async function start(user) {
                     : d < 0 ? `<b class="down">Turun ${-d} peringkat</b> dari minggu sebelumnya.`
                     : "Peringkatmu sama dengan minggu sebelumnya."}</div>`;
             }
+        }
+        // Naik tier karena poin minggu lalu?
+        const weeks = await loadHistory().catch(() => []);
+        const xpAfter = xpByUser(weeks.filter((w) => w.week <= lastWeek))[uid] || 0;
+        const tBefore = tierFor(xpAfter - me.points), tAfter = tierFor(xpAfter);
+        if (tAfter.index > tBefore.index) {
+            mine += `<div class="tier-up">${tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!</span></div>`;
         }
         if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonLabel(seasonKeyFor(lastWeek)).split(" ")[0])}.</div>`;
     } else if (!isNew) {
