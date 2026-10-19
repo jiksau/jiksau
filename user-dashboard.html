@@ -38,7 +38,16 @@
         /* Tier */
         .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px 14px 10px; }
         .pet-row { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
-        .pet-stage { border: 0; padding: 0; background: radial-gradient(circle at 50% 62%, var(--accent-soft) 0 52%, transparent 53%); border-radius: 16px; cursor: pointer; line-height: 0; }
+        .pet-stage { border: 0; padding: 0; background: radial-gradient(circle 50px at 50% 53%, var(--accent-soft) 0 49px, transparent 50px); border-radius: 16px; cursor: pointer; line-height: 0; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 7px; border-radius: 99px; background: var(--soft); color: var(--text); font-size: 13.5px; font-weight: 700; text-decoration: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .chip .tier-badge { flex: none; }
+        .chip .up { padding: 1px 7px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 10.5px; }
+        .chip.shop { padding-left: 8px; }
+        .chip.shop b { margin-left: 2px; padding-left: 8px; border-left: 1px solid var(--line-strong); color: var(--accent); font-weight: 700; }
+        .xp-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .xp-row b { color: var(--text); font-size: 14px; }
+        .xp-row button { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
         .pet-stage svg { animation: petIdle 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
         .pet-stage.hop svg { animation: petHop .5s ease-out, petIdle 3.2s ease-in-out .5s infinite; }
         @keyframes petIdle { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-2px) scale(1.015, .985); } }
@@ -47,13 +56,6 @@
         .pet-info { min-width: 0; }
         .pet-name { display: block; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
         .pet-sub { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
-        .tier-line { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; font-weight: 600; }
-        .tier-line b { font-variant-numeric: tabular-nums; }
-        .shop-link { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
-        .shop-link .coin-ico { justify-self: center; }
-        .shop-link span { font-variant-numeric: tabular-nums; }
-        .shop-link b { padding: 4px 12px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 13px; }
-        .tier-line .up { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; vertical-align: 1px; }
         .pet-stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
         .pet-stages div { display: grid; justify-items: center; font-size: 11px; color: var(--muted); font-weight: 600; }
         .pet-stages .locked svg { opacity: .35; }
@@ -69,7 +71,7 @@
         .pet-choices button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
         .pet-dialog .form-msg { min-height: 18px; margin-top: 6px; color: var(--bad); font-size: 13px; }
         .pet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-        .tier-bar { height: 8px; border-radius: 99px; background: var(--soft); margin-top: 12px; overflow: hidden; }
+        .tier-bar { height: 8px; border-radius: 99px; background: var(--soft); margin-top: 6px; overflow: hidden; }
         .tier-bar i { display: block; height: 100%; border-radius: 99px; }
         .tier-next { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
         .tier-next button { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
@@ -318,12 +320,15 @@
                         <div class="pet-info">${myPet
                             ? `<b class="pet-name">${escapeHtml(myPet.name)}</b><span class="pet-sub">${escapeHtml(sp.name)} · ${STAGES[stage]}</span>`
                             : `<b class="pet-name">Telur misterius</b><span class="pet-sub">Pilih hewan peliharaanmu. Ia akan tumbuh setiap kamu naik tier.</span><button type="button" class="btn" id="petPick" style="margin-top:10px;height:40px">Pilih hewan</button>`}
-                            <div class="tier-line">${tierBadge(t, 26)}<span>${escapeHtml(t.label)}${up ? '<span class="up">Naik!</span>' : ''}</span><b>${xp.toLocaleString('id-ID')} XP</b></div>
-                            ${myPet ? `<a class="shop-link" href="toko.html">${COIN_ICON}<span>${coins.toLocaleString('id-ID')} koin</span><b>Toko</b></a>` : ''}
+                            <div class="chips">
+                                <span class="chip">${tierBadge(t, 22)}<span>${escapeHtml(t.label)}</span>${up ? '<span class="up">Naik!</span>' : ''}</span>
+                                ${myPet ? `<a class="chip shop" href="toko.html" aria-label="Toko, ${coins} koin">${COIN_ICON}<span>${coins.toLocaleString('id-ID')}</span><b>Toko</b></a>` : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="tier-bar"><i style="width:${Math.max(3, Math.round(t.progress * 100))}%;background:linear-gradient(90deg, ${t.light}, ${t.color})"></i></div>
-                    <div class="tier-next"><span>${nextText}</span><button type="button" id="ladderBtn" aria-expanded="false">Semua tier</button></div>
+                    <div class="xp-row"><b>${xp.toLocaleString('id-ID')} XP</b><button type="button" id="ladderBtn" aria-expanded="false">Semua tier</button></div>
+                    <div class="tier-bar"><i style="width:${Math.max(2, Math.round(t.progress * 100))}%;background:linear-gradient(90deg, ${t.light}, ${t.color})"></i></div>
+                    <div class="tier-next"><span>${nextText}</span></div>
                     <div class="ladder" id="ladder" hidden>
                         ${myPet ? `<div class="pet-stages">${[1, 2, 3, 4, 5].map((st) => `<div class="${st > stage ? 'locked' : ''}${st === stage ? ' cur' : ''}">${petSvg(myPet.species, st > stage ? 0 : st, 48)}<span>${STAGES[st]}</span></div>`).join('')}</div>
                         <button type="button" class="link" id="petEdit">Ubah hewan atau nama</button>` : ''}
