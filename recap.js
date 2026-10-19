@@ -23,6 +23,7 @@ import {
 } from "./ec-common.js";
 import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js";
 import { tierFor, xpByUser, tierBadge } from "./tiers.js";
+import { petSvg, stageForTier, STAGES } from "./pets.js";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -158,7 +159,11 @@ async function start(user) {
         const xpAfter = xpByUser(weeks.filter((w) => w.week <= lastWeek))[uid] || 0;
         const tBefore = tierFor(xpAfter - me.points), tAfter = tierFor(xpAfter);
         if (tAfter.index > tBefore.index) {
-            mine += `<div class="tier-up">${tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!</span></div>`;
+            const pet = profile.pet;
+            const st = stageForTier(tAfter.index);
+            const grew = pet && st > stageForTier(tBefore.index);
+            mine += `<div class="tier-up">${grew ? petSvg(pet.species, st, 56) : tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!${grew
+                ? `<br>${escapeHtml(pet.name)} ${st === 1 ? "menetas" : `tumbuh jadi ${STAGES[st]}`}.` : ""}</span></div>`;
         }
         if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonLabel(seasonKeyFor(lastWeek)).split(" ")[0])}.</div>`;
     } else if (!isNew) {

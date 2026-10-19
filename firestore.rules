@@ -38,6 +38,16 @@ service cloud.firestore {
       return level in ['SD', 'SMP', 'SMA', 'S1', 'S2', 'UMUM'];
     }
 
+    // Hewan peliharaan: { species: 'kucing'|'kelinci'|'naga', name: 1-16 huruf }
+    function isValidPet(pet) {
+      return pet is map
+        && pet.keys().hasOnly(['species', 'name'])
+        && pet.species in ['kucing', 'kelinci', 'naga']
+        && pet.name is string
+        && pet.name.size() > 0
+        && pet.name.size() <= 16;
+    }
+
     // Kode kelas ada, aktif, dan jenjangnya sama dengan yang dipakai siswa.
     function isActiveCodeFor(code, level) {
       let path = /databases/$(database)/documents/classCodes/$(code);
@@ -65,15 +75,18 @@ service cloud.firestore {
             && isValidLevel(request.resource.data.level)
             && isActiveCodeFor(request.resource.data.classCode, request.resource.data.level));
 
-      // Siswa hanya boleh memperbarui waktu masuk terakhir dan waktu
-      // terakhir menekan "Mengerti" di pengumuman (announceSeenAt, harus
-      // waktu sekarang). Nama, jenjang, dan peran hanya bisa diubah admin.
+      // Siswa hanya boleh memperbarui waktu masuk terakhir, waktu terakhir
+      // menekan "Mengerti" di pengumuman (announceSeenAt, harus waktu
+      // sekarang), dan hewan peliharaannya (pet: jenis + nama).
+      // Nama, jenjang, dan peran hanya bisa diubah admin.
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['lastLoginAt', 'announceSeenAt'])
+                 .hasOnly(['lastLoginAt', 'announceSeenAt', 'pet'])
             && (!('announceSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
-                || request.resource.data.announceSeenAt == request.time));
+                || request.resource.data.announceSeenAt == request.time)
+            && (!('pet' in request.resource.data.diff(resource.data).affectedKeys())
+                || isValidPet(request.resource.data.pet)));
 
       allow delete: if isAdmin();
     }

@@ -36,15 +36,35 @@
         .week-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
         /* Tier */
-        .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 14px 14px 12px; }
-        .tier-top { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; }
-        .tier-top .tier-badge { display: block; }
-        .tier-name small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-        .tier-name b { display: block; font-size: 19px; line-height: 1.25; }
-        .tier-name .up { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; vertical-align: 3px; }
-        .tier-xp { text-align: right; }
-        .tier-xp b { display: block; font-size: 19px; line-height: 1.25; font-variant-numeric: tabular-nums; }
-        .tier-xp span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+        .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px 14px 10px; }
+        .pet-row { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
+        .pet-stage { border: 0; padding: 0; background: radial-gradient(circle at 50% 62%, var(--accent-soft) 0 52%, transparent 53%); border-radius: 16px; cursor: pointer; line-height: 0; }
+        .pet-stage svg { animation: petIdle 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+        .pet-stage.hop svg { animation: petHop .5s ease-out, petIdle 3.2s ease-in-out .5s infinite; }
+        @keyframes petIdle { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-2px) scale(1.015, .985); } }
+        @keyframes petHop { 0% { transform: translateY(0); } 35% { transform: translateY(-14px) scale(.97, 1.04); } 70% { transform: translateY(0) scale(1.05, .95); } 100% { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .pet-stage svg { animation: none !important; } }
+        .pet-info { min-width: 0; }
+        .pet-name { display: block; font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
+        .pet-sub { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+        .tier-line { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; font-weight: 600; }
+        .tier-line b { font-variant-numeric: tabular-nums; }
+        .tier-line .up { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; vertical-align: 1px; }
+        .pet-stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+        .pet-stages div { display: grid; justify-items: center; font-size: 11px; color: var(--muted); font-weight: 600; }
+        .pet-stages .locked svg { opacity: .35; }
+        .pet-stages .cur span { color: var(--accent); font-weight: 700; }
+        .ladder .link { border: 0; background: none; padding: 4px 0 8px; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .pet-overlay { position: fixed; inset: 0; z-index: 2100; background: rgba(10,16,13,.5); display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .pet-dialog { width: 100%; max-width: 420px; background: var(--surface); border-radius: 20px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+        .pet-dialog h3 { margin: 0; font-size: 19px; }
+        .pet-dialog p { margin: 4px 0 14px; color: var(--muted); font-size: 13.5px; }
+        .pet-dialog label { display: block; font-weight: 600; font-size: 13.5px; margin: 14px 0 6px; }
+        .pet-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .pet-choices button { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 10px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--text); }
+        .pet-choices button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+        .pet-dialog .form-msg { min-height: 18px; margin-top: 6px; color: var(--bad); font-size: 13px; }
+        .pet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
         .tier-bar { height: 8px; border-radius: 99px; background: var(--soft); margin-top: 12px; overflow: hidden; }
         .tier-bar i { display: block; height: 100%; border-radius: 99px; }
         .tier-next { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
@@ -137,6 +157,8 @@
         import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
         import { loadHistory } from "./weekly-results.js";
         import { TIERS, tierFor, xpByUser, tierBadge } from "./tiers.js";
+        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf } from "./pets.js";
+        let myPet = null, myUid = null, tierRender = null;
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -165,6 +187,8 @@
                 const snap = await getDoc(userRef);
                 if (snap.exists()) {
                     const data = snap.data();
+                    myPet = data.pet || null;
+                    myUid = user.uid;
                     $('userName').textContent = data.name || '-';
                     $('greetName').textContent = (data.name || 'Siswa').split(' ')[0];
                     $('userLevel').textContent = levelLabel(data.level);
@@ -264,16 +288,37 @@
                 try { seen = localStorage.getItem(KEY); localStorage.setItem(KEY, String(t.index)); } catch { /* abaikan */ }
                 const up = seen !== null && t.index > Number(seen);
                 const box = $('tierCard');
+                const stage = stageForTier(t.index);
+                const sp = myPet ? speciesOf(myPet.species) : null;
+                const grow = nextStageTier(t.index);
+                const nextText = !t.next ? 'Tier tertinggi. Luar biasa!'
+                    : myPet && grow === t.next.index ? `${t.need.toLocaleString('id-ID')} XP lagi, <b>${escapeHtml(myPet.name)}</b> ${stage === 0 ? 'menetas' : 'tumbuh jadi ' + STAGES[stage + 1]}`
+                    : `${t.need.toLocaleString('id-ID')} XP lagi ke <b>${escapeHtml(t.next.label)}</b>`;
                 box.innerHTML = `
-                    <div class="tier-top">${tierBadge(t, 52)}
-                        <div class="tier-name"><small>Tier</small><b>${escapeHtml(t.label)}${up ? '<span class="up">Naik!</span>' : ''}</b></div>
-                        <div class="tier-xp"><b>${xp.toLocaleString('id-ID')}</b><span>XP</span></div></div>
+                    <div class="pet-row">
+                        <button type="button" class="pet-stage" id="petBtn" aria-label="${myPet ? 'Sapa ' + escapeHtml(myPet.name) : 'Pilih hewan'}">${petSvg(myPet?.species || 'kucing', myPet ? stage : 0, 112)}</button>
+                        <div class="pet-info">${myPet
+                            ? `<b class="pet-name">${escapeHtml(myPet.name)}</b><span class="pet-sub">${escapeHtml(sp.name)} · ${STAGES[stage]}</span>`
+                            : `<b class="pet-name">Telur misterius</b><span class="pet-sub">Pilih hewan peliharaanmu. Ia akan tumbuh setiap kamu naik tier.</span><button type="button" class="btn" id="petPick" style="margin-top:10px;height:40px">Pilih hewan</button>`}
+                            <div class="tier-line">${tierBadge(t, 26)}<span>${escapeHtml(t.label)}${up ? '<span class="up">Naik!</span>' : ''}</span><b>${xp.toLocaleString('id-ID')} XP</b></div>
+                        </div>
+                    </div>
                     <div class="tier-bar"><i style="width:${Math.max(3, Math.round(t.progress * 100))}%;background:linear-gradient(90deg, ${t.light}, ${t.color})"></i></div>
-                    <div class="tier-next"><span>${t.next ? `${t.need.toLocaleString('id-ID')} XP lagi ke <b>${escapeHtml(t.next.label)}</b>` : 'Tier tertinggi. Luar biasa!'}</span><button type="button" id="ladderBtn" aria-expanded="false">Semua tier</button></div>
+                    <div class="tier-next"><span>${nextText}</span><button type="button" id="ladderBtn" aria-expanded="false">Semua tier</button></div>
                     <div class="ladder" id="ladder" hidden>
+                        ${myPet ? `<div class="pet-stages">${[1, 2, 3, 4, 5].map((st) => `<div class="${st > stage ? 'locked' : ''}${st === stage ? ' cur' : ''}">${petSvg(myPet.species, st > stage ? 0 : st, 48)}<span>${STAGES[st]}</span></div>`).join('')}</div>
+                        <button type="button" class="link" id="petEdit">Ubah hewan atau nama</button>` : ''}
                         ${TIERS.slice().reverse().map((x) => `<div class="lr${x.index === t.index ? ' cur' : ''}${x.index > t.index ? ' locked' : ''}">${tierBadge(x, 26)}<span>${escapeHtml(x.label)}</span><span>${x.xp.toLocaleString('id-ID')} XP</span></div>`).join('')}
                         <p>1 jawaban benar dari paket soal guru = 1 XP (hasil terbaik per paket tiap minggu). XP tidak berkurang, jadi tier tidak pernah turun.</p>
                     </div>`;
+                $('petBtn').addEventListener('click', () => {
+                    if (!myPet) return openPetPicker();
+                    const b = $('petBtn');
+                    b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop');
+                });
+                $('petPick')?.addEventListener('click', openPetPicker);
+                $('petEdit')?.addEventListener('click', openPetPicker);
+                tierRender = () => renderTier(uid, current);
                 $('ladderBtn').addEventListener('click', (e) => {
                     const open = $('ladder').hidden;
                     $('ladder').hidden = !open;
@@ -284,6 +329,46 @@
             } catch (e) {
                 console.warn('Gagal memuat tier:', e);
             }
+        }
+
+        // Pilih / ubah hewan peliharaan (disimpan di users/{uid}.pet)
+        function openPetPicker() {
+            let chosen = myPet?.species || PET_SPECIES[0].key;
+            const ov = document.createElement('div');
+            ov.className = 'pet-overlay';
+            ov.innerHTML = `<div class="pet-dialog" role="dialog" aria-modal="true" aria-labelledby="petTitle">
+                <h3 id="petTitle">${myPet ? 'Ubah hewan peliharaan' : 'Pilih hewan peliharaan'}</h3>
+                <p>Hewanmu menetas lalu tumbuh setiap kamu naik tier.</p>
+                <div class="pet-choices">${PET_SPECIES.map((s) => `<button type="button" data-sp="${s.key}" class="${s.key === chosen ? 'on' : ''}">${petSvg(s.key, 1, 76)}<span>${s.name}</span></button>`).join('')}</div>
+                <label for="petName">Nama</label>
+                <input class="input" id="petName" maxlength="${PET_NAME_MAX}" placeholder="Contoh: Mochi" value="${escapeHtml(myPet?.name || '')}">
+                <div class="form-msg" id="petMsg"></div>
+                <div class="pet-actions"><button type="button" class="btn secondary" id="petCancel">Batal</button><button type="button" class="btn" id="petSave">Simpan</button></div>
+            </div>`;
+            document.body.appendChild(ov);
+            const close = () => ov.remove();
+            ov.querySelectorAll('.pet-choices button').forEach((b) => b.addEventListener('click', () => {
+                chosen = b.dataset.sp;
+                ov.querySelectorAll('.pet-choices button').forEach((x) => x.classList.toggle('on', x === b));
+            }));
+            ov.querySelector('#petCancel').addEventListener('click', close);
+            ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+            ov.querySelector('#petSave').addEventListener('click', async (e) => {
+                const name = ov.querySelector('#petName').value.trim().replace(/\s+/g, ' ');
+                if (!name) { ov.querySelector('#petMsg').textContent = 'Beri nama hewanmu dulu.'; return; }
+                e.target.disabled = true;
+                try {
+                    const pet = { species: chosen, name: name.slice(0, PET_NAME_MAX) };
+                    await updateDoc(doc(db, 'users', myUid), { pet });
+                    myPet = pet;
+                    close();
+                    tierRender?.();
+                } catch (err) {
+                    ov.querySelector('#petMsg').textContent = 'Gagal menyimpan: ' + err.message;
+                    e.target.disabled = false;
+                }
+            });
+            ov.querySelector('#petName').focus();
         }
 
         const CHEV = '<svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
