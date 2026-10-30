@@ -143,6 +143,7 @@ export const PACK_GAMES = {
         { name: "Kartu Hafalan", href: "kosakata%203.html" },
         { name: "Hafalan Tanpa Salah", href: "kosakata%205.html" },
         { name: "Cocokkan Pasangan", href: "cocokkan.html" },
+        { name: "Pilihan Ganda Cepat", href: "pilihan-ganda.html" },
     ],
     verb: [{ name: "Kata Kerja V1-V2-V3", href: "kosakata%204.html" }],
     kalimat: [{ name: "Susun Kalimat", href: "scramble.html" }],

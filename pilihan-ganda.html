@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Pilihan Ganda Cepat - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner wide">
+            <a href="gamelist.html" class="back"><svg class="ico" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>Game</a>
+            <h1>Pilihan Ganda Cepat</h1>
+        </div>
+    </header>
+
+    <main class="app wide">
+        <!-- ===== Persiapan ===== -->
+        <section id="setup" class="setup-grid">
+            <div class="card">
+                <h2>Pilih soal</h2>
+                <div id="source"></div>
+            </div>
+            <div class="stack side">
+                <div class="card" id="preview"></div>
+                <div class="card">
+                    <div id="settings"></div>
+                    <p class="note" style="margin-top:12px" id="rulesNote"></p>
+                    <div id="setupMsg" class="feedback bad"></div>
+                    <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== Bermain ===== -->
+        <section id="play" class="card narrow" hidden>
+            <div class="play-head">
+                <span class="badge" id="progressBadge">1 / 1</span>
+                <span class="badge" id="streakBadge" hidden>0 beruntun</span>
+            </div>
+            <div class="progress"><span id="bar"></span></div>
+            <p class="prompt-label" id="promptLabel">Arti dari</p>
+            <p class="prompt-word" id="promptWord"></p>
+            <div class="countdown"><span id="countdown"></span></div>
+            <div class="choice-grid" id="choices"></div>
+            <div class="actions" style="margin-top:16px">
+                <button type="button" class="btn secondary" id="stopBtn">Berhenti</button>
+            </div>
+        </section>
+
+        <!-- ===== Hasil ===== -->
+        <section id="done" class="stack narrow" hidden>
+            <div class="card result">
+                <div class="big" id="doneScore">0/0</div>
+                <p class="sub" id="doneSub"></p>
+                <div class="actions" style="margin-top:16px">
+                    <button type="button" class="btn" id="againBtn">Main lagi</button>
+                    <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
+                </div>
+            </div>
+            <div class="card" id="missedCard">
+                <h2>Perlu diulang</h2>
+                <div id="missedList"></div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { mountWordSource, mountPlaySettings, shuffled, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js";
+        import { escapeHtml } from "./ec-common.js";
+
+        const $ = (id) => document.getElementById(id);
+        const SECONDS = 10;   // waktu per soal
+        const CHOICES = 4;    // jumlah pilihan (lebih sedikit jika kata paket kurang)
+
+        $("rulesNote").textContent = `Tiap soal ${SECONDS} detik. Pilih jawaban sebelum waktunya habis.`;
+
+        let settings = null;
+        const source = mountWordSource($("source"), {
+            gameKey: "mcq",
+            previewEl: $("preview"),
+            onChange: () => { $("setupMsg").textContent = ""; settings?.refresh(); },
+        });
+        settings = mountPlaySettings($("settings"), {
+            gameKey: "mcq", count: () => source.words().length, timer: false,
+        });
+
+        let words = [];        // [{ q, a, ok }]  ok: true/false/undefined (belum dijawab)
+        let index = 0;
+        let reverse = false;
+        let options = [];      // teks pilihan soal sekarang
+        let answerIndex = 0;   // indeks pilihan yang benar
+        let streak = 0;
+        let bestStreak = 0;
+        let timeoutId = null;
+        let nextId = null;
+        let locked = false;    // sudah menjawab, menunggu soal berikutnya
+        let finished = true;
+
+        function show(section) {
+            ["setup", "play", "done"].forEach((id) => { $(id).hidden = id !== section; });
+            window.scrollTo(0, 0);
+        }
+
+        // Semua jawaban benar dari satu teks (mis. "besar / luas" -> ["besar", "luas"])
+        const alts = (text) => String(text).split("/").map(normalizeAnswer).filter(Boolean);
+        const overlaps = (x, y) => { const ay = alts(y); return alts(x).some((t) => ay.includes(t)); };
+
+        const promptOf = (w) => reverse ? w.a : w.q;
+        const answerOf = (w) => reverse ? w.q : w.a;
+
+        // Pengecoh: jawaban kata lain yang tidak sama artinya dengan jawaban benar
+        // (big = besar tidak dijadikan pengecoh untuk large = besar).
+        function buildOptions(w) {
+            const correct = answerOf(w);
+            const picked = [];
+            for (const other of shuffled(words)) {
+                if (picked.length >= CHOICES - 1) break;
+                const text = answerOf(other);
+                if (overlaps(text, correct) || picked.some((p) => overlaps(p, text))) continue;
+                picked.push(text);
+            }
+            const list = shuffled([correct, ...picked]);
+            return { list, answer: list.indexOf(correct) };
+        }
+
+        // Minimal 2 jawaban berbeda agar ada pilihan
+        function distinctAnswers(list, rev) {
+            const seen = [];
+            list.forEach((w) => { const t = rev ? w.q : w.a; if (!seen.some((s) => overlaps(s, t))) seen.push(t); });
+            return seen.length;
+        }
+
+        function start() {
+            const problem = source.problem();
+            if (problem) { $("setupMsg").textContent = problem; return; }
+            const s = settings.get();
+            if (distinctAnswers(source.words(), s.reverse) < 2) {
+                $("setupMsg").textContent = "Butuh minimal 2 kata dengan jawaban berbeda.";
+                return;
+            }
+            const list = source.words();
+            words = (s.shuffle ? shuffled(list) : list).map((w) => ({ ...w, ok: undefined }));
+            reverse = s.reverse;
+            index = 0;
+            streak = 0;
+            bestStreak = 0;
+            finished = false;
+            $("promptLabel").textContent = reverse ? "Bahasa Inggris dari" : "Arti dari";
+            show("play");
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const w = words[index];
+            ({ list: options, answer: answerIndex } = buildOptions(w));
+            locked = false;
+            $("progressBadge").textContent = `${index + 1} / ${words.length}`;
+            $("bar").style.width = `${(index / words.length) * 100}%`;
+            $("promptWord").textContent = promptOf(w);
+            $("choices").innerHTML = options.map((t, i) => `
+                <button type="button" class="choice" data-i="${i}"><span class="key">${i + 1}</span><span class="t">${escapeHtml(t)}</span></button>`).join("");
+            renderStreak();
+            startCountdown();
+        }
+
+        function renderStreak() {
+            $("streakBadge").hidden = streak < 2;
+            $("streakBadge").textContent = `${streak} beruntun`;
+        }
+
+        // Bilah hitung mundur: mulai penuh, lalu mengecil sampai habis
+        function startCountdown() {
+            clearTimeout(timeoutId);
+            const el = $("countdown");
+            el.style.transition = "none";
+            el.style.width = "100%";
+            el.className = "";
+            void el.offsetWidth; // mulai ulang animasi
+            el.style.transition = `width ${SECONDS}s linear`;
+            el.style.width = "0%";
+            timeoutId = setTimeout(() => answer(-1), SECONDS * 1000);
+        }
+
+        function stopCountdown() {
+            clearTimeout(timeoutId);
+            const el = $("countdown");
+            el.style.width = getComputedStyle(el).width; // berhenti di tempat
+            el.style.transition = "none";
+        }
+
+        // pick = indeks pilihan, -1 = waktu habis
+        function answer(pick) {
+            if (locked || finished) return;
+            locked = true;
+            stopCountdown();
+            const ok = pick === answerIndex;
+            words[index].ok = ok;
+            streak = ok ? streak + 1 : 0;
+            bestStreak = Math.max(bestStreak, streak);
+            renderStreak();
+            document.querySelectorAll("#choices .choice").forEach((b, i) => {
+                b.disabled = true;
+                if (i === answerIndex) b.classList.add("is-ok");
+                else if (i === pick) b.classList.add("is-bad");
+            });
+            if (pick < 0) $("countdown").className = "out";
+            $("bar").style.width = `${((index + 1) / words.length) * 100}%`;
+            nextId = setTimeout(next, ok ? 650 : 1500);
+        }
+
+        function next() {
+            if (finished) return;
+            index++;
+            if (index >= words.length) finish("done");
+            else renderQuestion();
+        }
+
+        function finish(reason) {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeoutId);
+            clearTimeout(nextId);
+            const correct = words.filter((w) => w.ok).length;
+            const missed = words.filter((w) => !w.ok);
+            $("doneScore").textContent = `${correct}/${words.length}`;
+            $("doneSub").textContent = `benar · beruntun terbaik ${bestStreak}`
+                + (reason === "stop" ? " · berhenti" : "");
+            $("missedCard").hidden = missed.length === 0;
+            $("missedList").innerHTML = wordTableHtml(missed, PACK_FIELDS.kosakata);
+            show("done");
+            window.saveGameScore?.({
+                gameId: "pilihan-ganda", gameName: "Pilihan Ganda Cepat",
+                correct, total: words.length, mode: reverse ? "arti-ke-kata" : "kata-ke-arti",
+                ...source.scoreInfo(),
+            });
+        }
+
+        $("choices").addEventListener("click", (e) => {
+            const b = e.target.closest(".choice");
+            if (b) answer(Number(b.dataset.i));
+        });
+        // Tombol angka 1-4 di keyboard
+        document.addEventListener("keydown", (e) => {
+            if ($("play").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+            const n = Number(e.key);
+            if (n >= 1 && n <= options.length) answer(n - 1);
+        });
+        $("stopBtn").addEventListener("click", () => finish("stop"));
+        $("startBtn").addEventListener("click", start);
+        $("againBtn").addEventListener("click", start);
+        $("doneBackBtn").addEventListener("click", () => show("setup"));
+    </script>
+</body>
+</html>

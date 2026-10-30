@@ -363,13 +363,15 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
 //  dibulatkan ke atas ke menit (1-30 menit).
 const DEFAULT_DIRECTIONS = ["Kata → Arti", "Arti → Kata"];
 
-export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDefault = true, count = () => 0, directions = DEFAULT_DIRECTIONS }) {
+//  timer: false = tanpa pilihan batas waktu total (mis. Pilihan Ganda Cepat
+//  memakai hitung mundur per soal); seconds selalu null.
+export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDefault = true, count = () => 0, directions = DEFAULT_DIRECTIONS, timer = true }) {
     const KEY = `ec-${gameKey}-settings`;
     const saved = store.get(KEY) || {};
     const state = {
         reverse: !!saved.reverse,
         shuffle: !!saved.shuffle,
-        timer: typeof saved.timer === "boolean" ? saved.timer : timerDefault,
+        timer: timer && (typeof saved.timer === "boolean" ? saved.timer : timerDefault),
         // null = ikuti saran otomatis; angka = menit pilihan siswa
         minutes: Number.isInteger(saved.minutes) ? saved.minutes : null,
     };
@@ -384,7 +386,7 @@ export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDef
             </label>
             <div class="opt-row">
                 <label class="check"><input type="checkbox" data-shuffle> Acak urutan</label>
-                <label class="check"><input type="checkbox" data-timer> Batas waktu</label>
+                <label class="check" data-timer-field><input type="checkbox" data-timer> Batas waktu</label>
             </div>
             <div class="timer-row" data-timer-row>
                 <input type="number" class="input" data-min min="1" max="30" inputmode="numeric" aria-label="Menit">
@@ -398,6 +400,7 @@ export function mountPlaySettings(root, { gameKey, secondsPerWord = 10, timerDef
     // directions: null = game tanpa pilihan arah (mis. Susun Kalimat)
     $("[data-dir-field]").hidden = !directions;
     if (!directions) state.reverse = false;
+    $("[data-timer-field]").hidden = !timer;
 
     const suggested = () => Math.min(30, Math.max(1, Math.ceil((count() * secondsPerWord) / 60)));
     const persist = () => store.set(KEY, state);
