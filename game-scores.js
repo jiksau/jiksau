@@ -31,7 +31,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, PACK_ALL_LEVELS } from "./ec-common.js";
+import { firebaseConfig, weekKeyFor, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -140,11 +140,11 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     try {
         await addDoc(collection(db, "gameScores"), data);
         if (packId) {
-            playedCache?.then((set) => set.add(data.packId));
-            window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId } }));
+            myScoresCache?.then((list) => list.push(data));
+            window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId, points: scorePoints(data) } }));
         }
         showToast(packId
-            ? `Skor ${correct}/${total} tersimpan.`
+            ? `Skor ${correct}/${total} tersimpan (${scorePoints(data)} poin).`
             : `Skor ${correct}/${total} tersimpan (latihan, tanpa poin).`);
     } catch (e) {
         console.error("Gagal menyimpan skor:", e);
@@ -154,44 +154,67 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     }
 };
 
-// Paket yang pernah dimainkan siswa ini (skor dengan packId, game apa pun).
-// Dimuat sekali per halaman. Jika gagal: Set kosong.
-let playedCache = null;
-window.loadPlayedPackIds = function () {
-    if (!playedCache) {
-        playedCache = (async () => {
+// Skor berpaket milik siswa ini (game apa pun). Dimuat sekali per halaman;
+// skor yang baru disimpan ikut ditambahkan. Jika gagal: daftar kosong.
+let myScoresCache = null;
+function loadMyPackScores() {
+    if (!myScoresCache) {
+        myScoresCache = (async () => {
             await authReady;
-            if (!currentUser || !hasProfile) return new Set();
+            if (!currentUser || !hasProfile) return [];
             try {
                 const snap = await getDocs(query(collection(db, "gameScores"), where("userId", "==", currentUser.uid)));
-                return new Set(snap.docs.map((d) => d.data().packId).filter(Boolean));
+                return snap.docs.map((d) => d.data()).filter((s) => s.packId);
             } catch (e) {
                 console.warn("Gagal memuat riwayat main:", e);
-                return new Set();
+                return [];
             }
         })();
     }
-    return playedCache;
+    return myScoresCache;
+}
+
+// Paket yang pernah dimainkan siswa ini (Set packId).
+window.loadPlayedPackIds = async function () {
+    return new Set((await loadMyPackScores()).map((s) => s.packId));
+};
+
+// Poin terbaik siswa ini per paket minggu ini (Map packId -> poin, setelah bobot).
+window.loadWeekPackPoints = async function () {
+    const week = weekKeyFor();
+    const best = new Map();
+    (await loadMyPackScores()).filter((s) => s.week === week).forEach((s) => {
+        best.set(s.packId, Math.max(best.get(s.packId) || 0, scorePoints(s)));
+    });
+    return best;
 };
 
 // Paket soal aktif untuk jenjang siswa + paket "Semua jenjang".
 // Dua query terpisah agar sesuai aturan keamanan Firestore.
+// Dimuat sekali per halaman (lonceng & Beranda memakai hasil yang sama).
+let packsCache = null;
 window.loadQuestionPacks = async function (type) {
     await authReady;
     if (!currentUser) return { status: "login", packs: [] };
     if (!hasProfile) return { status: "inactive", packs: [] };
-    try {
+    packsCache ||= (async () => {
         const levels = currentLevel ? [currentLevel, PACK_ALL_LEVELS] : [PACK_ALL_LEVELS];
         const snaps = await Promise.all(levels.map((lvl) => getDocs(query(
             collection(db, "questionPacks"),
             where("active", "==", true),
             where("level", "==", lvl),
         ))));
-        const packs = snaps.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-            .filter((p) => !type || p.type === type)
+        return snaps.flatMap((snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() })))
             .sort((a, b) => String(a.title).localeCompare(String(b.title), "id", { numeric: true }));
+    })();
+    try {
+        // Paket terjadwal (publishedAt di masa depan) belum terlihat siswa
+        const now = Date.now();
+        const packs = (await packsCache).filter((p) => (!type || p.type === type)
+            && !((p.publishedAt?.toMillis?.() ?? 0) > now));
         return { status: "ok", packs, level: currentLevel };
     } catch (e) {
+        packsCache = null; // coba lagi di panggilan berikutnya
         console.error("Gagal memuat paket soal:", e);
         return { status: "error", packs: [], message: e?.message || String(e) };
     }

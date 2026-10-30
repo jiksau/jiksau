@@ -198,6 +198,9 @@
         .pack-check b { color: var(--text); }
         .pack-errors { margin: 6px 0 0; padding-left: 18px; color: var(--red); font-size: 13px; }
         .pack-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        .release-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 6px; }
+        .release-row [hidden] { display: none; }
+        .pill.wait { background: var(--soft); color: var(--accent); border: 1px dashed var(--accent); }
         /* Pengumuman */
         .news-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 14px; }
         textarea.news-text { min-height: 160px; font: 15px/1.55 "Plus Jakarta Sans", system-ui, sans-serif; }
@@ -223,6 +226,7 @@
         @media (max-width: 680px) {
             .form-grid { grid-template-columns: 1fr; }
             .pack-grid { grid-template-columns: 1fr; }
+            .release-row { grid-template-columns: 1fr; }
             .news-grid { grid-template-columns: 1fr; }
             .field-label { white-space: normal; }
             .actions { justify-content: flex-end; flex-wrap: wrap; }
@@ -398,6 +402,16 @@
                             <small>1 = paling mudah</small>
                         </label>
                     </div>
+                    <div class="release-row">
+                        <label class="field"><span class="field-label">Terbit</span>
+                            <select id="packRelease"></select>
+                            <small id="packReleaseHint">&nbsp;</small>
+                        </label>
+                        <label class="field" id="packWhenField" hidden><span class="field-label">Tanggal &amp; jam terbit</span>
+                            <input type="datetime-local" id="packWhen">
+                            <small>Paket muncul & lonceng siswa berbunyi pada waktu ini</small>
+                        </label>
+                    </div>
                     <label class="field" style="margin-top:6px"><span class="field-label">Daftar soal</span>
                         <small id="packHint" style="margin:2px 0 0"></small>
                         <textarea id="packText" class="pack-text" spellcheck="false"></textarea>
@@ -533,7 +547,7 @@
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import {
             getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
-            query, where, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch
+            query, where, orderBy, limit, onSnapshot, serverTimestamp, getDocs, writeBatch, Timestamp
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
@@ -865,6 +879,39 @@
         $('packLevel').innerHTML = `<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>` + levelOptions(false);
         $('packTier').innerHTML = PACK_TIERS.map((t) => `<option value="${t}">Level ${t}</option>`).join('');
         $('packLevelFilter').innerHTML = `<option value="all">Semua paket</option><option value="${PACK_ALL_LEVELS}">Semua jenjang (umum)</option>` + levelOptions(false);
+
+        // Jadwal terbit: publishedAt di masa depan = paket tersembunyi dari siswa
+        // sampai waktunya (lihat loadQuestionPacks di game-scores.js)
+        const isScheduled = (p) => (p.publishedAt?.toMillis?.() ?? 0) > Date.now();
+        // Saran jadwal: Senin depan pukul 07.00 (waktu perangkat ini)
+        function nextMondayMorning() {
+            const d = new Date();
+            d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+            d.setHours(7, 0, 0, 0);
+            return d;
+        }
+        function toLocalInput(d) {
+            const p = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+        // pack = paket yang diubah (null = paket baru)
+        function setReleaseOptions(pack) {
+            const opts = [];
+            if (pack && !isScheduled(pack)) opts.push(['keep', `Tidak diubah (terbit ${fmtDate(pack.publishedAt || pack.createdAt)})`]);
+            opts.push(['now', 'Sekarang'], ['schedule', 'Jadwalkan']);
+            $('packRelease').innerHTML = opts.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join('');
+            $('packRelease').value = !pack ? 'now' : isScheduled(pack) ? 'schedule' : 'keep';
+            $('packWhen').value = toLocalInput(pack && isScheduled(pack) ? pack.publishedAt.toDate() : nextMondayMorning());
+            updateRelease();
+        }
+        function updateRelease() {
+            const v = $('packRelease').value;
+            $('packWhenField').hidden = v !== 'schedule';
+            $('packReleaseHint').textContent = v === 'now' ? 'Siswa langsung melihat paket & mendapat notifikasi'
+                : v === 'schedule' ? 'Tersembunyi dari siswa sampai waktunya' : 'Tanggal terbit tetap, tanpa notifikasi ulang';
+        }
+        $('packRelease').addEventListener('change', updateRelease);
+        setReleaseOptions(null);
         // Urutan tampil: jenjang (SD → Umum, lalu Semua jenjang), level, judul
         const levelOrder = (v) => { const i = LEVELS.findIndex((l) => l.value === v); return i < 0 ? 99 : i; };
 
@@ -915,6 +962,7 @@
             $('packSubmitBtn').textContent = 'Simpan Paket';
             $('packCancelBtn').hidden = true;
             $('packType').disabled = false;
+            setReleaseOptions(null);
             updatePackHelp();
         }
         $('packCancelBtn').addEventListener('click', () => { resetPackForm(); setMsg('packMsg', '', true); });
@@ -929,16 +977,24 @@
             if (!title) return setMsg('packMsg', 'Judul paket wajib diisi.', false);
             if (errors.length) return setMsg('packMsg', 'Masih ada baris yang perlu diperbaiki (lihat daftar merah di atas).', false);
             if (items.length === 0) return setMsg('packMsg', 'Isi minimal satu soal.', false);
+            const release = $('packRelease').value;
+            const when = new Date($('packWhen').value);
+            if (release === 'schedule') {
+                if (!$('packWhen').value || isNaN(when)) return setMsg('packMsg', 'Isi tanggal & jam terbit.', false);
+                if (when <= new Date()) return setMsg('packMsg', 'Waktu terbit harus setelah sekarang. Pilih "Sekarang" untuk langsung terbit.', false);
+            }
+            const publishedAt = release === 'schedule' ? Timestamp.fromDate(when) : release === 'now' ? serverTimestamp() : null;
+            const whenText = release === 'schedule' ? `Terbit ${fmtDate(publishedAt)}.` : 'Siswa mendapat notifikasi.';
 
             $('packSubmitBtn').disabled = true;
             try {
                 const data = { title, type, level, tier, items, itemCount: items.length, updatedAt: serverTimestamp() };
                 if (editingPackId) {
-                    await updateDoc(doc(db, 'questionPacks', editingPackId), data);
-                    setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).`, true);
+                    await updateDoc(doc(db, 'questionPacks', editingPackId), publishedAt ? { ...data, publishedAt } : data);
+                    setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).${publishedAt ? ' ' + whenText : ''}`, true);
                 } else {
-                    await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp(), publishedAt: serverTimestamp() });
-                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal, ${packLevelLabel(level)} · Level ${tier}). Siswa mendapat notifikasi.`, true);
+                    await addDoc(collection(db, 'questionPacks'), { ...data, active: true, createdAt: serverTimestamp(), publishedAt });
+                    setMsg('packMsg', `Paket "${title}" dibuat (${items.length} soal, ${packLevelLabel(level)} · Level ${tier}). ${whenText}`, true);
                 }
                 resetPackForm();
             } catch (err) {
@@ -969,7 +1025,9 @@
                     <td data-label="Jenjang">${escapeHtml(packLevelLabel(p.level))}</td>
                     <td data-label="Level">${p.tier ? `Level ${p.tier}` : '-'}</td>
                     <td data-label="Soal">${p.itemCount ?? (p.items || []).length}</td>
-                    <td data-label="Status"><span class="pill ${p.active ? 'on' : 'off'}">${p.active ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Status">${p.active && isScheduled(p)
+                        ? `<span class="pill wait">Terjadwal</span><br><span class="sub">${fmtDate(p.publishedAt)}</span>`
+                        : `<span class="pill ${p.active ? 'on' : 'off'}">${p.active ? 'Aktif' : 'Nonaktif'}</span>`}</td>
                     <td data-label="Aksi" class="col-actions"><span class="actions">
                         <button class="btn ghost" data-edit-pack="${p.id}">Ubah</button>
                         <button class="btn ghost" data-toggle-pack="${p.id}">${p.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
@@ -990,6 +1048,7 @@
                     $('packType').disabled = true; // jenis tidak diubah agar skor lama tetap masuk akal
                     $('packLevel').value = p.level;
                     $('packTier').value = String(p.tier || 1);
+                    setReleaseOptions(p);
                     $('packText').value = packToText(p.type, p.items);
                     $('packFormTitle').textContent = 'Ubah Paket Soal';
                     $('packSubmitBtn').textContent = 'Simpan Perubahan';
@@ -999,9 +1058,10 @@
                     $('packFormCard').scrollIntoView({ behavior: 'smooth' });
                 } else if (togglePack) {
                     // Mengaktifkan lagi = dirilis ulang, siswa mendapat notifikasi
+                    // (paket terjadwal tetap menunggu jadwalnya)
                     await updateDoc(doc(db, 'questionPacks', p.id), p.active
                         ? { active: false, updatedAt: serverTimestamp() }
-                        : { active: true, updatedAt: serverTimestamp(), publishedAt: serverTimestamp() });
+                        : { active: true, updatedAt: serverTimestamp(), publishedAt: isScheduled(p) ? p.publishedAt : serverTimestamp() });
                 } else if (deletePack) {
                     if (!confirm(`Hapus paket "${p.title}"?\n\nSkor yang sudah tersimpan tetap ada. Jika hanya ingin menyembunyikan sementara, pilih Nonaktifkan.`)) return;
                     await deleteDoc(doc(db, 'questionPacks', p.id));

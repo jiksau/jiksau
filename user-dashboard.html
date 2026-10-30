@@ -35,6 +35,15 @@
         .week-rank .pts { display: block; font-size: 18px; line-height: 1.3; }
         .week-rank .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
+        /* Paket minggu ini: berapa yang sudah poin penuh */
+        .pack-week { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 14px 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); color: var(--text); text-decoration: none; }
+        .pack-week .kicker { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+        .pack-week b { display: block; font-size: 16px; line-height: 1.35; margin-top: 2px; }
+        .pack-week .bar { height: 6px; margin: 8px 0 6px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+        .pack-week .bar span { display: block; height: 100%; border-radius: 99px; background: var(--ok); }
+        .pack-week .hint { display: block; font-size: 13px; color: var(--muted); }
+        .pack-week .go { color: var(--muted); display: grid; place-items: center; }
+
         /* Tier */
         .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px 14px 10px; }
         .pet-row { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
@@ -121,6 +130,7 @@
     <main class="app">
         <div id="tierCard" class="tier-card" hidden></div>
         <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
+        <a id="packWeek" class="pack-week" href="gamelist.html" hidden></a>
 
         <a class="btn block" href="gamelist.html">Main game</a>
 
@@ -160,7 +170,8 @@
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, setDoc, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints } from "./ec-common.js";
+        import "./game-scores.js"; // window.loadQuestionPacks & loadWeekPackPoints
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints, packMaxPoints } from "./ec-common.js";
         import { loadHistory } from "./weekly-results.js";
         import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js";
         import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById, publicPet } from "./pets.js";
@@ -217,6 +228,7 @@
                         : 'Ini pertama kalinya';
                     await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
                     loadWeekRank(user.uid, data.level || null);
+                    loadPackWeek();
                 } else {
                     // Profil sudah dihapus admin: hapus juga akun loginnya
                     // agar email/nama pengguna bisa dipakai lagi.
@@ -293,6 +305,28 @@
             } catch (e) {
                 console.warn("Gagal memuat peringkat:", e);
             }
+        }
+
+        // Paket minggu ini: berapa paket yang sudah poin penuh, sisa poin yang bisa didapat
+        async function loadPackWeek() {
+            const [res, best] = await Promise.all([window.loadQuestionPacks(), window.loadWeekPackPoints()]);
+            if (res.status !== 'ok' || !res.packs.length) return;
+            let full = 0, left = 0;
+            res.packs.forEach((p) => {
+                const max = packMaxPoints(p), got = Math.min(best.get(p.id) || 0, max);
+                if (got >= max) full++;
+                left += max - got;
+            });
+            const n = res.packs.length;
+            const box = $('packWeek');
+            box.innerHTML = `<div><small class="kicker">Paket minggu ini</small>
+                    <b>Poin penuh ${full} dari ${n} paket</b>
+                    <div class="bar"><span style="width:${Math.round((full / n) * 100)}%"></span></div>
+                    <small class="hint">${full === n
+                        ? 'Semua paket sudah poin penuh. Tunggu paket baru, atau main lagi mulai Senin.'
+                        : `Masih bisa tambah ${left} poin.`}</small></div>
+                <span class="go">${CHEV}</span>`;
+            box.hidden = false;
         }
 
         // Tier: XP = semua poin mingguan sepanjang masa (lihat tiers.js)

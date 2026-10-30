@@ -598,6 +598,11 @@ nav.tabs a.on::before {
 }
 .tag.all { background: var(--info-soft); color: var(--info); }
 .tag.lvl { background: var(--accent-soft); color: var(--accent); }
+/* Poin paket minggu ini */
+.tag.full { background: var(--ok); color: var(--accent-ink); }
+.tag.part { background: var(--warn-soft); color: var(--warn); }
+.pack-points { margin: 10px 0 0; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--soft); color: var(--muted); font-size: 13.5px; }
+.pack-points.full { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
 
 /* Pratinjau paket */
 .preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }

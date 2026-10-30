@@ -238,6 +238,12 @@ export const GAME_WEIGHT = {
     "pilihan-ganda": 1,  // Pilihan Ganda Cepat
 };
 export const WEIGHT_FROM_WEEK = "2026-11-02";
+// Poin maksimal satu paket dalam seminggu (dengan game berbobot tertinggi)
+export function packMaxPoints(pack, week = weekKeyFor()) {
+    const n = Number(pack.itemCount) || 0;
+    if (!(week >= WEIGHT_FROM_WEEK)) return n;
+    return n * (LEVEL_WEIGHT[pack.tier] || 1) * Math.max(...Object.values(GAME_WEIGHT));
+}
 export function scorePoints(s) {
     if (!(s.week >= WEIGHT_FROM_WEEK)) return Number(s.correct) || 0;
     return (Number(s.correct) || 0) * (LEVEL_WEIGHT[s.packTier] || 1) * (GAME_WEIGHT[s.gameId] || 1);

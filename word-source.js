@@ -18,7 +18,7 @@
 // =====================================================================
 
 import "./game-scores.js"; // window.loadQuestionPacks & window.saveGameScore
-import { escapeHtml, packTags, PACK_ALL_LEVELS } from "./ec-common.js";
+import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS } from "./ec-common.js";
 
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
@@ -116,6 +116,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"
         tier: "all",
         played: null,   // Set packId yang pernah dimainkan (game apa pun)
+        weekPoints: null, // Map packId -> poin terbaik minggu ini
         own: Array.isArray(saved.own) ? saved.own.filter(isComplete).slice(0, maxOwn) : [],
     };
 
@@ -191,6 +192,27 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
             && (!term || String(p.title).toLowerCase().includes(term)));
     }
 
+    // Poin paket minggu ini: label di daftar & pratinjau
+    function packPoints(p) {
+        if (!state.weekPoints) return null;
+        const max = packMaxPoints(p);
+        const got = state.weekPoints.get(p.id) || 0;
+        return { got, max, full: max > 0 && got >= max };
+    }
+    function pointsTag(p) {
+        const r = packPoints(p);
+        if (!r || !r.got) return "";
+        return r.full ? '<span class="tag full">Poin penuh</span>' : `<span class="tag part">${r.got}/${r.max} poin</span>`;
+    }
+    function pointsNote(p) {
+        const r = packPoints(p);
+        if (!r) return "";
+        const text = r.full ? `Poin penuh minggu ini (${r.max}). Main lagi untuk berlatih; poin bisa didapat lagi Senin.`
+            : r.got ? `Poin minggu ini: ${r.got} dari ${r.max}. Hasil terbaikmu yang dihitung.`
+            : `Paket ini bernilai maks. ${r.max} poin minggu ini.`;
+        return `<p class="pack-points${r.full ? " full" : ""}">${text}</p>`;
+    }
+
     function renderPacks() {
         const box = $("[data-pack-list]");
         const messages = {
@@ -212,7 +234,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         } else {
             box.innerHTML = list.map((p) => `
                 <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
-                    <span class="info"><span class="t">${state.played && !state.played.has(p.id) ? '<span class="new-dot" title="Belum pernah dimainkan"></span>' : ""}${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}</span></span>
+                    <span class="info"><span class="t">${state.played && !state.played.has(p.id) ? '<span class="new-dot" title="Belum pernah dimainkan"></span>' : ""}${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}${pointsTag(p)}</span></span>
                     <span class="n">${p.itemCount} ${unit}</span>
                 </button>`).join("");
         }
@@ -234,9 +256,10 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         previewEl.classList.remove("only-wide");
         previewEl.innerHTML = `
             <div class="preview-head">
-                <div><h2>${escapeHtml(p.title)}</h2><div class="tags">${tagsHtml(p)}</div></div>
+                <div><h2>${escapeHtml(p.title)}</h2><div class="tags">${tagsHtml(p)}${pointsTag(p)}</div></div>
                 <span class="n">${p.itemCount} ${unit}</span>
             </div>
+            ${pointsNote(p)}
             <div class="word-scroll">${wordTableHtml(api.words(), FIELDS)}</div>`;
     }
 
@@ -337,9 +360,12 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
 
     // Titik merah: paket yang belum pernah dimainkan di game mana pun
     window.loadPlayedPackIds().then((set) => { state.played = set; if (state.mode === "pack") renderPacks(); });
+    window.loadWeekPackPoints().then((map) => { state.weekPoints = map; if (state.mode === "pack") { renderPacks(); renderPreview(); } });
     window.addEventListener("ec-pack-played", (e) => {
-        state.played?.add(e.detail.packId);
-        if (state.mode === "pack") renderPacks();
+        const { packId, points } = e.detail;
+        state.played?.add(packId);
+        state.weekPoints?.set(packId, Math.max(state.weekPoints.get(packId) || 0, points));
+        if (state.mode === "pack") { renderPacks(); renderPreview(); }
     });
 
     window.loadQuestionPacks(type).then((res) => {
