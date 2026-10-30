@@ -184,7 +184,11 @@ service cloud.firestore {
         return request.resource.data.packId is string
           && pack.active == true
           && (pack.level == 'SEMUA' || pack.level == myProfile().get('level', null))
-          && request.resource.data.total == pack.itemCount;
+          && request.resource.data.total == pack.itemCount
+          // Level paket di skor (dasar bobot poin) harus sama dengan level
+          // paket sebenarnya; tanpa packTier dihitung level 1.
+          && (!('packTier' in request.resource.data)
+              || request.resource.data.packTier == pack.get('tier', 1));
       }
 
       allow create: if isSignedIn()

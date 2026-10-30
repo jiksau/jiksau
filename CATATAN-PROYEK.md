@@ -85,7 +85,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
    });
    ```
    Daftar paket: `const hasil = await window.loadQuestionPacks("kosakata")` → `hasil.status` (`ok`/`login`/`inactive`/`error`) dan `hasil.packs`. Untuk game kosakata cukup pakai `mountWordSource` dari `word-source.js` (contoh: `kosakata 5.html`); `source.scoreInfo()` mengisi `packId`/`packName`.
-3. **1 jawaban benar = 1 poin** di papan peringkat, hanya dari paket soal, hasil terbaik per paket per minggu. Minggu dihitung Senin 00.00 – Minggu 23.59 WIB.
+3. **Bobot poin = level paket × jenis game** (`scorePoints` di `ec-common.js`, mulai minggu `WEIGHT_FROM_WEEK` = 2026-11-02; sebelumnya 1 jawaban benar = 1 poin). Level (`LEVEL_WEIGHT`, dari `packTier` di skor): Level 1–2 = 1, Level 3–4 = 2, Level 5 = 3, paket tanpa level = 1. Game (`GAME_WEIGHT`): menulis/menyusun (Kuis Kosakata, Kartu Hafalan, Hafalan Tanpa Salah, Kata Kerja, Susun Kalimat) ×2, memilih (Cocokkan Pasangan, Pilihan Ganda Cepat) ×1. Contoh: paket Level 3 di Kuis Kosakata = 4 poin per kata. Game baru wajib ditambahkan ke `GAME_WEIGHT` (tanpa entri = ×1). Level disimpan di skor saat dimainkan (`scoreInfo()` → `packTier`), dicek aturan Firestore agar sama dengan level paket; guru mengubah level paket tidak mengubah skor lama. Winrate/akurasi sengaja **tidak** dibuat: mengulang paket justru didorong (hanya hasil terbaik yang dihitung). Hanya dari paket soal, hasil terbaik (setelah bobot) per paket per minggu, dari game mana pun. Poin = XP = koin, jadi bobot juga mempercepat tier & koin (batas tier/harga toko mungkin perlu disesuaikan). Minggu dihitung Senin 00.00 – Minggu 23.59 WIB.
 4. Skor hanya tersimpan jika siswa login dan profilnya masih ada. Jika tidak, muncul notifikasi kecil.
 
 ## Data Firestore
@@ -95,7 +95,7 @@ Catatan: nama file berspasi masih dipertahankan agar tautan lama tidak rusak.
 - `questionPacks/{id}`: title, type ("kosakata"/"verb"/"kalimat"), level (jenjang atau "SEMUA"), tier (1–5, opsional untuk paket lama), active, items[], itemCount, createdAt, updatedAt, publishedAt (diisi saat dibuat & saat diaktifkan lagi; dasar notifikasi, paket lama memakai createdAt)
 - `announcements/{id}`: title (≤80), body (≤2000), level (jenjang atau "SEMUA"), active, createdAt, updatedAt, publishedAt (diisi saat terbit, saat diaktifkan lagi, atau saat diubah dengan centang "Tampilkan lagi")
 - `weeklyResults/{week}`: week, ranking [{uid, name, level, points, packs, rank}] (papan Semua Jenjang; papan jenjang = `levelRanking`), players, savedAt. Hanya admin yang menulis
-- `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, week ("YYYY-MM-DD" Senin), timestamp
+- `gameScores/{id}`: userId, userName, gameId, gameName, correct, total, percent, points?, mode?, level?, packId?, packName?, packTier? (level paket 1–5 saat dimainkan), week ("YYYY-MM-DD" Senin), timestamp
 - Akun tanpa email memakai email sintetis `<namapengguna>@siswa.extra-course-d02c2.firebaseapp.com`.
 
 ## Tampilan (sejak 17 Okt 2026, meniru Monitor Kelas)

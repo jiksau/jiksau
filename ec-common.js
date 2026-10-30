@@ -221,17 +221,40 @@ export function packToText(type, items) {
         : `${it.q} = ${it.a}`).join("\n");
 }
 
+// ---------- Bobot poin: level paket x jenis game ----------
+// Poin per jawaban benar = bobot level x bobot game.
+// Level paket (packTier di skor): 1-2 = 1, 3-4 = 2, 5 = 3 (tanpa level = 1).
+// Game menulis/menyusun = x2, game memilih = x1.
+// Berlaku untuk skor mulai minggu WEIGHT_FROM_WEEK; sebelum itu semua 1 poin.
+// Game baru: tambahkan di GAME_WEIGHT (tanpa entri = x1).
+export const LEVEL_WEIGHT = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3 };
+export const GAME_WEIGHT = {
+    "kosakata-2": 2,     // Kuis Kosakata
+    "kosakata-3": 2,     // Kartu Hafalan
+    "kosakata-5": 2,     // Hafalan Tanpa Salah
+    "kosakata-4": 2,     // Kata Kerja V1-V2-V3
+    "scramble": 2,       // Susun Kalimat
+    "cocokkan": 1,       // Cocokkan Pasangan
+    "pilihan-ganda": 1,  // Pilihan Ganda Cepat
+};
+export const WEIGHT_FROM_WEEK = "2026-11-02";
+export function scorePoints(s) {
+    if (!(s.week >= WEIGHT_FROM_WEEK)) return Number(s.correct) || 0;
+    return (Number(s.correct) || 0) * (LEVEL_WEIGHT[s.packTier] || 1) * (GAME_WEIGHT[s.gameId] || 1);
+}
+
 // ---------- Hitung poin mingguan ----------
 // Hanya skor dari paket soal guru (punya packId) yang dihitung.
-// Jika satu paket dimainkan berkali-kali dalam seminggu, yang dihitung
-// hanya hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.
+// Jika satu paket dimainkan berkali-kali dalam seminggu (di game mana pun),
+// yang dihitung hanya hasil terbaiknya (setelah bobot, lihat scorePoints).
+// Latihan dengan kata sendiri tidak menambah poin.
 // scores: array data dokumen gameScores. Hasil: array per siswa.
 export function weeklyPoints(scores) {
     const by = {};
     scores.forEach((s) => {
         if (!s || !s.packId) return;
         const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, best: {}, points: 0, games: 0, last: 0 };
-        r.best[s.packId] = Math.max(r.best[s.packId] || 0, Number(s.correct) || 0);
+        r.best[s.packId] = Math.max(r.best[s.packId] || 0, scorePoints(s));
         r.games += 1;
         const t = s.timestamp?.toMillis?.() ?? Date.now();
         if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }

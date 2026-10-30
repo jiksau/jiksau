@@ -14,7 +14,7 @@
 //        gameKey: "k5", secondsPerWord: 15, timerDefault: false,
 //        count: () => source.words().length });
 //    source.words() -> [{ q, a }]     settings.get() -> { reverse, shuffle, seconds|null }
-//    source.scoreInfo() -> { packId, packName } (kosong untuk latihan)
+//    source.scoreInfo() -> { packId, packName, packTier } (kosong untuk latihan)
 // =====================================================================
 
 import "./game-scores.js"; // window.loadQuestionPacks & window.saveGameScore
@@ -320,7 +320,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
             return list.map((it) => Object.fromEntries(FIELDS.map((f) => [f.key, it[f.key] || ""])));
         },
         title() { return api.pack ? api.pack.title : "Kata sendiri"; },
-        scoreInfo() { return api.pack ? { packId: api.pack.id, packName: api.pack.title } : {}; },
+        scoreInfo() { return api.pack ? { packId: api.pack.id, packName: api.pack.title, packTier: api.pack.tier || 1 } : {}; },
         // Pesan jika belum bisa mulai (null = siap)
         problem() {
             if (state.mode === "pack" && !state.pack) return "Pilih paket soal dulu.";

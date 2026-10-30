@@ -12,7 +12,7 @@
 //         });
 //
 //       Untuk permainan dengan paket soal guru, tambahkan juga
-//         packId: paket.id, packName: paket.title
+//         packId: paket.id, packName: paket.title, packTier: paket.tier
 //       Hanya skor dengan packId yang dihitung di papan peringkat.
 //    3. Daftar paket soal untuk siswa yang sedang login:
 //         const hasil = await window.loadQuestionPacks("kosakata");
@@ -92,7 +92,7 @@ function showToast(html, isError = false) {
 // ---------- Fungsi utama ----------
 let lastSaveKey = null;
 
-window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null, packId = null, packName = null }) {
+window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null, packId = null, packName = null, packTier = null }) {
     correct = Math.round(Number(correct));
     total = Math.round(Number(total));
     if (!gameId || !Number.isFinite(total) || total <= 0 || !Number.isFinite(correct)) return;
@@ -133,6 +133,8 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     if (packId) {
         data.packId = String(packId);
         data.packName = String(packName || "Paket soal").slice(0, 80);
+        // Level paket (1-5) saat dimainkan, dasar bobot poin (scorePoints)
+        if (Number.isInteger(packTier)) data.packTier = packTier;
     }
 
     try {

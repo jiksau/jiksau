@@ -333,7 +333,7 @@
                         ${myPet ? `<div class="pet-stages">${[1, 2, 3, 4, 5].map((st) => `<div class="${st > stage ? 'locked' : ''}${st === stage ? ' cur' : ''}">${petSvg(myPet.species, st > stage ? 0 : st, 48)}<span>${STAGES[st]}</span></div>`).join('')}</div>
                         <button type="button" class="link" id="petEdit">Ubah hewan atau nama</button>` : ''}
                         ${TIERS.slice().reverse().map((x) => `<div class="lr${x.index === t.index ? ' cur' : ''}${x.index > t.index ? ' locked' : ''}">${tierBadge(x, 26)}<span>${escapeHtml(x.label)}</span><span>${x.xp.toLocaleString('id-ID')} XP</span></div>`).join('')}
-                        <p>1 jawaban benar dari paket soal guru = 1 XP (hasil terbaik per paket tiap minggu). XP tidak berkurang, jadi tier tidak pernah turun.</p>
+                        <p>1 poin dari paket soal guru = 1 XP (hasil terbaik per paket tiap minggu; poin per jawaban benar = poin level paket × 2 untuk game menulis, × 1 untuk game memilih). XP tidak berkurang, jadi tier tidak pernah turun.</p>
                     </div>`;
                 $('petBtn').addEventListener('click', () => {
                     if (!myPet) return openPetPicker();
