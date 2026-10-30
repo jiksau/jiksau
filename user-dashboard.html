@@ -43,6 +43,8 @@
         .pack-week .bar span { display: block; height: 100%; border-radius: 99px; background: var(--ok); }
         .pack-week .hint { display: block; font-size: 13px; color: var(--muted); }
         .pack-week .go { color: var(--muted); display: grid; place-items: center; }
+        .pack-week.todo { border: 2px solid var(--accent); padding: 13px 13px 13px 15px; }
+        .pack-week.todo .go { color: var(--accent); }
 
         /* Tier */
         .tier-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px 14px 10px; }
@@ -130,6 +132,7 @@
     <main class="app">
         <div id="tierCard" class="tier-card" hidden></div>
         <a id="weekRank" class="week-rank" href="leaderboard.html" hidden></a>
+        <a id="dailyCard" class="pack-week" href="harian.html" hidden></a>
         <a id="packWeek" class="pack-week" href="gamelist.html" hidden></a>
 
         <a class="btn block" href="gamelist.html">Main game</a>
@@ -171,7 +174,8 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, setDoc, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import "./game-scores.js"; // window.loadQuestionPacks & loadWeekPackPoints
-        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints, packMaxPoints } from "./ec-common.js";
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints, packMaxPoints, scorePoints, dayKeyFor } from "./ec-common.js";
+        import { dailyWords, DAILY_MIN_POOL } from "./daily.js";
         import { loadHistory } from "./weekly-results.js";
         import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js";
         import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById, publicPet } from "./pets.js";
@@ -229,6 +233,7 @@
                     await updateDoc(userRef, { lastLoginAt: serverTimestamp() });
                     loadWeekRank(user.uid, data.level || null);
                     loadPackWeek();
+                    loadDaily();
                 } else {
                     // Profil sudah dihapus admin: hapus juga akun loginnya
                     // agar email/nama pengguna bisa dipakai lagi.
@@ -305,6 +310,27 @@
             } catch (e) {
                 console.warn("Gagal memuat peringkat:", e);
             }
+        }
+
+        // Tantangan Harian: sudah/belum dikerjakan hari ini + rangkaian hari
+        async function loadDaily() {
+            const { today, streak } = await window.loadDailyStatus();
+            if (!today) {
+                // Sembunyikan jika jenjang ini belum punya cukup kata kosakata
+                const res = await window.loadQuestionPacks('kosakata');
+                if (res.status !== 'ok' || dailyWords(res.packs, dayKeyFor(), res.level).pool.length < DAILY_MIN_POOL) return;
+            }
+            const box = $('dailyCard');
+            const each = scorePoints({ correct: 1, gameId: 'harian', week: weekKeyFor() });
+            box.classList.toggle('todo', !today);
+            box.innerHTML = `<div><small class="kicker">Tantangan harian</small>
+                    <b>${today ? `Selesai: ${today.correct}/${today.total} benar` : '10 kata hari ini menunggumu'}</b>
+                    <small class="hint">${today
+                        ? `${streak > 1 ? `Rangkaian ${streak} hari. ` : ''}Tantangan baru besok.`
+                        : streak ? `Rangkaian ${streak} hari, jangan sampai putus. ${each} poin per jawaban benar.`
+                        : `Sekali sehari, ${each} poin per jawaban benar.`}</small></div>
+                <span class="go">${CHEV}</span>`;
+            box.hidden = false;
         }
 
         // Paket minggu ini: berapa paket yang sudah poin penuh, sisa poin yang bisa didapat
@@ -491,7 +517,7 @@
                         <div class="hist">
                             <div class="m">
                                 <div class="nm">${escapeHtml(i.gameName)}</div>
-                                <div class="ds">${i.packId ? escapeHtml(i.packName || '-') : 'Latihan bebas'} · ${when}</div>
+                                <div class="ds">${i.packId ? escapeHtml(i.packName || '-') : i.daily ? 'Tantangan harian' : 'Latihan bebas'} · ${when}</div>
                             </div>
                             <div class="res ${scoreColor(i.percent)}">${describeScore(i)}</div>
                         </div>`;

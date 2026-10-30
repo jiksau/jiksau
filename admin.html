@@ -1273,7 +1273,7 @@
             $('gameScoresBody').innerHTML = rows.slice(0, rowsShown).map((i) => `<tr>
                     <td data-label="Waktu">${fmtDate(i.timestamp)}</td>
                     <td data-label="Nama">${escapeHtml(by[i.userId]?.name || i.userName)}</td>
-                    <td data-label="Game"><span>${escapeHtml(i.gameName)}<br><span class="sub">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : 'Latihan bebas (tanpa poin)'}</span></span></td>
+                    <td data-label="Game"><span>${escapeHtml(i.gameName)}<br><span class="sub">${i.packId ? 'Paket: ' + escapeHtml(i.packName || '-') : i.daily ? 'Tantangan harian ' + escapeHtml(i.daily) : 'Latihan bebas (tanpa poin)'}</span></span></td>
                     <td data-label="Hasil"><span class="${scoreClass(i.percent)}">${scoreText(i)}</span></td>
                     <td data-label="Aksi"><button class="btn danger" data-delete-score="${i.id}">Hapus</button></td>
                 </tr>`).join('');

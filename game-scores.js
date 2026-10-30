@@ -13,7 +13,7 @@
 //
 //       Untuk permainan dengan paket soal guru, tambahkan juga
 //         packId: paket.id, packName: paket.title, packTier: paket.tier
-//       Hanya skor dengan packId yang dihitung di papan peringkat.
+//       Hanya skor dengan packId (atau daily: Tantangan Harian) yang dihitung di papan peringkat.
 //    3. Daftar paket soal untuk siswa yang sedang login:
 //         const hasil = await window.loadQuestionPacks("kosakata");
 //         // hasil.status: "ok" | "login" | "inactive" | "error"
@@ -30,8 +30,8 @@
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js";
+import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -92,7 +92,10 @@ function showToast(html, isError = false) {
 // ---------- Fungsi utama ----------
 let lastSaveKey = null;
 
-window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null, packId = null, packName = null, packTier = null }) {
+// daily: tanggal Tantangan Harian ("YYYY-MM-DD"); disimpan dengan ID
+// harian-<tanggal>-<uid> sehingga hanya bisa sekali per hari.
+// Hasil: "ok", "denied", "error", atau undefined (tidak disimpan).
+window.saveGameScore = async function ({ gameId, gameName, correct, total, points = null, mode = null, packId = null, packName = null, packTier = null, daily = null }) {
     correct = Math.round(Number(correct));
     total = Math.round(Number(total));
     if (!gameId || !Number.isFinite(total) || total <= 0 || !Number.isFinite(correct)) return;
@@ -135,27 +138,33 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         data.packName = String(packName || "Paket soal").slice(0, 80);
         // Level paket (1-5) saat dimainkan, dasar bobot poin (scorePoints)
         if (Number.isInteger(packTier)) data.packTier = packTier;
+    } else if (daily) {
+        data.daily = String(daily);
     }
 
     try {
-        await addDoc(collection(db, "gameScores"), data);
+        if (data.daily) await setDoc(doc(db, "gameScores", `harian-${data.daily}-${currentUser.uid}`), data);
+        else await addDoc(collection(db, "gameScores"), data);
+        if (packId || data.daily) myScoresCache?.then((list) => list.push(data));
         if (packId) {
-            myScoresCache?.then((list) => list.push(data));
             window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId, points: scorePoints(data) } }));
         }
-        showToast(packId
+        showToast(packId || data.daily
             ? `Skor ${correct}/${total} tersimpan (${scorePoints(data)} poin).`
             : `Skor ${correct}/${total} tersimpan (latihan, tanpa poin).`);
+        return "ok";
     } catch (e) {
         console.error("Gagal menyimpan skor:", e);
-        showToast(packId && e?.code === "permission-denied"
-            ? "Skor gagal disimpan: paket ini sudah tidak aktif."
+        const denied = e?.code === "permission-denied";
+        showToast(data.daily && denied ? "Tantangan hari ini sudah pernah disimpan."
+            : packId && denied ? "Skor gagal disimpan: paket ini sudah tidak aktif."
             : "Skor gagal disimpan. Coba lagi nanti.", true);
+        return denied ? "denied" : "error";
     }
 };
 
-// Skor berpaket milik siswa ini (game apa pun). Dimuat sekali per halaman;
-// skor yang baru disimpan ikut ditambahkan. Jika gagal: daftar kosong.
+// Skor berpaket & Tantangan Harian milik siswa ini (game apa pun). Dimuat
+// sekali per halaman; skor yang baru disimpan ikut ditambahkan. Jika gagal: daftar kosong.
 let myScoresCache = null;
 function loadMyPackScores() {
     if (!myScoresCache) {
@@ -164,7 +173,7 @@ function loadMyPackScores() {
             if (!currentUser || !hasProfile) return [];
             try {
                 const snap = await getDocs(query(collection(db, "gameScores"), where("userId", "==", currentUser.uid)));
-                return snap.docs.map((d) => d.data()).filter((s) => s.packId);
+                return snap.docs.map((d) => d.data()).filter((s) => s.packId || s.daily);
             } catch (e) {
                 console.warn("Gagal memuat riwayat main:", e);
                 return [];
@@ -176,17 +185,29 @@ function loadMyPackScores() {
 
 // Paket yang pernah dimainkan siswa ini (Set packId).
 window.loadPlayedPackIds = async function () {
-    return new Set((await loadMyPackScores()).map((s) => s.packId));
+    return new Set((await loadMyPackScores()).map((s) => s.packId).filter(Boolean));
 };
 
 // Poin terbaik siswa ini per paket minggu ini (Map packId -> poin, setelah bobot).
 window.loadWeekPackPoints = async function () {
     const week = weekKeyFor();
     const best = new Map();
-    (await loadMyPackScores()).filter((s) => s.week === week).forEach((s) => {
+    (await loadMyPackScores()).filter((s) => s.packId && s.week === week).forEach((s) => {
         best.set(s.packId, Math.max(best.get(s.packId) || 0, scorePoints(s)));
     });
     return best;
+};
+
+// Tantangan Harian siswa ini: { today: skor hari ini | null, streak: hari berturut-turut }.
+// Rangkaian dihitung mundur dari hari ini (jika sudah main) atau kemarin.
+window.loadDailyStatus = async function () {
+    const byDay = new Map();
+    (await loadMyPackScores()).filter((s) => s.daily && s.gameId === "harian").forEach((s) => byDay.set(s.daily, s));
+    const today = dayKeyFor();
+    let day = byDay.has(today) ? today : previousDayKey(today);
+    let streak = 0;
+    while (byDay.has(day)) { streak++; day = previousDayKey(day); }
+    return { today: byDay.get(today) || null, streak };
 };
 
 // Paket soal aktif untuk jenjang siswa + paket "Semua jenjang".

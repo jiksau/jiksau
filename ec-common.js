@@ -101,6 +101,18 @@ export function weekKeyFor(date = new Date()) {
     return new Date(monday).toISOString().slice(0, 10);
 }
 
+// Kunci hari (WIB) "YYYY-MM-DD", dipakai Tantangan Harian.
+export function dayKeyFor(date = new Date()) {
+    return new Date(date.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
+}
+// Waktu (ms) saat hari itu dimulai (00.00 WIB).
+export function dayStartMs(key) {
+    return Date.parse(key + "T00:00:00Z") - WIB_OFFSET_MS;
+}
+export function previousDayKey(key) {
+    return new Date(Date.parse(key + "T00:00:00Z") - DAY_MS).toISOString().slice(0, 10);
+}
+
 export function previousWeekKey(key) {
     return new Date(Date.parse(key + "T00:00:00Z") - 7 * DAY_MS).toISOString().slice(0, 10);
 }
@@ -236,6 +248,7 @@ export const GAME_WEIGHT = {
     "scramble": 2,       // Susun Kalimat
     "cocokkan": 1,       // Cocokkan Pasangan
     "pilihan-ganda": 1,  // Pilihan Ganda Cepat
+    "harian": 2,         // Tantangan Harian (tanpa level paket)
 };
 export const WEIGHT_FROM_WEEK = "2026-11-02";
 // Poin maksimal satu paket dalam seminggu (dengan game berbobot tertinggi)
@@ -250,7 +263,8 @@ export function scorePoints(s) {
 }
 
 // ---------- Hitung poin mingguan ----------
-// Hanya skor dari paket soal guru (punya packId) yang dihitung.
+// Hanya skor dari paket soal guru (punya packId) dan Tantangan Harian
+// (daily = tanggal, sekali per hari) yang dihitung.
 // Jika satu paket dimainkan berkali-kali dalam seminggu (di game mana pun),
 // yang dihitung hanya hasil terbaiknya (setelah bobot, lihat scorePoints).
 // Latihan dengan kata sendiri tidak menambah poin.
@@ -258,16 +272,18 @@ export function scorePoints(s) {
 export function weeklyPoints(scores) {
     const by = {};
     scores.forEach((s) => {
-        if (!s || !s.packId) return;
+        // Kunci: paket soal, atau satu hari Tantangan Harian
+        const key = s?.packId || (s?.daily && s.gameId === "harian" ? `harian:${s.daily}` : null);
+        if (!key) return;
         const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, best: {}, points: 0, games: 0, last: 0 };
-        r.best[s.packId] = Math.max(r.best[s.packId] || 0, scorePoints(s));
+        r.best[key] = Math.max(r.best[key] || 0, scorePoints(s));
         r.games += 1;
         const t = s.timestamp?.toMillis?.() ?? Date.now();
         if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }
     });
     return Object.values(by).map((r) => {
         r.points = Object.values(r.best).reduce((a, b) => a + b, 0);
-        r.packs = Object.keys(r.best).length;
+        r.packs = Object.keys(r.best).filter((k) => !k.startsWith("harian:")).length;
         delete r.best;
         return r;
     });

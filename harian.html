@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Tantangan Harian - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="user-dashboard.html" class="back"><svg class="ico" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>Beranda</a>
+            <h1>Tantangan Harian</h1>
+        </div>
+    </header>
+
+    <main class="app">
+        <!-- ===== Memuat / tidak tersedia ===== -->
+        <section id="msg" class="card"><p class="preview-empty" id="msgText">Memuat tantangan hari ini...</p></section>
+
+        <!-- ===== Pembuka ===== -->
+        <section id="intro" class="stack" hidden>
+            <div class="card daily-intro">
+                <p class="daily-date" id="introDate"></p>
+                <h2>10 kata hari ini</h2>
+                <ul class="daily-rules">
+                    <li>5 soal pilihan ganda, lalu 5 soal menulis kata bahasa Inggris.</li>
+                    <li>Hanya sekali sehari. Semua teman sejenjang mendapat kata yang sama.</li>
+                    <li id="introPoints"></li>
+                </ul>
+                <div class="daily-streak" id="introStreak" hidden></div>
+                <button type="button" class="btn block" id="startBtn" style="margin-top:16px">Mulai</button>
+            </div>
+        </section>
+
+        <!-- ===== Bermain ===== -->
+        <section id="play" class="card" hidden>
+            <div class="play-head">
+                <span class="badge" id="progressBadge">1 / 10</span>
+                <span class="badge" id="scoreBadge">0 benar</span>
+            </div>
+            <div class="progress"><span id="bar"></span></div>
+            <p class="prompt-label" id="promptLabel"></p>
+            <p class="prompt-word" id="promptWord"></p>
+            <div class="choice-grid" id="choices"></div>
+            <form class="answer-row" id="answerForm" autocomplete="off" hidden>
+                <input class="input" id="answer" placeholder="Tulis dalam bahasa Inggris" autocapitalize="none" spellcheck="false">
+                <button class="btn" type="submit" id="checkBtn">Periksa</button>
+            </form>
+            <div id="feedback" class="feedback"></div>
+            <div class="actions" style="margin-top:16px">
+                <button type="button" class="btn" id="nextBtn" hidden>Berikutnya</button>
+            </div>
+        </section>
+
+        <!-- ===== Hasil ===== -->
+        <section id="done" class="stack" hidden>
+            <div class="card result">
+                <div class="big" id="doneScore">0/0</div>
+                <p class="sub" id="doneSub"></p>
+                <div class="daily-streak" id="doneStreak" hidden></div>
+                <p class="note" id="doneNext" style="margin-top:12px"></p>
+                <div class="actions" style="margin-top:16px">
+                    <a class="btn" href="gamelist.html">Main game lain</a>
+                    <a class="btn secondary" href="user-dashboard.html">Beranda</a>
+                </div>
+            </div>
+            <div class="card" id="reviewCard" hidden>
+                <h2>Kata hari ini</h2>
+                <table class="word-table"><tbody id="reviewList"></tbody></table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import "./game-scores.js";
+        import { isAnswerCorrect } from "./word-source.js";
+        import { escapeHtml, dayKeyFor, dayStartMs, weekKeyFor, scorePoints } from "./ec-common.js";
+        import { dailyWords, choicesFor, DAILY_MIN_POOL } from "./daily.js";
+
+        const $ = (id) => document.getElementById(id);
+        const day = dayKeyFor();
+        const pointsEach = scorePoints({ correct: 1, gameId: "harian", week: weekKeyFor() });
+
+        let words = [];     // 10 kata hari ini
+        let pool = [];      // semua kata (pengecoh pilihan ganda)
+        let progress = null; // { words, options: [[...]], answers: [{ ok, given }] }
+        let storeKey = "";
+        let index = 0;
+        let waiting = false; // sudah menjawab, menunggu "Berikutnya"
+        let answeredAt = 0;  // cegah Enter yang sama langsung melewati umpan balik
+
+        const store = {
+            get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+            set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* abaikan */ } },
+        };
+
+        function show(section) {
+            ["msg", "intro", "play", "done"].forEach((id) => { $(id).hidden = id !== section; });
+            window.scrollTo(0, 0);
+        }
+        function message(html) { $("msgText").innerHTML = html; show("msg"); }
+
+        const dateLabel = (key) => new Date(Date.parse(key + "T00:00:00Z"))
+            .toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+        const streakHtml = (n) => `<b>${n}</b> hari berturut-turut`;
+        // Soal 1-5 pilihan ganda (kata → arti), sisanya menulis (arti → kata)
+        const half = () => Math.ceil(words.length / 2);
+        const isChoice = (i) => i < half();
+
+        async function init() {
+            const [res, status] = await Promise.all([window.loadQuestionPacks("kosakata"), window.loadDailyStatus()]);
+            if (res.status === "login") return message('Masuk dulu untuk ikut Tantangan Harian. <a href="index.html">Masuk</a>');
+            if (res.status === "inactive") return message("Akun ini tidak aktif. Hubungi guru.");
+            if (res.status !== "ok") return message("Tantangan gagal dimuat. Periksa internet, lalu muat ulang halaman.");
+
+            ({ words, pool } = dailyWords(res.packs, day, res.level));
+            storeKey = `ec-daily-${day}-${res.level || "-"}`;
+
+            if (status.today) return showDone(status.today, status.streak);
+            if (pool.length < DAILY_MIN_POOL) return message("Tantangan harian belum tersedia: belum ada cukup paket kosakata untuk jenjangmu. Coba lagi besok.");
+
+            // Lanjutkan jika halaman sempat tertutup di tengah permainan
+            progress = store.get(storeKey);
+            if (progress?.answers?.length && progress.words?.length) return resume();
+
+            $("introDate").textContent = dateLabel(day);
+            $("introPoints").textContent = `${pointsEach} poin untuk tiap jawaban benar, masuk papan peringkat.`;
+            $("introStreak").hidden = status.streak === 0;
+            $("introStreak").innerHTML = `Rangkaianmu: ${streakHtml(status.streak)}. Selesaikan hari ini agar tidak terputus.`;
+            show("intro");
+        }
+
+        function start() {
+            progress = { words, options: words.map((w, i) => (isChoice(i) ? choicesFor(w, pool) : null)), answers: [] };
+            store.set(storeKey, progress);
+            resume();
+        }
+
+        function resume() {
+            words = progress.words; // kata tetap sama walau paket berubah di tengah hari
+            index = progress.answers.length;
+            show("play");
+            if (index >= words.length) finish();
+            else renderQuestion();
+        }
+
+        function renderQuestion() {
+            const w = words[index];
+            waiting = false;
+            const correct = progress.answers.filter((a) => a.ok).length;
+            $("progressBadge").textContent = `${index + 1} / ${words.length}`;
+            $("scoreBadge").textContent = `${correct} benar`;
+            $("bar").style.width = `${(index / words.length) * 100}%`;
+            $("feedback").textContent = "";
+            $("feedback").className = "feedback";
+            $("nextBtn").hidden = true;
+            if (isChoice(index)) {
+                $("promptLabel").textContent = "Arti dari";
+                $("promptWord").textContent = w.q;
+                $("answerForm").hidden = true;
+                $("choices").hidden = false;
+                $("choices").innerHTML = progress.options[index].map((t, i) => `
+                    <button type="button" class="choice" data-i="${i}"><span class="key">${i + 1}</span><span class="t">${escapeHtml(t)}</span></button>`).join("");
+            } else {
+                $("promptLabel").textContent = "Bahasa Inggris dari";
+                $("promptWord").textContent = w.a;
+                $("choices").hidden = true;
+                $("answerForm").hidden = false;
+                $("answer").value = "";
+                $("answer").disabled = false;
+                $("answer").className = "input";
+                $("checkBtn").disabled = false;
+                $("answer").focus();
+            }
+        }
+
+        function record(ok, given) {
+            waiting = true;
+            answeredAt = Date.now();
+            progress.answers.push({ ok, given });
+            store.set(storeKey, progress);
+            const w = words[index];
+            $("feedback").className = "feedback " + (ok ? "ok" : "bad");
+            $("feedback").textContent = ok ? "Benar!" : `Jawaban: ${isChoice(index) ? w.a : w.q}`;
+            $("scoreBadge").textContent = `${progress.answers.filter((a) => a.ok).length} benar`;
+            $("bar").style.width = `${((index + 1) / words.length) * 100}%`;
+            $("nextBtn").textContent = index + 1 < words.length ? "Berikutnya" : "Lihat hasil";
+            $("nextBtn").hidden = false;
+            $("nextBtn").focus();
+        }
+
+        function pickChoice(i) {
+            if (waiting || !isChoice(index)) return;
+            const options = progress.options[index];
+            const answer = options.indexOf(words[index].a);
+            document.querySelectorAll("#choices .choice").forEach((b, j) => {
+                b.disabled = true;
+                if (j === answer) b.classList.add("is-ok");
+                else if (j === i) b.classList.add("is-bad");
+            });
+            record(i === answer, options[i]);
+        }
+
+        function checkWritten() {
+            if (waiting || isChoice(index)) return;
+            const given = $("answer").value.trim();
+            if (!given) { $("answer").focus(); return; }
+            const ok = isAnswerCorrect(given, words[index].q);
+            $("answer").disabled = true;
+            $("answer").className = "input " + (ok ? "is-ok" : "is-bad");
+            $("checkBtn").disabled = true;
+            record(ok, given);
+        }
+
+        function next() {
+            if (!waiting || Date.now() - answeredAt < 300) return;
+            index++;
+            if (index >= words.length) finish();
+            else renderQuestion();
+        }
+
+        async function finish() {
+            const correct = progress.answers.filter((a) => a.ok).length;
+            message("Menyimpan hasil...");
+            const result = await window.saveGameScore({
+                gameId: "harian", gameName: "Tantangan Harian",
+                correct, total: words.length, mode: "campuran", daily: day,
+            });
+            const status = await window.loadDailyStatus();
+            if (result === "ok" || status.today) {
+                try { localStorage.removeItem(storeKey); } catch { /* abaikan */ }
+            }
+            showDone(status.today || { correct, total: words.length, gameId: "harian", week: weekKeyFor() }, status.streak, result);
+        }
+
+        function showDone(score, streak, result = "ok") {
+            $("doneScore").textContent = `${score.correct}/${score.total}`;
+            $("doneSub").textContent = result === "error"
+                ? "Hasil gagal disimpan. Periksa internet, lalu muat ulang halaman untuk mencoba lagi."
+                : `benar · ${scorePoints(score)} poin`;
+            $("doneStreak").hidden = !streak;
+            $("doneStreak").innerHTML = `Rangkaian: ${streakHtml(streak)}`;
+            const hours = Math.max(1, Math.ceil((dayStartMs(day) + 86400000 - Date.now()) / 3600000));
+            $("doneNext").textContent = `Tantangan baru besok pukul 00.00 (sekitar ${hours} jam lagi).`;
+            // Daftar kata hanya tersedia di perangkat tempat bermain
+            const answers = progress?.answers || [];
+            $("reviewCard").hidden = answers.length !== words.length;
+            $("reviewList").innerHTML = words.map((w, i) => {
+                const a = answers[i];
+                return `<tr><td>${a?.ok ? "✓" : "✗"}</td><td>${escapeHtml(w.q)}</td><td>${escapeHtml(w.a)}${a && !a.ok ? `<br><span class="sub-bad">kamu: ${escapeHtml(a.given || "-")}</span>` : ""}</td></tr>`;
+            }).join("");
+            show("done");
+        }
+
+        $("startBtn").addEventListener("click", start);
+        $("choices").addEventListener("click", (e) => {
+            const b = e.target.closest(".choice");
+            if (b) pickChoice(Number(b.dataset.i));
+        });
+        $("answerForm").addEventListener("submit", (e) => { e.preventDefault(); checkWritten(); });
+        $("nextBtn").addEventListener("click", next);
+        document.addEventListener("keydown", (e) => {
+            if ($("play").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+            if (waiting && e.key === "Enter" && document.activeElement !== $("nextBtn")) { e.preventDefault(); next(); return; }
+            const n = Number(e.key);
+            if (!waiting && isChoice(index) && n >= 1 && n <= progress.options[index].length) pickChoice(n - 1);
+        });
+
+        init();
+    </script>
+</body>
+</html>

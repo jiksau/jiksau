@@ -193,6 +193,24 @@ service cloud.firestore {
               || request.resource.data.packTier == pack.get('tier', 1));
       }
 
+      // Tantangan Harian: sekali per hari. ID dokumen harus
+      // harian-<tanggal>-<uid>, jadi menyimpan kedua kali di hari yang sama
+      // ditolak (dokumen sudah ada = ubah, hanya admin). Tanggal harus hari
+      // ini (WIB), dengan kelonggaran 1 jam lewat tengah malam.
+      function isValidDaily(scoreId) {
+        let d = request.resource.data;
+        let parts = d.daily.split('-');
+        let dayStart = timestamp.date(int(parts[0]), int(parts[1]), int(parts[2])) - duration.value(7, 'h');
+        return d.daily is string
+          && d.daily.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && scoreId == 'harian-' + d.daily + '-' + request.auth.uid
+          && d.gameId == 'harian'
+          && !('packId' in d)
+          && d.total <= 10
+          && request.time >= dayStart
+          && request.time < dayStart + duration.value(25, 'h');
+      }
+
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -211,7 +229,8 @@ service cloud.firestore {
             || request.resource.data.level == myProfile().get('level', null))
         // Skor latihan bebas (tanpa paket) tetap boleh disimpan, tetapi
         // tidak dihitung di papan peringkat.
-        && (!('packId' in request.resource.data) || isValidPackScore());
+        && (!('packId' in request.resource.data) || isValidPackScore())
+        && (!('daily' in request.resource.data) || isValidDaily(scoreId));
 
       // Siswa melihat skornya sendiri, dan skor siswa lain (untuk papan
       // peringkat semua jenjang & per jenjang). Admin melihat semua.
