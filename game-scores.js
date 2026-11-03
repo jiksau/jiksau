@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai di halaman game:
 //    1. Tambahkan sebelum </body>:
-//         <script type="module" src="game-scores.js"></script>
+//         <script type="module" src="game-scores.js?v=2026-11-03"></script>
 //    2. Saat permainan selesai, panggil:
 //         window.saveGameScore?.({
 //           gameId: "kosakata-2", gameName: "Vocabulary Memorize",
@@ -31,7 +31,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js?v=2026-11-03";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -42,6 +42,7 @@ let currentUser = null;
 let currentName = null;
 let currentLevel = null;
 let hasProfile = false;
+let isTeacher = false; // akun guru: skor tidak disimpan (lihat firestore.rules)
 
 // Menunggu Firebase selesai memeriksa status login (sekali di awal).
 const authReady = new Promise((resolve) => {
@@ -50,6 +51,7 @@ const authReady = new Promise((resolve) => {
         currentName = null;
         currentLevel = null;
         hasProfile = false;
+        isTeacher = false;
         if (user) {
             try {
                 const snap = await getDoc(doc(db, "users", user.uid));
@@ -57,6 +59,7 @@ const authReady = new Promise((resolve) => {
                     hasProfile = true;
                     currentName = snap.data().name || null;
                     currentLevel = snap.data().level || null;
+                    isTeacher = snap.data().role === "Guru";
                 }
             } catch (e) {
                 console.warn("Gagal memuat nama siswa:", e);
@@ -115,6 +118,11 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
 
     if (!hasProfile) {
         showToast('Skor tidak disimpan: akun ini tidak aktif. Hubungi admin.', true);
+        return;
+    }
+
+    if (isTeacher) {
+        showToast('Akun guru: skor tidak disimpan.', true);
         return;
     }
 

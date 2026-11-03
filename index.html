@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Special ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03">
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .auth { flex: 1; width: 100%; max-width: 420px; margin: 0 auto; padding: 40px 16px 24px; display: grid; gap: 16px; align-content: start; }
@@ -124,7 +124,7 @@
         import {
             firebaseConfig, ADMIN_EMAIL, levelLabel, loginIdToEmail, isUsernameEmail,
             normalizeClassCode, CLASS_CODE_PATTERN, friendlyAuthError
-        } from "./ec-common.js";
+        } from "./ec-common.js?v=2026-11-03";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -159,10 +159,17 @@
             }
 
             // --- Cek status login ---
-            onAuthStateChanged(auth, (user) => {
-                if (user && !isSigningUp) {
-                    window.location.href = user.email === ADMIN_EMAIL ? "admin.html" : "user-dashboard.html";
-                }
+            onAuthStateChanged(auth, async (user) => {
+                if (!user || isSigningUp) return;
+                if (user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
+                // Akun guru → halaman guru; selain itu (siswa) → Beranda.
+                // Jika gagal membaca profil, Beranda tetap mengalihkan guru.
+                let target = "user-dashboard.html";
+                try {
+                    const snap = await getDoc(doc(db, "users", user.uid));
+                    if (snap.exists() && snap.data().role === "Guru") target = "guru.html";
+                } catch (_) { /* abaikan */ }
+                window.location.href = target;
             });
 
             // --- Pindah tab ---

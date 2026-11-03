@@ -15,9 +15,21 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 | Hasil akhir mingguan (`weeklyResults`) | Peringkat akhir tiap minggu yang sudah selesai (nama, jenjang, poin) | Membaca (untuk rekap & riwayat juara) | Semua; tersimpan otomatis saat admin membuka halaman admin | Tidak bisa |
 | Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
-Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, guru).
+Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, koleksi lama `teachers`). Peran guru yang baru memakai profil di `users` (lihat bagian Guru).
 
 Siswa tidak bisa mengubah jenjang atau perannya sendiri, melihat data siswa lain, atau mendaftar tanpa kode kelas yang aktif.
+
+## Guru
+
+Guru **bukan admin** dan tidak memakai akun admin. Akun guru dibuat admin di tab **Guru** (nama, email asli, password); profilnya `role: 'Guru'`, `active: true`, tanpa jenjang dan kode kelas.
+
+- Di aturan, `isTeacher()` hanya benar jika profil `role 'Guru'` **dan** `active true`. Jika admin menonaktifkan, akses guru langsung hilang (tidak bisa membaca paket, pengumuman, skor, hasil mingguan, hewan).
+- Guru tidak bisa mengubah `role` atau `active` miliknya sendiri; satu-satunya yang boleh ia ubah di profilnya adalah waktu masuk terakhir.
+- Guru **tidak bisa membaca koleksi `users`** selain profilnya sendiri, jadi email siswa tidak terbuka.
+- Skor dari akun guru **ditolak** di `gameScores` (guru tidak masuk papan peringkat). Profil tanpa field `role` (siswa lama) tetap dianggap siswa.
+- Guru tidak bisa menyimpan hewan atau barang toko (`users.pet/items/equipped`, koleksi `pets`).
+- Guru boleh membuka Daftar Game dan Peringkat untuk melihat saja. Beranda siswa dan Toko mengalihkan guru ke `guru.html`; siswa yang membuka `guru.html` dialihkan ke Beranda.
+- Tahap 1 belum memberi guru hak menulis paket soal; itu Tahap 2.
 
 ## Memasang aturan
 
@@ -87,6 +99,24 @@ Jika tab Pengumuman menampilkan "Gagal memuat pengumuman", aturan terbaru belum 
 1. Setelah minggu berganti (Senin), buka halaman admin sekali: hasil minggu lalu tersimpan otomatis ke koleksi `weeklyResults`.
 2. Masuk sebagai siswa → Beranda: jendela "Rekap minggu lalu" muncul sekali (setelah pengumuman, jika ada).
 3. Halaman Peringkat → bagian "Riwayat juara" di bawah daftar.
+
+## Uji peran Guru – Tahap 1 (setelah memasang aturan terbaru)
+
+- [ ] Admin → tab **Guru** → buat akun (nama, email asli, password) → muncul di Daftar Guru dengan status Aktif; admin tetap masuk (tidak ter-logout)
+- [ ] Buat akun guru dengan email yang sudah terdaftar (mis. email siswa) → ditolak: "Email ini sudah terdaftar"
+- [ ] Buat akun guru dengan email admin → ditolak
+- [ ] Guru tidak muncul di Daftar Siswa
+- [ ] Masuk sebagai guru di halaman depan → langsung ke `guru.html`, nama guru tampil
+- [ ] Halaman depan → isi email guru → **Lupa password** → email atur ulang terkirim
+- [ ] Sebagai guru, buka `user-dashboard.html` dan `toko.html` lewat alamat → dialihkan ke `guru.html`
+- [ ] Sebagai guru, buka **Daftar game** dan **Papan peringkat** → tampil normal, tanpa error dan tanpa tampilan rusak (cek HP & PC, mode gelap)
+- [ ] Sebagai guru, mainkan satu game sampai selesai → muncul "Akun guru: skor tidak disimpan"; guru **tidak** muncul di papan peringkat
+- [ ] Admin → **Nonaktifkan** guru → guru memuat ulang `guru.html` → "Akun guru nonaktif"; **Aktifkan** lagi → halaman guru kembali normal
+- [ ] Sebagai siswa, buka `guru.html` lewat alamat → dialihkan ke Beranda
+- [ ] Siswa lama & baru tetap bisa main dan skornya masuk papan peringkat; Toko & hewan tetap berjalan
+- [ ] Admin: tab Siswa, Kode Kelas, Paket Soal, Pengumuman, Skor Game tetap berjalan
+
+Catatan: akun guru tidak punya jenjang, jadi di game ia hanya melihat paket "Semua jenjang". Ini akan diselesaikan di Tahap 3 (mode coba).
 
 ## Papan peringkat
 

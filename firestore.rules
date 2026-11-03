@@ -9,6 +9,8 @@ rules_version = '2';
 //  Prinsip:
 //   - Admin (admin@extracourse.com) boleh membaca & mengubah semua data.
 //   - Siswa hanya boleh melihat data MILIKNYA SENDIRI.
+//   - Guru (profil role 'Guru', dibuat admin) BUKAN admin. Akses guru
+//     hilang begitu admin menonaktifkannya (active false).
 //   - Siswa baru wajib memakai kode kelas yang aktif.
 //   - Koleksi lain yang tidak disebut di bawah otomatis DITOLAK
 //     (termasuk data lama: studentAttendance, registrations, classes, teachers).
@@ -32,6 +34,42 @@ service cloud.firestore {
 
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ---------- Peran (siswa / guru) ----------
+    // Profil orang yang sedang login. Panggilan ke dokumen yang sama dalam
+    // satu permintaan hanya dihitung sekali baca.
+    function myUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasProfile() {
+      return isSignedIn() && exists(myUserPath());
+    }
+
+    // Peran di profil. Siswa lama yang tidak punya field role = siswa.
+    function myRole() {
+      return get(myUserPath()).data.get('role', 'Student');
+    }
+
+    // Guru aktif: profil role 'Guru' dan active true. Jika admin
+    // menonaktifkan, semua akses guru langsung hilang.
+    function isTeacher() {
+      return hasProfile()
+        && myRole() == 'Guru'
+        && get(myUserPath()).data.get('active', false) == true;
+    }
+
+    // Profil siswa (bukan guru). Hanya siswa yang boleh menyimpan skor,
+    // hewan, dan barang toko.
+    function isStudent() {
+      return hasProfile() && myRole() != 'Guru';
+    }
+
+    // Anggota yang boleh membaca data bersama (paket aktif, pengumuman,
+    // skor untuk peringkat, hasil mingguan, hewan): siswa atau guru aktif.
+    function isMember() {
+      return isStudent() || isTeacher();
     }
 
     function isValidLevel(level) {
@@ -93,11 +131,14 @@ service cloud.firestore {
       // Siswa hanya boleh memperbarui waktu masuk terakhir, waktu terakhir
       // menekan "Mengerti" di pengumuman (announceSeenAt, harus waktu
       // sekarang), dan hewan peliharaannya (pet: jenis + nama).
-      // Nama, jenjang, dan peran hanya bisa diubah admin.
+      // Nama, jenjang, peran (role), dan status aktif hanya bisa diubah admin.
+      // Guru hanya boleh memperbarui waktu masuk terakhir (tanpa hewan/toko).
       allow update: if isAdmin()
         || (isOwner(uid)
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['lastLoginAt', 'announceSeenAt', 'pet', 'items', 'equipped'])
+            && (resource.data.get('role', 'Student') != 'Guru'
+                || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt']))
             && (!('announceSeenAt' in request.resource.data.diff(resource.data).affectedKeys())
                 || request.resource.data.announceSeenAt == request.time)
             && (!('pet' in request.resource.data.diff(resource.data).affectedKeys())
@@ -124,9 +165,7 @@ service cloud.firestore {
     // Hanya admin yang bisa membuat, mengubah, atau menghapus paket.
     match /questionPacks/{packId} {
       allow read: if isAdmin()
-        || (isSignedIn()
-            && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-            && resource.data.active == true);
+        || (isMember() && resource.data.active == true);
 
       allow create, update: if isAdmin()
         && request.resource.data.title is string
@@ -151,9 +190,7 @@ service cloud.firestore {
     // Siswa yang profilnya aktif boleh membaca pengumuman yang AKTIF.
     match /announcements/{newsId} {
       allow read: if isAdmin()
-        || (isSignedIn()
-            && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-            && resource.data.active == true);
+        || (isMember() && resource.data.active == true);
 
       allow create, update: if isAdmin()
         && request.resource.data.title is string
@@ -171,6 +208,7 @@ service cloud.firestore {
     // ---------- Skor game: gameScores/{id} ----------
     // Disimpan otomatis oleh game-scores.js saat siswa selesai bermain.
     // Hanya siswa yang profilnya masih ada (belum dihapus admin).
+    // Akun guru tidak bisa menyimpan skor (tidak masuk papan peringkat).
     match /gameScores/{scoreId} {
       function myProfile() {
         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
@@ -211,9 +249,8 @@ service cloud.firestore {
           && request.time < dayStart + duration.value(25, 'h');
       }
 
-      allow create: if isSignedIn()
+      allow create: if isStudent()
         && request.resource.data.userId == request.auth.uid
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && request.resource.data.correct is int
         && request.resource.data.total is int
         && request.resource.data.total > 0
@@ -236,7 +273,7 @@ service cloud.firestore {
       // peringkat semua jenjang & per jenjang). Admin melihat semua.
       allow read: if isAdmin()
         || (isSignedIn() && resource.data.userId == request.auth.uid)
-        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
+        || isMember();
 
       // Skor tidak bisa diubah siswa; admin boleh menghapus.
       allow update, delete: if isAdmin();
@@ -246,8 +283,7 @@ service cloud.firestore {
     // Peringkat minggu yang sudah selesai, dibekukan otomatis saat admin
     // membuka halaman admin. Dipakai untuk rekap minggu lalu & riwayat juara.
     match /weeklyResults/{week} {
-      allow read: if isAdmin()
-        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
+      allow read: if isAdmin() || isMember();
       allow create, update: if isAdmin()
         && request.resource.data.week == week
         && request.resource.data.ranking is list;
@@ -256,12 +292,11 @@ service cloud.firestore {
 
     // ---------- Hewan untuk ditampilkan ke siswa lain: pets/{uid} ----------
     // Salinan publik hewan siswa (jenis, nama, barang dipakai) untuk papan
-    // peringkat & poster. Ditulis oleh pemiliknya sendiri.
+    // peringkat & poster. Ditulis oleh pemiliknya sendiri (siswa, bukan guru).
     match /pets/{uid} {
-      allow read: if isAdmin()
-        || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)));
+      allow read: if isAdmin() || isMember();
       allow create, update: if isOwner(uid)
-        && exists(/databases/$(database)/documents/users/$(uid))
+        && isStudent()
         && request.resource.data.keys().hasOnly(['species', 'name', 'equipped'])
         && request.resource.data.species in ['kucing', 'kelinci', 'naga']
         && request.resource.data.name is string

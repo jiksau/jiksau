@@ -271,6 +271,7 @@
 
     <nav class="tabs">
         <button data-panel="students" class="active">Siswa</button>
+        <button data-panel="teachers">Guru</button>
         <button data-panel="codes">Kode Kelas</button>
         <button data-panel="packs">Paket Soal</button>
         <button data-panel="news">Pengumuman</button>
@@ -329,6 +330,50 @@
                 </table>
                 <p class="note"><b>Hapus akun</b> menghapus profil dan semua skor siswa secara permanen. Siswa itu tidak bisa bermain lagi, dan akun loginnya terhapus otomatis saat ia mencoba masuk, sehingga email/nama penggunanya bisa dipakai lagi.<br>
                 Password akun nama pengguna tidak bisa direset dari website. Jika siswa lupa, hapus akunnya lalu buatkan akun baru dengan nama pengguna <b>lain</b> (misalnya tambahkan angka: budi.smp2).</p>
+            </div>
+        </section>
+
+        <!-- ================= GURU ================= -->
+        <section class="panel" id="panel-teachers">
+            <div class="card">
+                <h2>Buat Akun Guru</h2>
+                <p class="desc">Guru masuk di halaman depan dengan email dan password ini, lalu diarahkan ke halaman Guru. Guru bukan admin dan tidak punya jenjang.</p>
+                <form id="createTeacherForm" class="form-grid" style="--cols:3" autocomplete="off">
+                    <label class="field"><span class="field-label">Nama lengkap</span>
+                        <input type="text" id="teacherName" placeholder="contoh: Bu Rina" maxlength="80" required>
+                        <small>Tampil di halaman guru</small>
+                    </label>
+                    <label class="field"><span class="field-label">Email</span>
+                        <input type="email" id="teacherEmail" placeholder="contoh: rina@gmail.com" autocapitalize="none" required>
+                        <small>Email asli, untuk Lupa password</small>
+                    </label>
+                    <label class="field"><span class="field-label">Password</span>
+                        <input type="text" id="teacherPassword" placeholder="min. 6 karakter" required>
+                        <small>Catat & berikan ke guru</small>
+                    </label>
+                    <div class="field-btn"><span class="field-label">&nbsp;</span>
+                        <button class="btn" type="submit" id="createTeacherBtn">Buat Akun</button>
+                    </div>
+                </form>
+                <div class="form-msg" id="createTeacherMsg"></div>
+            </div>
+
+            <div class="card">
+                <h2>Daftar Guru</h2>
+                <p class="desc">Akun nonaktif tidak bisa membuka halaman guru. Aktifkan lagi kapan saja.</p>
+                <table class="responsive">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Dibuat</th>
+                            <th>Status</th>
+                            <th class="col-actions">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teachersBody"><tr><td colspan="5" class="empty">Memuat...</td></tr></tbody>
+                </table>
+                <p class="note">Akun guru tidak bisa dihapus dari sini, cukup dinonaktifkan. Guru yang lupa password bisa memakai <b>Lupa password</b> di halaman depan.</p>
             </div>
         </section>
 
@@ -551,11 +596,11 @@
         } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import {
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
-            loginIdToEmail, usernameFromEmail, CLASS_CODE_PATTERN, normalizeClassCode,
+            loginIdToEmail, usernameFromEmail, isUsernameEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
             parsePackText, packToText, PACK_TIERS, announcementHtml
-        } from "./ec-common.js";
-        import { archiveFinishedWeeks } from "./weekly-results.js";
+        } from "./ec-common.js?v=2026-11-03";
+        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -609,6 +654,7 @@
 
         // ================= SISWA =================
         let students = [];       // [{id, ...data}]
+        let teachers = [];       // profil role 'Guru'
         let codes = [];          // [{id, ...data}]
         let studentsStarted = false;
 
@@ -616,15 +662,18 @@
             if (studentsStarted) return;
             studentsStarted = true;
             onSnapshot(collection(db, 'users'), (snap) => {
-                students = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-                    .filter((u) => u.role === 'Student')
+                const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'id'));
+                students = all.filter((u) => u.role === 'Student');
+                teachers = all.filter((u) => u.role === 'Guru');
                 renderStudents();
+                renderTeachers();
                 renderCodes();
                 renderScores();
             }, (e) => {
                 console.error(e);
                 $('studentsBody').innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat siswa: ${escapeHtml(e.message)}</td></tr>`;
+                $('teachersBody').innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat guru: ${escapeHtml(e.message)}</td></tr>`;
             });
         }
 
@@ -777,6 +826,83 @@
                 setMsg('createStudentMsg', friendlyAuthError(err), false);
             } finally {
                 $('createStudentBtn').disabled = false;
+            }
+        });
+
+        // ================= GURU =================
+        // Profil guru: { name, role: 'Guru', active, email, loginType: 'email', createdAt }.
+        // Tanpa jenjang & kode kelas. Status aktif diperiksa di firestore.rules (isTeacher).
+        function renderTeachers() {
+            if (teachers.length === 0) {
+                $('teachersBody').innerHTML = '<tr><td colspan="5" class="empty">Belum ada akun guru. Buat satu di atas.</td></tr>';
+                return;
+            }
+            $('teachersBody').innerHTML = teachers.map((t) => `
+                <tr>
+                    <td data-label="Nama"><b>${escapeHtml(t.name || '(tanpa nama)')}</b></td>
+                    <td data-label="Email"><span>${escapeHtml(t.email || '-')}</span></td>
+                    <td data-label="Dibuat"><span>${fmtDate(t.createdAt)}</span></td>
+                    <td data-label="Status"><span class="pill ${t.active === true ? 'on' : 'off'}">${t.active === true ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td data-label="Aksi" class="col-actions"><span class="actions">
+                        <button class="btn ghost" data-toggle-teacher="${t.id}">${t.active === true ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                    </span></td>
+                </tr>`).join('');
+        }
+
+        $('teachersBody').addEventListener('click', async (e) => {
+            const uid = e.target.dataset.toggleTeacher;
+            if (!uid) return;
+            const t = teachers.find((x) => x.id === uid);
+            if (!t) return;
+            const next = t.active !== true;
+            if (!next && !confirm(`Nonaktifkan akun guru "${t.name || t.email}"?\n\nGuru ini tidak bisa membuka halaman guru sampai diaktifkan lagi.`)) return;
+            e.target.disabled = true;
+            try {
+                await updateDoc(doc(db, 'users', uid), { active: next });
+            } catch (err) {
+                alert('Gagal mengubah status guru: ' + err.message);
+                e.target.disabled = false;
+            }
+        });
+
+        const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        $('createTeacherForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = $('teacherName').value.trim();
+            const email = $('teacherEmail').value.trim().toLowerCase();
+            const password = $('teacherPassword').value;
+            if (!name) return setMsg('createTeacherMsg', 'Nama wajib diisi.', false);
+            if (!EMAIL_PATTERN.test(email)) return setMsg('createTeacherMsg', 'Format email tidak valid.', false);
+            if (email === ADMIN_EMAIL) return setMsg('createTeacherMsg', 'Email admin tidak boleh dipakai untuk akun guru.', false);
+            if (isUsernameEmail(email)) return setMsg('createTeacherMsg', 'Pakai email asli guru, bukan email nama pengguna siswa.', false);
+            if (password.length < 6) return setMsg('createTeacherMsg', 'Password minimal 6 karakter.', false);
+
+            $('createTeacherBtn').disabled = true;
+            setMsg('createTeacherMsg', 'Membuat akun...', true);
+            let created = null;
+            try {
+                const sAuth = await getSecondaryAuth();
+                const cred = await createUserWithEmailAndPassword(sAuth, email, password);
+                created = cred.user;
+                await setDoc(doc(db, 'users', cred.user.uid), {
+                    name, role: 'Guru', active: true, email: cred.user.email,
+                    loginType: 'email', createdAt: serverTimestamp(),
+                });
+                created = null;
+                await signOut(sAuth);
+                setMsg('createTeacherMsg', `Akun guru dibuat. Email: ${email}  ·  Password: ${password}  (catat dan berikan ke guru)`, true);
+                $('teacherName').value = '';
+                $('teacherEmail').value = '';
+                $('teacherPassword').value = '';
+            } catch (err) {
+                console.error(err);
+                // Profil gagal disimpan: hapus lagi akun loginnya agar email bisa dipakai ulang
+                if (created) { try { await created.delete(); } catch (_) { /* abaikan */ } }
+                setMsg('createTeacherMsg', err?.code === 'auth/email-already-in-use'
+                    ? 'Email ini sudah terdaftar (mungkin sebagai akun siswa). Pakai email lain.'
+                    : friendlyAuthError(err), false);
+            } finally {
+                $('createTeacherBtn').disabled = false;
             }
         });
 

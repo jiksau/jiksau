@@ -2,7 +2,7 @@
 //  announcements.js - Jendela pengumuman dari admin di dashboard siswa
 // ---------------------------------------------------------------------
 //  Cara pakai (user-dashboard.html, setelah script halaman):
-//      <script type="module" src="announcements.js"></script>
+//      <script type="module" src="announcements.js?v=2026-11-03"></script>
 //
 //  Yang tampil: pengumuman AKTIF untuk jenjang siswa + "Semua siswa"
 //  yang terbit (publishedAt) setelah siswa terakhir menekan "Mengerti"
@@ -13,7 +13,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, escapeHtml, announcementHtml, PACK_ALL_LEVELS } from "./ec-common.js";
+import { firebaseConfig, escapeHtml, announcementHtml, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03";
 
 const DAYS = 30;
 const MAX_SHOWN = 5;

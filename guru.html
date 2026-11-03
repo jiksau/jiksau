@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Guru - ExtraCourse</title>
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03">
+    <style>
+        body { visibility: hidden; } /* Ditampilkan setelah akun guru terverifikasi */
+        .topbar .btn { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+        .hello h2 { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 700; letter-spacing: -0.3px; }
+        .hello p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+        .soon { display: grid; gap: 6px; }
+        .soon b { font-size: 15px; }
+        .soon .note { max-width: 46ch; }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="logo" href="guru.html" aria-label="Ke halaman guru">EC</a>
+            <div class="brand"><b>Halaman Guru</b><small id="headSub">Memuat...</small></div>
+            <button class="btn secondary" id="logoutBtn" type="button">Keluar</button>
+        </div>
+    </header>
+
+    <main class="app" id="main">
+        <div class="hello">
+            <h2 id="greet">Halo</h2>
+            <p>Kelola paket soal untuk siswa di sini.</p>
+        </div>
+
+        <div class="sec">Paket saya</div>
+        <div class="card soon">
+            <b>Belum ada paket</b>
+            <p class="note">Membuat, menjadwalkan, dan menerbitkan paket soal akan tersedia di halaman ini. Sementara itu, paket masih dibuat oleh admin.</p>
+        </div>
+
+        <div class="sec">Lihat seperti siswa</div>
+        <div class="list">
+            <a class="item" href="gamelist.html"><span><span class="name">Daftar game</span><span class="desc">Skor akun guru tidak disimpan.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            <a class="item" href="leaderboard.html"><span><span class="name">Papan peringkat</span><span class="desc">Peringkat siswa minggu ini.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { firebaseConfig, ADMIN_EMAIL, escapeHtml } from "./ec-common.js?v=2026-11-03";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const $ = (id) => document.getElementById(id);
+
+        $('logoutBtn').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+
+        function showMessage(title, text) {
+            $('main').innerHTML = `
+                <div class="card">
+                    <h2>${escapeHtml(title)}</h2>
+                    <p class="note">${escapeHtml(text)}</p>
+                </div>`;
+            document.body.style.visibility = 'visible';
+        }
+
+        let started = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'index.html'; return; }
+            if (user.email === ADMIN_EMAIL) { window.location.href = 'admin.html'; return; }
+            if (started) return;
+            started = true;
+            try {
+                const ref = doc(db, 'users', user.uid);
+                const snap = await getDoc(ref);
+                const data = snap.exists() ? snap.data() : null;
+                // Siswa (atau profil tanpa peran guru) tidak boleh membuka halaman ini
+                if (!data || data.role !== 'Guru') { window.location.href = 'user-dashboard.html'; return; }
+                $('headSub').textContent = user.email;
+                if (data.active !== true) {
+                    showMessage('Akun guru nonaktif', 'Akun ini sedang dinonaktifkan admin ExtraCourse. Hubungi admin untuk mengaktifkannya lagi.');
+                    return;
+                }
+                $('greet').textContent = `Halo, ${data.name || 'Guru'}`;
+                document.body.style.visibility = 'visible';
+                updateDoc(ref, { lastLoginAt: serverTimestamp() }).catch((e) => console.warn('Gagal mencatat waktu masuk:', e));
+            } catch (e) {
+                console.error(e);
+                showMessage('Halaman guru gagal dimuat', 'Periksa koneksi internet, lalu muat ulang halaman.');
+            }
+        });
+    </script>
+</body>
+</html>
