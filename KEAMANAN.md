@@ -165,6 +165,17 @@ Siapkan Guru A dengan paket kosakata SMP (terbit), paket draf jenjang SD, dan pa
 - [ ] Draf tidak punya tombol Hasil
 - [ ] Siswa & admin: game, skor, peringkat, Tantangan Harian, Toko, tab Paket Soal tetap berjalan
 
+## Uji tampilan Paket A (tanpa perubahan aturan)
+
+- [ ] Siswa main paket baru sampai selesai → kartu hasil "+x poin" (sama dengan kenaikan di Beranda/Peringkat)
+- [ ] Main lagi paket yang sama dengan nilai lebih rendah → "Hasil terbaikmu masih x poin"; nilai lebih tinggi → "+selisih poin"
+- [ ] Paket yang sudah poin penuh → "Poin penuh"; tab Kata Sendiri → "Latihan bebas: tanpa poin"
+- [ ] Tantangan Harian selesai → "+x poin"; buka lagi hari itu → tetap tampil poin dari skor tersimpan
+- [ ] Akun guru selesai main → "Mode coba: skor tidak disimpan"
+- [ ] Matikan internet sebelum menekan selesai → setelah ±8 detik "Internet belum tersambung..." (tanpa angka poin); nyalakan lagi → otomatis berganti hasil poin; di admin hanya ada **satu** skor baru
+- [ ] Halaman masuk: label di atas setiap isian, tiga hewan tampil, tautan "Admin" kecil di bawah tetap membuka login admin; HP, PC, mode gelap
+- [ ] Beranda belum ada paket penuh → "Belum ada paket dengan poin penuh (0 dari n)"
+
 ## Papan peringkat
 
 - Poin = jumlah jawaban benar dari **paket soal guru** dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB). Satu paket yang dimainkan berkali-kali hanya dihitung hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.

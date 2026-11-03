@@ -2,7 +2,7 @@
 //  recap.js - Rekap minggu lalu di Beranda (sekali tiap minggu)
 // ---------------------------------------------------------------------
 //  Cara pakai (user-dashboard.html, setelah announcements.js):
-//      <script type="module" src="recap.js?v=2026-11-03-5"></script>
+//      <script type="module" src="recap.js?v=2026-11-03-7"></script>
 //
 //  Saat siswa pertama kali membuka Beranda di minggu baru, muncul jendela:
 //  juara minggu lalu (Semua Jenjang + juara jenjang siswa), peringkat &
@@ -20,10 +20,10 @@ import {
     firebaseConfig, ADMIN_EMAIL, escapeHtml, levelLabel, shortName, levelRanking,
     weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
     seasonKeyFor, seasonLabel, seasonRanking, weekBonus
-} from "./ec-common.js?v=2026-11-03-5";
-import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-03-5";
-import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-5";
-import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-03-5";
+} from "./ec-common.js?v=2026-11-03-7";
+import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-03-7";
+import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-7";
+import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-03-7";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);

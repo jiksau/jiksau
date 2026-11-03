@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Kata Kerja V1-V2-V3 - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
 </head>
 <body>
     <header class="topbar">
@@ -70,6 +70,7 @@
             <div class="card result">
                 <div class="big" id="doneScore">0/0</div>
                 <p class="sub" id="doneSub"></p>
+                <div class="score-line" data-score-line hidden></div>
                 <div class="actions" style="margin-top:16px">
                     <button type="button" class="btn" id="againBtn">Main lagi</button>
                     <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
@@ -83,7 +84,7 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock, wordTableHtml, PACK_FIELDS } from "./word-source.js?v=2026-11-03-5";
+        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock, wordTableHtml, PACK_FIELDS } from "./word-source.js?v=2026-11-03-7";
 
         const $ = (id) => document.getElementById(id);
         const FORMS = ["v1", "v2", "v3"];
@@ -214,6 +215,7 @@
                 gameId: "kosakata-4", gameName: "Kata Kerja V1-V2-V3",
                 correct, total: words.length, mode: fromV1 ? "v1-ke-v2v3" : "arti-ke-v123",
                 ...source.scoreInfo(),
+                resultEl: document.querySelector("[data-score-line]"),
             });
         }
 

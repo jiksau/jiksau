@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Pilihan Ganda Cepat - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
 </head>
 <body>
     <header class="topbar">
@@ -56,6 +56,7 @@
             <div class="card result">
                 <div class="big" id="doneScore">0/0</div>
                 <p class="sub" id="doneSub"></p>
+                <div class="score-line" data-score-line hidden></div>
                 <div class="actions" style="margin-top:16px">
                     <button type="button" class="btn" id="againBtn">Main lagi</button>
                     <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
@@ -69,8 +70,8 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, mountPlaySettings, shuffled, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js?v=2026-11-03-5";
-        import { escapeHtml } from "./ec-common.js?v=2026-11-03-5";
+        import { mountWordSource, mountPlaySettings, shuffled, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js?v=2026-11-03-7";
+        import { escapeHtml } from "./ec-common.js?v=2026-11-03-7";
 
         const $ = (id) => document.getElementById(id);
         const SECONDS = 10;   // waktu per soal
@@ -236,6 +237,7 @@
                 gameId: "pilihan-ganda", gameName: "Pilihan Ganda Cepat",
                 correct, total: words.length, mode: reverse ? "arti-ke-kata" : "kata-ke-arti",
                 ...source.scoreInfo(),
+                resultEl: document.querySelector("[data-score-line]"),
             });
         }
 

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Tantangan Harian - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
 </head>
 <body>
     <header class="topbar">
@@ -61,6 +61,7 @@
             <div class="card result">
                 <div class="big" id="doneScore">0/0</div>
                 <p class="sub" id="doneSub"></p>
+                <div class="score-line" data-score-line hidden></div>
                 <div class="daily-streak" id="doneStreak" hidden></div>
                 <p class="note" id="doneNext" style="margin-top:12px"></p>
                 <div class="actions" style="margin-top:16px">
@@ -76,10 +77,10 @@
     </main>
 
     <script type="module">
-        import "./game-scores.js?v=2026-11-03-5";
-        import { isAnswerCorrect } from "./word-source.js?v=2026-11-03-5";
-        import { escapeHtml, dayKeyFor, dayStartMs, weekKeyFor, scorePoints } from "./ec-common.js?v=2026-11-03-5";
-        import { dailyWords, choicesFor, DAILY_MIN_POOL } from "./daily.js?v=2026-11-03-5";
+        import "./game-scores.js?v=2026-11-03-7";
+        import { isAnswerCorrect } from "./word-source.js?v=2026-11-03-7";
+        import { escapeHtml, dayKeyFor, dayStartMs, weekKeyFor, scorePoints } from "./ec-common.js?v=2026-11-03-7";
+        import { dailyWords, choicesFor, DAILY_MIN_POOL } from "./daily.js?v=2026-11-03-7";
 
         const $ = (id) => document.getElementById(id);
         const day = dayKeyFor();
@@ -225,23 +226,24 @@
 
         async function finish() {
             const correct = progress.answers.filter((a) => a.ok).length;
-            message("Menyimpan hasil...");
+            const local = { correct, total: words.length, gameId: "harian", week: weekKeyFor() };
+            showDone(local, 0, true); // baris poin: "Menyimpan skor..." → hasil
             const result = await window.saveGameScore({
                 gameId: "harian", gameName: "Tantangan Harian",
                 correct, total: words.length, mode: "campuran", daily: day,
+                resultEl: document.querySelector("[data-score-line]"),
             });
             const status = await window.loadDailyStatus();
             if (result === "ok" || status.today) {
                 try { localStorage.removeItem(storeKey); } catch { /* abaikan */ }
             }
-            showDone(status.today || { correct, total: words.length, gameId: "harian", week: weekKeyFor() }, status.streak, result);
+            showDone(status.today || local, status.streak, true);
         }
 
-        function showDone(score, streak, result = "ok") {
+        function showDone(score, streak, justSaved = false) {
             $("doneScore").textContent = `${score.correct}/${score.total}`;
-            $("doneSub").textContent = result === "error"
-                ? "Hasil gagal disimpan. Periksa internet, lalu muat ulang halaman untuk mencoba lagi."
-                : `benar · ${scorePoints(score)} poin`;
+            $("doneSub").textContent = justSaved ? "benar" : `benar · ${scorePoints(score)} poin`;
+            if (!justSaved) document.querySelector("[data-score-line]").hidden = true;
             $("doneStreak").hidden = !streak;
             $("doneStreak").innerHTML = `Rangkaian: ${streakHtml(streak)}`;
             const hours = Math.max(1, Math.ceil((dayStartMs(day) + 86400000 - Date.now()) / 3600000));

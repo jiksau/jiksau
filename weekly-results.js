@@ -15,7 +15,7 @@ import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.j
 import {
     getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js?v=2026-11-03-5";
+import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js?v=2026-11-03-7";
 
 const db = () => getFirestore(getApp());
 const slim = (r) => ({ uid: r.uid, name: r.name || "Siswa", level: r.level || null, points: r.points, packs: r.packs, rank: r.rank });

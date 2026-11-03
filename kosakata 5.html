@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Hafalan Tanpa Salah - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
 </head>
 <body>
     <header class="topbar">
@@ -63,6 +63,7 @@
             <div class="card result">
                 <div class="big" id="doneTitle">Tuntas</div>
                 <p class="sub" id="doneSub"></p>
+                <div class="score-line" data-score-line hidden></div>
                 <div class="actions" style="margin-top:16px">
                     <button type="button" class="btn" id="againBtn">Main lagi</button>
                     <button type="button" class="btn secondary" id="doneBackBtn">Ganti soal</button>
@@ -76,8 +77,8 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock } from "./word-source.js?v=2026-11-03-5";
-        import { escapeHtml } from "./ec-common.js?v=2026-11-03-5";
+        import { mountWordSource, mountPlaySettings, isAnswerCorrect, shuffled, formatClock } from "./word-source.js?v=2026-11-03-7";
+        import { escapeHtml } from "./ec-common.js?v=2026-11-03-7";
 
         const $ = (id) => document.getElementById(id);
 
@@ -214,12 +215,14 @@
                 gameId: "kosakata-5", gameName: "Hafalan Tanpa Salah",
                 correct: words.length, total: words.length, points: mistakes, mode: reverse ? "arti-ke-kata" : "kata-ke-arti",
                 ...source.scoreInfo(),
+                resultEl: document.querySelector("[data-score-line]"),
             });
         }
 
         // Waktu habis sebelum tuntas: tidak ada skor tersimpan
         function timeUp() {
             if (!running) return;
+            document.querySelector("[data-score-line]").hidden = true; // tidak ada skor tersimpan
             running = false;
             clearInterval(timerId);
             $("doneTitle").textContent = "Waktu habis";

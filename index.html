@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Special ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .auth { flex: 1; width: 100%; max-width: 420px; margin: 0 auto; padding: 40px 16px 24px; display: grid; gap: 16px; align-content: start; }
@@ -21,9 +21,11 @@
         .form-group { display: none; gap: 12px; }
         .form-group.active { display: grid; }
         .form-group h2 { margin: 0 0 2px; font-size: 16px; }
-        .input-wrapper { position: relative; display: grid; gap: 4px; }
+        .input-wrapper { display: grid; gap: 6px; }
         .input-wrapper .input { height: 48px; }
-        .input-wrapper.pw .input { padding-right: 48px; }
+        .lbl { font-size: 13px; font-weight: 600; color: var(--text); padding-left: 2px; }
+        .pw-box { position: relative; }
+        .pw-box .input { padding-right: 48px; }
         .password-toggle {
             position: absolute; top: 4px; right: 4px; width: 40px; height: 40px; border: 0; border-radius: 10px;
             background: none; color: var(--muted); display: grid; place-items: center; cursor: pointer;
@@ -39,8 +41,16 @@
         #status:empty { display: none; }
         #status.ok { background: var(--ok-soft); color: var(--ok); }
         #status.error { background: var(--bad-soft); color: var(--bad); }
-        .admin-link { justify-self: center; background: none; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; padding: 8px; }
-        .admin-link:hover { color: var(--text); }
+        /* Tautan admin: kecil & tidak mencolok, tetap bisa diketuk */
+        .admin-link { justify-self: center; background: none; border: 0; color: var(--muted); font-size: 12px; cursor: pointer; padding: 10px 12px; margin-top: 8px; }
+        .admin-link:hover { color: var(--text); text-decoration: underline; }
+
+        /* Tiga hewan mengintip di tepi atas kartu (gambar dari pets.js, tanpa data Firebase) */
+        .login-card { position: relative; display: grid; gap: 16px; }
+        .pets { display: flex; justify-content: center; align-items: flex-end; gap: 6px; height: 58px; margin: 6px 0 -18px; position: relative; z-index: 1; pointer-events: none; }
+        .pets:empty { display: none; }
+        .pets svg { width: 64px; height: 64px; flex: none; }
+        .pets svg:nth-child(2) { width: 72px; height: 72px; }
     </style>
 </head>
 <body>
@@ -50,7 +60,8 @@
             <div><h1>Special ExtraCourse</h1><p>Belajar sambil bermain</p></div>
         </div>
 
-        <div class="card" style="display:grid;gap:16px">
+        <div class="pets" id="pets" aria-hidden="true"></div>
+        <div class="card login-card">
             <div class="tabs-seg">
                 <button id="signin-tab" type="button">Masuk</button>
                 <button id="signup-tab" type="button">Daftar</button>
@@ -58,12 +69,16 @@
 
             <div id="signin-form" class="form-group">
                 <div class="input-wrapper">
-                    <input type="text" id="signin-id" class="input" placeholder="Email atau nama pengguna" autocomplete="username" autocapitalize="none" required>
+                    <label class="lbl" for="signin-id">Email atau nama pengguna</label>
+                    <input type="text" id="signin-id" class="input" placeholder="contoh: budi.smp" autocomplete="username" autocapitalize="none" required>
                     <span id="signin-id-error" class="error-message"></span>
                 </div>
-                <div class="input-wrapper pw">
-                    <input type="password" id="signin-password" class="input" placeholder="Password" autocomplete="current-password" required>
-                    <button type="button" id="signin-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <div class="input-wrapper">
+                    <label class="lbl" for="signin-password">Password</label>
+                    <div class="pw-box">
+                        <input type="password" id="signin-password" class="input" autocomplete="current-password" required>
+                        <button type="button" id="signin-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
                     <span id="signin-password-error" class="error-message"></span>
                 </div>
                 <button id="signin-button" class="btn block" type="button">Masuk</button>
@@ -73,25 +88,34 @@
             <div id="signup-form" class="form-group">
                 <h2>Daftar akun permainan</h2>
                 <div class="input-wrapper">
-                    <input type="text" id="signup-name" class="input" placeholder="Nama lengkap" autocomplete="name" required>
+                    <label class="lbl" for="signup-name">Nama lengkap</label>
+                    <input type="text" id="signup-name" class="input" placeholder="contoh: Budi Santoso" autocomplete="name" required>
                     <span id="signup-name-error" class="error-message"></span>
                 </div>
                 <div class="input-wrapper">
-                    <input type="email" id="signup-email" class="input" placeholder="Email" autocomplete="email" autocapitalize="none" required>
+                    <label class="lbl" for="signup-email">Email</label>
+                    <input type="email" id="signup-email" class="input" placeholder="contoh: budi@gmail.com" autocomplete="email" autocapitalize="none" required>
                     <span id="signup-email-error" class="error-message"></span>
                 </div>
-                <div class="input-wrapper pw">
-                    <input type="password" id="signup-password" class="input" placeholder="Password (min. 6 karakter)" autocomplete="new-password" required>
-                    <button type="button" id="signup-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <div class="input-wrapper">
+                    <label class="lbl" for="signup-password">Password</label>
+                    <div class="pw-box">
+                        <input type="password" id="signup-password" class="input" placeholder="min. 6 karakter" autocomplete="new-password" required>
+                        <button type="button" id="signup-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
                     <span id="signup-password-error" class="error-message"></span>
                 </div>
-                <div class="input-wrapper pw">
-                    <input type="password" id="signup-confirm-password" class="input" placeholder="Ulangi password" autocomplete="new-password" required>
-                    <button type="button" id="signup-confirm-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <div class="input-wrapper">
+                    <label class="lbl" for="signup-confirm-password">Ulangi password</label>
+                    <div class="pw-box">
+                        <input type="password" id="signup-confirm-password" class="input" autocomplete="new-password" required>
+                        <button type="button" id="signup-confirm-password-toggle" class="password-toggle" aria-label="Lihat password"><svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    </div>
                     <span id="signup-confirm-password-error" class="error-message"></span>
                 </div>
                 <div class="input-wrapper">
-                    <input type="text" id="signup-code" class="input code-input" placeholder="Kode kelas" maxlength="12" autocapitalize="characters" autocomplete="off" required>
+                    <label class="lbl" for="signup-code">Kode kelas</label>
+                    <input type="text" id="signup-code" class="input code-input" placeholder="contoh: SMP24" maxlength="12" autocapitalize="characters" autocomplete="off" required>
                     <span id="signup-code-error" class="error-message"></span>
                     <span id="signup-code-info" class="field-hint">Kode kelas diberikan oleh guru ExtraCourse.</span>
                 </div>
@@ -102,7 +126,7 @@
             <div id="status"></div>
         </div>
 
-        <button id="admin-dashboard-button" class="admin-link" type="button">Masuk sebagai admin</button>
+        <button id="admin-dashboard-button" class="admin-link" type="button">Admin</button>
     </main>
 
     <script type="module">
@@ -124,7 +148,7 @@
         import {
             firebaseConfig, ADMIN_EMAIL, levelLabel, loginIdToEmail, isUsernameEmail,
             normalizeClassCode, CLASS_CODE_PATTERN, friendlyAuthError
-        } from "./ec-common.js?v=2026-11-03-5";
+        } from "./ec-common.js?v=2026-11-03-7";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -341,6 +365,16 @@
 
             showTab("signin");
         });
+    </script>
+    <script type="module">
+        // Hanya menggambar SVG di browser (pets.js tidak memanggil Firebase).
+        try {
+            const { petSvg } = await import("./pets.js?v=2026-11-03-7");
+            document.getElementById("pets").innerHTML =
+                ["kucing", "naga", "kelinci"].map((sp) => petSvg(sp, 2, 72, "pet-svg")).join("");
+        } catch (e) {
+            console.warn("Gambar hewan tidak dimuat:", e);
+        }
     </script>
 </body>
 </html>
