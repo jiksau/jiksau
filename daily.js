@@ -8,8 +8,8 @@
 //  yang sama mendapat kata yang sama, dan berganti setiap hari.
 // =====================================================================
 
-import { dayStartMs } from "./ec-common.js?v=2026-11-03";
-import { normalizeAnswer } from "./word-source.js?v=2026-11-03";
+import { dayStartMs } from "./ec-common.js?v=2026-11-03-3";
+import { normalizeAnswer } from "./word-source.js?v=2026-11-03-3";
 
 export const DAILY_SIZE = 10;
 export const DAILY_MIN_POOL = 4; // minimal kata agar pilihan ganda masuk akal

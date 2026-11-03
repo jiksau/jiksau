@@ -9,8 +9,9 @@ rules_version = '2';
 //  Prinsip:
 //   - Admin (admin@extracourse.com) boleh membaca & mengubah semua data.
 //   - Siswa hanya boleh melihat data MILIKNYA SENDIRI.
-//   - Guru (profil role 'Guru', dibuat admin) BUKAN admin. Akses guru
-//     hilang begitu admin menonaktifkannya (active false).
+//   - Guru (profil role 'Guru', dibuat admin) BUKAN admin. Guru aktif
+//     boleh mengelola paket soal MILIKNYA saja. Akses guru hilang begitu
+//     admin menonaktifkannya (active false).
 //   - Siswa baru wajib memakai kode kelas yang aktif.
 //   - Koleksi lain yang tidak disebut di bawah otomatis DITOLAK
 //     (termasuk data lama: studentAttendance, registrations, classes, teachers).
@@ -158,31 +159,87 @@ service cloud.firestore {
     }
 
     // ---------- Paket soal: questionPacks/{id} ----------
-    // Bank soal dari guru. Siswa yang profilnya aktif boleh membaca paket
-    // yang AKTIF (game menampilkan paket jenjangnya + "Semua jenjang").
+    // Bank soal. Dibuat admin (tanpa ownerId) atau guru (ownerId = uid guru).
+    // Siswa & guru aktif boleh membaca paket yang AKTIF (game menampilkan
+    // paket jenjangnya + "Semua jenjang"). Guru aktif juga boleh membaca
+    // semua paket miliknya sendiri (termasuk draf & nonaktif).
     // Batas jenjang ditegakkan saat skor disimpan (lihat isValidPackScore):
     // paket jenjang lain tidak bisa menghasilkan poin.
-    // Hanya admin yang bisa membuat, mengubah, atau menghapus paket.
+    //
+    // Status paket (lihat packStatus di ec-common.js):
+    //   Draf      = draft true, active false, tanpa publishedAt
+    //   Nonaktif  = active false (bukan draf)
+    //   Terjadwal = active true, publishedAt di masa depan
+    //   Terbit    = active true, publishedAt sudah lewat (atau paket lama)
     match /questionPacks/{packId} {
+      // Isi paket yang sah (admin maks. 200 soal, guru maks. 30 soal).
+      function isValidPack(d, maxItems) {
+        return d.title is string
+          && d.title.size() > 0
+          && d.title.size() <= 80
+          && d.type in ['kosakata', 'verb', 'kalimat']
+          && (d.level == 'SEMUA' || isValidLevel(d.level))
+          && d.active is bool
+          // Level paket (opsional untuk paket lama): 1-5
+          && (!('tier' in d) || (d.tier is int && d.tier >= 1 && d.tier <= 5))
+          && d.items is list
+          && d.items.size() > 0
+          && d.items.size() <= maxItems
+          && d.itemCount == d.items.size()
+          // Draf tidak pernah aktif, jadi tidak pernah terlihat siswa
+          && (!('draft' in d) || d.draft is bool)
+          && !(d.active == true && d.get('draft', false) == true);
+      }
+
+      // Bentuk paket guru: hanya field yang dikenal, pemilik = guru itu
+      // sendiri, level wajib, maks. 30 soal, draf tanpa tanggal terbit.
+      function isValidTeacherPack(d) {
+        return d.keys().hasOnly(['title', 'type', 'level', 'tier', 'active', 'draft',
+                                 'items', 'itemCount', 'ownerId', 'createdAt', 'updatedAt', 'publishedAt'])
+          && d.ownerId == request.auth.uid
+          && d.tier is int
+          && d.updatedAt == request.time
+          && isValidPack(d, 30)
+          && (d.get('draft', false) != true || d.get('publishedAt', null) == null);
+      }
+
+      // Tanggal terbit dari guru: kosong (draf), sekarang, di masa depan
+      // (terjadwal), atau tidak diubah. Tidak bisa dimundurkan, karena
+      // Tantangan Harian memakai paket yang terbit sebelum 00.00 hari itu.
+      function isValidTeacherPublish(d, old) {
+        let p = d.get('publishedAt', null);
+        return p == null
+          || p == request.time
+          || (p is timestamp && p > request.time)
+          || (old != null && p == old.get('publishedAt', null));
+      }
+
       allow read: if isAdmin()
-        || (isMember() && resource.data.active == true);
+        || (isMember() && resource.data.active == true)
+        || (isTeacher() && resource.data.ownerId == request.auth.uid);
 
-      allow create, update: if isAdmin()
-        && request.resource.data.title is string
-        && request.resource.data.title.size() > 0
-        && request.resource.data.title.size() <= 80
-        && request.resource.data.type in ['kosakata', 'verb', 'kalimat']
-        && (request.resource.data.level == 'SEMUA' || isValidLevel(request.resource.data.level))
-        && request.resource.data.active is bool
-        // Level paket (opsional): 1-5
-        && (!('tier' in request.resource.data)
-            || (request.resource.data.tier is int && request.resource.data.tier >= 1 && request.resource.data.tier <= 5))
-        && request.resource.data.items is list
-        && request.resource.data.items.size() > 0
-        && request.resource.data.items.size() <= 200
-        && request.resource.data.itemCount == request.resource.data.items.size();
+      allow create: if (isAdmin() && isValidPack(request.resource.data, 200))
+        || (isTeacher()
+            && isValidTeacherPack(request.resource.data)
+            && request.resource.data.createdAt == request.time
+            && isValidTeacherPublish(request.resource.data, null));
 
-      allow delete: if isAdmin();
+      // Guru hanya mengubah paket miliknya; pemilik, waktu dibuat, dan
+      // jenis soal tidak bisa diganti (agar skor lama tetap masuk akal).
+      allow update: if (isAdmin() && isValidPack(request.resource.data, 200))
+        || (isTeacher()
+            && resource.data.ownerId == request.auth.uid
+            && isValidTeacherPack(request.resource.data)
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.type == resource.data.type
+            && isValidTeacherPublish(request.resource.data, resource.data));
+
+      // Guru hanya menghapus paket miliknya yang Draf atau Nonaktif
+      // (paket Terbit/Terjadwal harus dinonaktifkan dulu). Admin: semua.
+      allow delete: if isAdmin()
+        || (isTeacher()
+            && resource.data.ownerId == request.auth.uid
+            && resource.data.active == false);
     }
 
     // ---------- Pengumuman: announcements/{id} ----------
@@ -257,6 +314,13 @@ service cloud.firestore {
         && request.resource.data.total <= 1000
         && request.resource.data.correct >= 0
         && request.resource.data.correct <= request.resource.data.total
+        // Angka & teks tambahan berjenis benar (ditampilkan di admin & Beranda)
+        && request.resource.data.percent is int
+        && request.resource.data.percent >= 0
+        && request.resource.data.percent <= 100
+        && (!('points' in request.resource.data) || request.resource.data.points is int)
+        && (!('mode' in request.resource.data)
+            || (request.resource.data.mode is string && request.resource.data.mode.size() <= 30))
         // Waktu & minggu diisi apa adanya (tidak bisa dimundurkan/dimajukan)
         && request.resource.data.timestamp == request.time
         && request.resource.data.week is string

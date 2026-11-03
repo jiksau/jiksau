@@ -476,6 +476,7 @@
                 <div class="toolbar">
                     <input type="search" id="packSearch" placeholder="Cari judul paket...">
                     <select id="packLevelFilter"></select>
+                    <select id="packOwnerFilter"><option value="all">Semua pembuat</option><option value="admin">Admin</option></select>
                 </div>
                 <table class="responsive">
                     <thead>
@@ -485,11 +486,12 @@
                             <th>Jenjang</th>
                             <th>Level</th>
                             <th>Soal</th>
+                            <th>Pembuat</th>
                             <th>Status</th>
                             <th class="col-actions">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="packsBody"><tr><td colspan="7" class="empty">Memuat...</td></tr></tbody>
+                    <tbody id="packsBody"><tr><td colspan="8" class="empty">Memuat...</td></tr></tbody>
                 </table>
                 <p class="note">Jika jumlah soal sebuah paket diubah, siswa yang sedang membuka paket itu perlu memuat ulang halaman game sebelum skornya bisa tersimpan.</p>
             </div>
@@ -598,9 +600,9 @@
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, USERNAME_PATTERN, normalizeUsername,
             loginIdToEmail, usernameFromEmail, isUsernameEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
-            parsePackText, packToText, PACK_TIERS, announcementHtml
-        } from "./ec-common.js?v=2026-11-03";
-        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03";
+            parsePackText, packToText, PACK_TIERS, announcementHtml, packStatus, PACK_STATUS_LABEL
+        } from "./ec-common.js?v=2026-11-03-3";
+        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03-3";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -668,6 +670,7 @@
                 teachers = all.filter((u) => u.role === 'Guru');
                 renderStudents();
                 renderTeachers();
+                renderPacks();
                 renderCodes();
                 renderScores();
             }, (e) => {
@@ -1023,7 +1026,8 @@
         // pack = paket yang diubah (null = paket baru)
         function setReleaseOptions(pack) {
             const opts = [];
-            if (pack && !isScheduled(pack)) opts.push(['keep', `Tidak diubah (terbit ${fmtDate(pack.publishedAt || pack.createdAt)})`]);
+            if (pack?.draft === true) opts.push(['keep', 'Tetap draf (belum terlihat siswa)']);
+            else if (pack && !isScheduled(pack)) opts.push(['keep', `Tidak diubah (terbit ${fmtDate(pack.publishedAt || pack.createdAt)})`]);
             opts.push(['now', 'Sekarang'], ['schedule', 'Jadwalkan']);
             $('packRelease').innerHTML = opts.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join('');
             $('packRelease').value = !pack ? 'now' : isScheduled(pack) ? 'schedule' : 'keep';
@@ -1034,7 +1038,8 @@
             const v = $('packRelease').value;
             $('packWhenField').hidden = v !== 'schedule';
             $('packReleaseHint').textContent = v === 'now' ? 'Siswa langsung melihat paket & mendapat notifikasi'
-                : v === 'schedule' ? 'Tersembunyi dari siswa sampai waktunya' : 'Tanggal terbit tetap, tanpa notifikasi ulang';
+                : v === 'schedule' ? 'Tersembunyi dari siswa sampai waktunya'
+                : packs.find((p) => p.id === editingPackId)?.draft === true ? 'Paket draf guru, belum terlihat siswa' : 'Tanggal terbit tetap, tanpa notifikasi ulang';
         }
         $('packRelease').addEventListener('change', updateRelease);
         setReleaseOptions(null);
@@ -1054,7 +1059,7 @@
                 console.error(e);
                 packsStarted = false;
                 const hint = e.code === 'permission-denied' ? ' Pastikan aturan keamanan terbaru (firestore.rules) sudah dipasang di Firebase Console.' : '';
-                $('packsBody').innerHTML = `<tr><td colspan="7" class="empty">Gagal memuat paket soal: ${escapeHtml(e.message)}.${hint}</td></tr>`;
+                $('packsBody').innerHTML = `<tr><td colspan="8" class="empty">Gagal memuat paket soal: ${escapeHtml(e.message)}.${hint}</td></tr>`;
             });
         }
 
@@ -1079,6 +1084,7 @@
         $('packType').addEventListener('change', updatePackHelp);
         $('packSearch').addEventListener('input', renderPacks);
         $('packLevelFilter').addEventListener('change', renderPacks);
+        $('packOwnerFilter').addEventListener('change', renderPacks);
         $('packText').addEventListener('input', checkPackText);
 
         function resetPackForm() {
@@ -1116,6 +1122,10 @@
             try {
                 const data = { title, type, level, tier, items, itemCount: items.length, updatedAt: serverTimestamp() };
                 if (editingPackId) {
+                    // Draf guru yang diterbitkan/dijadwalkan admin: bukan draf lagi & aktif.
+                    // Pemilik (ownerId) tidak diubah.
+                    const wasDraft = packs.find((p) => p.id === editingPackId)?.draft === true;
+                    if (wasDraft && publishedAt) Object.assign(data, { draft: false, active: true });
                     await updateDoc(doc(db, 'questionPacks', editingPackId), publishedAt ? { ...data, publishedAt } : data);
                     setMsg('packMsg', `Paket "${title}" diperbarui (${items.length} soal).${publishedAt ? ' ' + whenText : ''}`, true);
                 } else {
@@ -1131,17 +1141,45 @@
             }
         });
 
+        // Pembuat paket: paket tanpa ownerId = paket admin (termasuk semua paket lama)
+        function ownerLabel(p) {
+            if (!p.ownerId) return 'Admin';
+            const t = teachers.find((x) => x.id === p.ownerId);
+            return t ? (t.name || t.email || 'Guru') : 'Guru (akun tidak ditemukan)';
+        }
+        function statusCell(p) {
+            const st = packStatus(p);
+            const cls = { draft: 'off', scheduled: 'wait', published: 'on', inactive: 'off' }[st];
+            return `<span class="pill ${cls}">${PACK_STATUS_LABEL[st]}</span>`
+                + (st === 'scheduled' ? `<br><span class="sub">${fmtDate(p.publishedAt)}</span>` : '');
+        }
+        // Pilihan filter pembuat: Admin + guru yang punya paket
+        function renderOwnerFilter() {
+            const sel = $('packOwnerFilter');
+            const keep = sel.value;
+            const ids = [...new Set(packs.map((p) => p.ownerId).filter(Boolean))];
+            const opts = ids.map((id) => ({ id, name: ownerLabel({ ownerId: id }) }))
+                .sort((a, b) => a.name.localeCompare(b.name, 'id'));
+            sel.innerHTML = '<option value="all">Semua pembuat</option><option value="admin">Admin</option>'
+                + opts.map((o) => `<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)}</option>`).join('');
+            sel.value = [...sel.options].some((o) => o.value === keep) ? keep : 'all';
+        }
+
         function renderPacks() {
+            if (!packsStarted) return;
+            renderOwnerFilter();
             if (packs.length === 0) {
-                $('packsBody').innerHTML = '<tr><td colspan="7" class="empty">Belum ada paket soal. Buat satu di atas.</td></tr>';
+                $('packsBody').innerHTML = '<tr><td colspan="8" class="empty">Belum ada paket soal. Buat satu di atas.</td></tr>';
                 return;
             }
             const term = $('packSearch').value.trim().toLowerCase();
             const lvl = $('packLevelFilter').value;
+            const owner = $('packOwnerFilter').value;
             const rows = packs.filter((p) => (lvl === 'all' || p.level === lvl)
+                && (owner === 'all' || (owner === 'admin' ? !p.ownerId : p.ownerId === owner))
                 && (!term || String(p.title).toLowerCase().includes(term)));
             if (rows.length === 0) {
-                $('packsBody').innerHTML = '<tr><td colspan="7" class="empty">Tidak ada paket yang cocok.</td></tr>';
+                $('packsBody').innerHTML = '<tr><td colspan="8" class="empty">Tidak ada paket yang cocok.</td></tr>';
                 return;
             }
             $('packsBody').innerHTML = rows.map((p) => `
@@ -1150,14 +1188,13 @@
                     <td data-label="Jenis">${escapeHtml(packTypeLabel(p.type).split(' (')[0])}</td>
                     <td data-label="Jenjang">${escapeHtml(packLevelLabel(p.level))}</td>
                     <td data-label="Level">${p.tier ? `Level ${p.tier}` : '-'}</td>
-                    <td data-label="Soal">${p.itemCount ?? (p.items || []).length}</td>
-                    <td data-label="Status">${p.active && isScheduled(p)
-                        ? `<span class="pill wait">Terjadwal</span><br><span class="sub">${fmtDate(p.publishedAt)}</span>`
-                        : `<span class="pill ${p.active ? 'on' : 'off'}">${p.active ? 'Aktif' : 'Nonaktif'}</span>`}</td>
+                    <td data-label="Soal">${Number(p.itemCount ?? (p.items || []).length) || 0}</td>
+                    <td data-label="Pembuat">${escapeHtml(ownerLabel(p))}</td>
+                    <td data-label="Status">${statusCell(p)}</td>
                     <td data-label="Aksi" class="col-actions"><span class="actions">
-                        <button class="btn ghost" data-edit-pack="${p.id}">Ubah</button>
-                        <button class="btn ghost" data-toggle-pack="${p.id}">${p.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
-                        <button class="btn danger" data-delete-pack="${p.id}">Hapus</button>
+                        <button class="btn ghost" data-edit-pack="${escapeHtml(p.id)}">Ubah</button>
+                        <button class="btn ghost" data-toggle-pack="${escapeHtml(p.id)}">${p.active ? 'Nonaktifkan' : p.draft === true ? 'Terbitkan' : 'Aktifkan'}</button>
+                        <button class="btn danger" data-delete-pack="${escapeHtml(p.id)}">Hapus</button>
                     </span></td>
                 </tr>`).join('');
         }
@@ -1185,9 +1222,10 @@
                 } else if (togglePack) {
                     // Mengaktifkan lagi = dirilis ulang, siswa mendapat notifikasi
                     // (paket terjadwal tetap menunggu jadwalnya)
+                    // Draf guru yang diaktifkan admin = langsung terbit (draft false).
                     await updateDoc(doc(db, 'questionPacks', p.id), p.active
                         ? { active: false, updatedAt: serverTimestamp() }
-                        : { active: true, updatedAt: serverTimestamp(), publishedAt: isScheduled(p) ? p.publishedAt : serverTimestamp() });
+                        : { active: true, draft: false, updatedAt: serverTimestamp(), publishedAt: isScheduled(p) ? p.publishedAt : serverTimestamp() });
                 } else if (deletePack) {
                     if (!confirm(`Hapus paket "${p.title}"?\n\nSkor yang sudah tersimpan tetap ada. Jika hanya ingin menyembunyikan sementara, pilih Nonaktifkan.`)) return;
                     await deleteDoc(doc(db, 'questionPacks', p.id));
@@ -1324,9 +1362,12 @@
         let scoresStarted = false;
 
         const scoreClass = (p) => p >= 80 ? 'score-good' : p >= 60 ? 'score-mid' : 'score-low';
+        // Angka dari dokumen skor (ditulis browser siswa) selalu dipaksa jadi angka
+        // agar tidak bisa disisipi HTML.
+        const num = (v) => Number(v) || 0;
         const scoreText = (item) => item.gameId === 'kosakata-5'
-            ? `Tuntas ${item.total} kata` + ((item.points ?? 0) > 0 ? ` (${item.points}x salah)` : ' tanpa salah')
-            : `${item.correct}/${item.total} (${item.percent}%)` + (item.points ? ` · ${item.points} poin` : '');
+            ? `Tuntas ${num(item.total)} kata` + (num(item.points) > 0 ? ` (${num(item.points)}x salah)` : ' tanpa salah')
+            : `${num(item.correct)}/${num(item.total)} (${num(item.percent)}%)` + (num(item.points) ? ` · ${num(item.points)} poin` : '');
         const scoreTime = (i) => i.timestamp?.toMillis?.() ?? 0;
         // Jenjang siswa: pakai data profil terbaru, jika tidak ada pakai yang tersimpan di skor
         const levelOf = (uid, fallback) => students.find((s) => s.id === uid)?.level || fallback || null;

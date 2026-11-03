@@ -137,6 +137,8 @@ export function weekRangeLabel(key) {
 // yang menambah poin di papan peringkat.
 export const PACK_ALL_LEVELS = "SEMUA";
 export const PACK_MAX_ITEMS = 200;
+// Batas soal untuk paket buatan guru (juga ditegakkan di firestore.rules).
+export const TEACHER_PACK_MAX_ITEMS = 30;
 // Level kesulitan paket di dalam satu jenjang (1 = paling mudah).
 export const PACK_TIERS = [1, 2, 3, 4, 5];
 
@@ -191,9 +193,23 @@ export function packLevelLabel(value) {
     return value === PACK_ALL_LEVELS ? "Semua jenjang" : levelLabel(value);
 }
 
-// Mengubah teks yang ditempel admin menjadi daftar soal.
+// Status paket (admin & guru). Dihitung dari data yang sudah ada:
+//   draft: true (selalu active false)        → "draft"     Draf
+//   active false                              → "inactive"  Nonaktif
+//   active true, publishedAt di masa depan    → "scheduled" Terjadwal
+//   active true lainnya (termasuk paket lama) → "published" Terbit
+// Paket dengan ownerId = buatan guru; tanpa ownerId = paket admin.
+export const PACK_STATUS_LABEL = { draft: "Draf", scheduled: "Terjadwal", published: "Terbit", inactive: "Nonaktif" };
+export function packStatus(pack, now = Date.now()) {
+    if (pack?.draft === true) return "draft";
+    if (pack?.active !== true) return "inactive";
+    return (pack.publishedAt?.toMillis?.() ?? 0) > now ? "scheduled" : "published";
+}
+
+// Mengubah teks yang ditempel admin/guru menjadi daftar soal.
+// maxItems: batas soal (admin 200, guru TEACHER_PACK_MAX_ITEMS).
 // Hasil: { items: [...], errors: ["Baris 3: ..."] }
-export function parsePackText(type, text) {
+export function parsePackText(type, text, maxItems = PACK_MAX_ITEMS) {
     const items = [];
     const errors = [];
     const clean = (s) => String(s || "").trim().replace(/\s+/g, " ");
@@ -222,7 +238,7 @@ export function parsePackText(type, text) {
             items.push({ q: left, a: right });
         }
     });
-    if (items.length > PACK_MAX_ITEMS) errors.push(`Maksimal ${PACK_MAX_ITEMS} soal per paket (sekarang ${items.length}).`);
+    if (items.length > maxItems) errors.push(`Maksimal ${maxItems} soal per paket (sekarang ${items.length}).`);
     return { items, errors };
 }
 

@@ -10,10 +10,10 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 |---|---|---|---|---|
 | Profil (`users`) | Nama, email/nama pengguna, jenjang, kode kelas | Lihat profil sendiri; dibuat saat daftar dengan kode kelas aktif; hanya bisa mengubah waktu masuk terakhir & waktu terakhir menekan "Mengerti" di pengumuman | Semua (buat akun tanpa email, ubah nama & jenjang) | Tidak bisa |
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
-| Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, aktif/nonaktif | Membaca paket yang aktif | Semua | Tidak bisa |
+| Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, status (draf/terjadwal/terbit/nonaktif), pembuat (`ownerId`) | Membaca paket yang aktif | Semua | Tidak bisa |
 | Pengumuman (`announcements`) | Judul, isi, untuk jenjang, aktif/nonaktif | Membaca pengumuman yang aktif | Semua | Tidak bisa |
 | Hasil akhir mingguan (`weeklyResults`) | Peringkat akhir tiap minggu yang sudah selesai (nama, jenjang, poin) | Membaca (untuk rekap & riwayat juara) | Semua; tersimpan otomatis saat admin membuka halaman admin | Tidak bisa |
-| Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
+| Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); nilai harus angka (`percent` 0–100, `points` bilangan bulat, `mode` teks pendek); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, koleksi lama `teachers`). Peran guru yang baru memakai profil di `users` (lihat bagian Guru).
 
@@ -29,7 +29,14 @@ Guru **bukan admin** dan tidak memakai akun admin. Akun guru dibuat admin di tab
 - Skor dari akun guru **ditolak** di `gameScores` (guru tidak masuk papan peringkat). Profil tanpa field `role` (siswa lama) tetap dianggap siswa.
 - Guru tidak bisa menyimpan hewan atau barang toko (`users.pet/items/equipped`, koleksi `pets`).
 - Guru boleh membuka Daftar Game dan Peringkat untuk melihat saja. Beranda siswa dan Toko mengalihkan guru ke `guru.html`; siswa yang membuka `guru.html` dialihkan ke Beranda.
-- Tahap 1 belum memberi guru hak menulis paket soal; itu Tahap 2.
+- **Paket guru (Tahap 2):** guru aktif boleh membuat paket dengan `ownerId` = dirinya sendiri, maks. **30 soal** (admin 200), level wajib, hanya field yang dikenal. Semua batas lain tetap (judul ≤80, jenis, jenjang, level 1–5, `itemCount` = jumlah soal).
+- Guru membaca paket aktif + **semua paket miliknya** (termasuk draf & nonaktif); tidak bisa membaca draf/nonaktif guru lain.
+- Guru hanya mengubah paket miliknya; **pemilik, waktu dibuat, dan jenis soal tidak bisa diganti**. Paket admin (tanpa `ownerId`) dan paket guru lain tidak bisa diubah atau dihapus guru.
+- Tanggal terbit dari guru hanya boleh kosong (draf), **sekarang**, **di masa depan** (terjadwal), atau tidak diubah, jadi tidak bisa dimundurkan (Tantangan Harian memakai paket yang terbit sebelum 00.00).
+- Guru hanya **menghapus** paket miliknya yang **Draf atau Nonaktif**. Paket Terbit/Terjadwal harus dinonaktifkan dulu. Admin bisa menghapus semua.
+- **Draf tidak pernah aktif**: aturan menolak `active: true` bersamaan dengan `draft: true` (juga untuk admin), sehingga draf tidak bisa muncul di game, lonceng, Tantangan Harian, atau papan peringkat, dan skor dari draf ditolak.
+- Guru yang dinonaktifkan langsung tidak bisa membaca draf/nonaktif miliknya maupun menulis/menghapus paket. Paketnya yang sudah terbit tetap bisa dimainkan siswa sampai admin menonaktifkannya.
+- Semua judul & isi paket ditampilkan sebagai teks biasa (`escapeHtml` / `textContent`) di halaman siswa, admin, guru, lonceng, dan poster peringkat.
 
 ## Memasang aturan
 
@@ -117,6 +124,27 @@ Jika tab Pengumuman menampilkan "Gagal memuat pengumuman", aturan terbaru belum 
 - [ ] Admin: tab Siswa, Kode Kelas, Paket Soal, Pengumuman, Skor Game tetap berjalan
 
 Catatan: akun guru tidak punya jenjang, jadi di game ia hanya melihat paket "Semua jenjang". Ini akan diselesaikan di Tahap 3 (mode coba).
+
+## Uji paket guru – Tahap 2 (setelah memasang aturan terbaru)
+
+Siapkan 2 akun guru (A dan B) dan 1 akun siswa SMP.
+
+- [ ] Guru A → **Buat paket** kosakata SMP Level 2, 5 soal → **Simpan draf** → kartu bergaris putus-putus, status Draf
+- [ ] Siswa SMP: draf **tidak** muncul di game, lonceng, Beranda, atau Tantangan Harian
+- [ ] Guru A → draf → **Terbitkan** → status Terbit; siswa melihatnya di game & lonceng, main → poin masuk peringkat
+- [ ] Guru A → paket baru → Jadwalkan 10 menit lagi → status Terjadwal + tanggal; siswa belum melihatnya; setelah waktunya tampil
+- [ ] Isi 31 soal → "Maksimal 30 soal"; tidak bisa disimpan. Baris tanpa `=` → kesalahan per baris tampil
+- [ ] Jenis Kosakata → muncul catatan "Kosakata: tulis kata Inggris = arti Indonesia. Paket ini juga dipakai untuk Tantangan Harian."
+- [ ] Ubah paket terbit (judul / ejaan) → tersimpan; skor lama siswa tidak berubah
+- [ ] Siswa membuka paket itu, guru menambah 1 soal, siswa menyelesaikan → pesan "paket ini baru diubah ... Muat ulang halaman"; setelah dimuat ulang skornya tersimpan
+- [ ] Paket Terbit/Terjadwal tidak punya tombol Hapus; **Nonaktifkan** → hilang dari game siswa → tombol **Hapus** muncul → hapus berhasil
+- [ ] Nonaktif → **Aktifkan** → terbit lagi, siswa mendapat notifikasi
+- [ ] Guru B tidak melihat paket Guru A di halaman guru
+- [ ] Admin → Paket Soal: kolom **Pembuat** = nama Guru A; paket lama = Admin; filter pembuat berfungsi; status Draf/Terjadwal/Terbit/Nonaktif
+- [ ] Admin bisa mengubah, menonaktifkan, menerbitkan draf, dan menghapus paket Guru A; pemiliknya tetap Guru A
+- [ ] Admin menonaktifkan akun Guru A → halaman guru: "Akun guru nonaktif"; paket Guru A yang terbit tetap bisa dimainkan siswa
+- [ ] Judul paket `<b>tes</b>` → tampil apa adanya sebagai teks (guru, admin, game, lonceng)
+- [ ] Paket lama, skor, poin, Tantangan Harian, dan Toko siswa tetap berjalan
 
 ## Papan peringkat
 

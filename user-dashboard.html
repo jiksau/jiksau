@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Beranda - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-3">
     <style>
         body { visibility: hidden; } /* tampil setelah status login diketahui */
 
@@ -165,20 +165,20 @@
         <a href="leaderboard.html"><svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>Peringkat</a>
     </div></nav>
 
-    <script type="module" src="notifications.js?v=2026-11-03"></script>
-    <script type="module" src="announcements.js?v=2026-11-03"></script>
-    <script type="module" src="recap.js?v=2026-11-03"></script>
+    <script type="module" src="notifications.js?v=2026-11-03-3"></script>
+    <script type="module" src="announcements.js?v=2026-11-03-3"></script>
+    <script type="module" src="recap.js?v=2026-11-03-3"></script>
 
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, setDoc, doc, getDoc, getDocs, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import "./game-scores.js?v=2026-11-03"; // window.loadQuestionPacks & loadWeekPackPoints
-        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints, packMaxPoints, scorePoints, dayKeyFor } from "./ec-common.js?v=2026-11-03";
-        import { dailyWords, DAILY_MIN_POOL } from "./daily.js?v=2026-11-03";
-        import { loadHistory } from "./weekly-results.js?v=2026-11-03";
-        import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-03";
-        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById, publicPet } from "./pets.js?v=2026-11-03";
+        import "./game-scores.js?v=2026-11-03-3"; // window.loadQuestionPacks & loadWeekPackPoints
+        import { firebaseConfig, ADMIN_EMAIL, levelLabel, usernameFromEmail, escapeHtml, weekKeyFor, weeklyPoints, packMaxPoints, scorePoints, dayKeyFor } from "./ec-common.js?v=2026-11-03-3";
+        import { dailyWords, DAILY_MIN_POOL } from "./daily.js?v=2026-11-03-3";
+        import { loadHistory } from "./weekly-results.js?v=2026-11-03-3";
+        import { TIERS, tierFor, xpByUser, tierBadge, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-03-3";
+        import { PET_SPECIES, PET_NAME_MAX, STAGES, stageForTier, nextStageTier, petSvg, speciesOf, itemById, publicPet } from "./pets.js?v=2026-11-03-3";
         // Salin hewan ke pets/{uid} (dibaca papan peringkat) jika belum sama
         async function syncPublicPet() {
             const pub = publicPet(myPet, myEquipped);
@@ -471,10 +471,10 @@
 
         function describeScore(item) {
             if (item.gameId === 'kosakata-5') {
-                const mistakes = item.points ?? 0;
-                return `Tuntas ${item.total} kata` + (mistakes > 0 ? `<small>${mistakes}x salah sebelumnya</small>` : '<small>tanpa salah</small>');
+                const mistakes = Number(item.points) || 0;
+                return `Tuntas ${Number(item.total) || 0} kata` + (mistakes > 0 ? `<small>${mistakes}x salah sebelumnya</small>` : '<small>tanpa salah</small>');
             }
-            return `${item.correct}/${item.total} benar<small>${item.percent}%</small>`;
+            return `${Number(item.correct) || 0}/${Number(item.total) || 0} benar<small>${Number(item.percent) || 0}%</small>`;
         }
 
         function loadGameScores(currentUserId) {
@@ -513,7 +513,7 @@
                 $('bestSec').hidden = false;
                 // Hanya 3 game dengan nilai terbaik agar beranda tetap ringkas
                 bestEl.innerHTML = Object.values(best).sort((a, b) => b.percent - a.percent).slice(0, 3).map((b) => `
-                    <div class="row"><span class="nm">${escapeHtml(b.gameName)}</span><span class="pct ${scoreColor(b.percent)}">${b.percent}%</span></div>`).join('');
+                    <div class="row"><span class="nm">${escapeHtml(b.gameName)}</span><span class="pct ${scoreColor(b.percent)}">${Number(b.percent) || 0}%</span></div>`).join('');
 
                 historyEl.innerHTML = items.slice(0, 5).map((i) => {
                     const when = i.timestamp ? i.timestamp.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : 'Baru saja';

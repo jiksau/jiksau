@@ -17,8 +17,8 @@
 //    source.scoreInfo() -> { packId, packName, packTier } (kosong untuk latihan)
 // =====================================================================
 
-import "./game-scores.js?v=2026-11-03"; // window.loadQuestionPacks & window.saveGameScore
-import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03";
+import "./game-scores.js?v=2026-11-03-3"; // window.loadQuestionPacks & window.saveGameScore
+import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03-3";
 
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },

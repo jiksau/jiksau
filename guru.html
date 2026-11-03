@@ -7,15 +7,83 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Guru - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-3">
     <style>
         body { visibility: hidden; } /* Ditampilkan setelah akun guru terverifikasi */
+        main.app { max-width: 760px; }
+        #listView > * { min-width: 0; } /* baris filter yang bisa digeser tidak boleh melebarkan halaman */
         .topbar .btn { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+
+        .hello { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
         .hello h2 { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 700; letter-spacing: -0.3px; }
         .hello p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
-        .soon { display: grid; gap: 6px; }
-        .soon b { font-size: 15px; }
-        .soon .note { max-width: 46ch; }
+
+        /* Filter status: baris tombol yang bisa digeser di HP */
+        .filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-top: 10px; padding-bottom: 2px; }
+        .filters::-webkit-scrollbar { display: none; }
+        .filters button {
+            flex: none; height: 36px; padding: 0 14px; border-radius: 999px;
+            border: 1px solid var(--line); background: var(--surface); color: var(--text);
+            font-weight: 600; font-size: 13.5px; cursor: pointer; white-space: nowrap;
+        }
+        .filters button .n { color: var(--muted); font-weight: 500; margin-left: 4px; font-variant-numeric: tabular-nums; }
+        .filters button.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        .filters button.active .n { color: inherit; opacity: .8; }
+
+        /* Daftar paket */
+        .packs { display: grid; gap: 10px; }
+        .pk {
+            background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 14px 16px; display: grid; gap: 10px; min-width: 0;
+        }
+        .pk.is-draft { border-style: dashed; border-color: var(--line-strong); box-shadow: none; }
+        .pk-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .pk-title { font-weight: 700; font-size: 15.5px; line-height: 1.3; min-width: 0; }
+        .pk-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+        .pk .actions { gap: 6px; }
+        .pk .actions > .btn { flex: 0 1 auto; min-height: 38px; padding: 6px 14px; font-size: 14px; }
+
+        .st {
+            flex: none; display: inline-flex; align-items: center; height: 26px; padding: 0 10px;
+            border-radius: 999px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+        }
+        .st.draft { border: 1px dashed var(--line-strong); color: var(--muted); }
+        .st.scheduled { background: var(--info-soft); color: var(--info); }
+        .st.published { background: var(--ok-soft); color: var(--ok); }
+        .st.inactive { background: var(--soft); color: var(--muted); }
+        .pk-when { color: var(--info); font-size: 13px; font-weight: 600; }
+
+        /* Formulir paket */
+        .form-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .form-head h2 { margin: 0; font-size: 18px; }
+        .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+        form.pack { display: grid; gap: 14px; }
+        .field small { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+        .hint { margin: 0; color: var(--muted); font-size: 13.5px; }
+        .hint.daily { color: var(--text); background: var(--accent-soft); border-radius: var(--radius-sm); padding: 10px 12px; }
+        textarea.pack-text {
+            width: 100%; min-height: 220px; padding: 12px; resize: vertical;
+            border: 1.5px solid var(--line); border-radius: var(--radius-sm); background: var(--surface);
+            font-size: 15px; line-height: 1.55; font-weight: 400; outline: 0;
+        }
+        textarea.pack-text:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+        .count { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .count b { color: var(--text); }
+        .count .bad { color: var(--bad); font-weight: 600; }
+        .errors { margin: 0; padding: 10px 12px 10px 28px; border-radius: var(--radius-sm); background: var(--bad-soft); color: var(--bad); font-size: 13.5px; }
+        .errors:empty { display: none; }
+        .release { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+        .warn-note { margin: 0; color: var(--warn); background: var(--warn-soft); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13.5px; }
+        .form-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .msg { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px; }
+        .msg:empty { display: none; }
+        .msg.ok { background: var(--ok-soft); color: var(--ok); }
+        .msg.err { background: var(--bad-soft); color: var(--bad); }
+
+        @media (max-width: 640px) {
+            .grid3, .release { grid-template-columns: 1fr; }
+            .form-buttons .btn { flex: 1 1 100%; }
+        }
     </style>
 </head>
 <body>
@@ -28,34 +96,115 @@
     </header>
 
     <main class="app" id="main">
-        <div class="hello">
-            <h2 id="greet">Halo</h2>
-            <p>Kelola paket soal untuk siswa di sini.</p>
-        </div>
+        <!-- ===== Daftar paket ===== -->
+        <section id="listView" class="stack">
+            <div class="hello">
+                <div>
+                    <h2 id="greet">Halo</h2>
+                    <p>Paket yang terbit langsung bisa dimainkan siswa.</p>
+                </div>
+                <button class="btn" type="button" id="newPackBtn">Buat paket</button>
+            </div>
 
-        <div class="sec">Paket saya</div>
-        <div class="card soon">
-            <b>Belum ada paket</b>
-            <p class="note">Membuat, menjadwalkan, dan menerbitkan paket soal akan tersedia di halaman ini. Sementara itu, paket masih dibuat oleh admin.</p>
-        </div>
+            <div>
+                <label class="search" for="packSearch">
+                    <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input type="search" id="packSearch" placeholder="Cari judul paket" autocomplete="off">
+                </label>
+                <div class="filters" id="filters" role="tablist" aria-label="Status paket"></div>
+            </div>
 
-        <div class="sec">Lihat seperti siswa</div>
-        <div class="list">
-            <a class="item" href="gamelist.html"><span><span class="name">Daftar game</span><span class="desc">Skor akun guru tidak disimpan.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
-            <a class="item" href="leaderboard.html"><span><span class="name">Papan peringkat</span><span class="desc">Peringkat siswa minggu ini.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
-        </div>
+            <div class="packs" id="packList"><div class="empty">Memuat paket...</div></div>
+
+            <div class="sec">Lihat seperti siswa</div>
+            <div class="list">
+                <a class="item" href="gamelist.html"><span><span class="name">Daftar game</span><span class="desc">Skor akun guru tidak disimpan.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+                <a class="item" href="leaderboard.html"><span><span class="name">Papan peringkat</span><span class="desc">Peringkat siswa minggu ini.</span></span><span class="go"><svg class="ico" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span></a>
+            </div>
+        </section>
+
+        <!-- ===== Formulir paket ===== -->
+        <section id="formView" class="card" hidden>
+            <form class="pack" id="packForm" autocomplete="off" novalidate>
+                <div class="form-head">
+                    <h2 id="formTitle">Paket baru</h2>
+                    <button class="btn ghost" type="button" id="cancelBtn">Batal</button>
+                </div>
+
+                <label class="field">Judul paket
+                    <input class="input" type="text" id="fTitle" maxlength="80" placeholder="contoh: Buah dan Hewan">
+                    <small>Terlihat oleh siswa</small>
+                </label>
+
+                <div class="grid3">
+                    <label class="field">Jenis soal
+                        <select class="input" id="fType"></select>
+                        <small id="fTypeNote">&nbsp;</small>
+                    </label>
+                    <label class="field">Untuk jenjang
+                        <select class="input" id="fLevel"></select>
+                    </label>
+                    <label class="field">Level
+                        <select class="input" id="fTier"></select>
+                        <small>1 = paling mudah</small>
+                    </label>
+                </div>
+
+                <p class="hint daily" id="dailyNote" hidden>Kosakata: tulis kata Inggris = arti Indonesia. Paket ini juga dipakai untuk Tantangan Harian.</p>
+
+                <label class="field">Daftar soal
+                    <small id="fHint"></small>
+                    <textarea class="pack-text" id="fText" spellcheck="false"></textarea>
+                </label>
+                <div class="count" id="fCount"></div>
+                <ul class="errors" id="fErrors"></ul>
+
+                <div class="release">
+                    <label class="field">Terbit
+                        <select class="input" id="fRelease"></select>
+                        <small id="fReleaseHint">&nbsp;</small>
+                    </label>
+                    <label class="field" id="fWhenField" hidden>Tanggal &amp; jam terbit
+                        <input class="input" type="datetime-local" id="fWhen">
+                        <small>Paket muncul di game siswa pada waktu ini</small>
+                    </label>
+                </div>
+
+                <p class="warn-note" id="liveNote" hidden>Paket ini sedang dimainkan siswa. Jika jumlah soal atau level diubah, siswa yang sedang bermain perlu memuat ulang halaman sebelum skornya tersimpan. Untuk menambah soal, sebaiknya buat paket baru.</p>
+
+                <div class="form-buttons">
+                    <button class="btn" type="submit" id="saveBtn">Terbitkan</button>
+                    <button class="btn secondary" type="button" id="draftBtn">Simpan draf</button>
+                </div>
+                <div class="msg" id="formMsg" role="status"></div>
+            </form>
+        </section>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, escapeHtml } from "./ec-common.js?v=2026-11-03";
+        import {
+            getFirestore, collection, doc, getDoc, addDoc, updateDoc, deleteDoc,
+            query, where, onSnapshot, serverTimestamp, Timestamp
+        } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import {
+            firebaseConfig, ADMIN_EMAIL, escapeHtml, LEVELS, PACK_TYPES, PACK_ALL_LEVELS, PACK_TIERS,
+            packTypeLabel, packLevelLabel, parsePackText, packToText, packStatus, PACK_STATUS_LABEL,
+            TEACHER_PACK_MAX_ITEMS
+        } from "./ec-common.js?v=2026-11-03-3";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const $ = (id) => document.getElementById(id);
+        const MAX = TEACHER_PACK_MAX_ITEMS;
+        const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+
+        let uid = null;
+        let packs = [];          // paket milik guru ini
+        let filter = 'all';
+        let editing = null;      // paket yang sedang diubah (null = paket baru)
 
         $('logoutBtn').addEventListener('click', async () => {
             await signOut(auth);
@@ -71,6 +220,7 @@
             document.body.style.visibility = 'visible';
         }
 
+        // ---------- Login & peran ----------
         let started = false;
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'index.html'; return; }
@@ -88,14 +238,297 @@
                     showMessage('Akun guru nonaktif', 'Akun ini sedang dinonaktifkan admin ExtraCourse. Hubungi admin untuk mengaktifkannya lagi.');
                     return;
                 }
+                uid = user.uid;
                 $('greet').textContent = `Halo, ${data.name || 'Guru'}`;
                 document.body.style.visibility = 'visible';
                 updateDoc(ref, { lastLoginAt: serverTimestamp() }).catch((e) => console.warn('Gagal mencatat waktu masuk:', e));
+                startPacks();
             } catch (e) {
                 console.error(e);
                 showMessage('Halaman guru gagal dimuat', 'Periksa koneksi internet, lalu muat ulang halaman.');
             }
         });
+
+        // ---------- Daftar paket milik guru ----------
+        function startPacks() {
+            onSnapshot(query(collection(db, 'questionPacks'), where('ownerId', '==', uid)), (snap) => {
+                const t = (p) => p.updatedAt?.toMillis?.() ?? p.createdAt?.toMillis?.() ?? Date.now();
+                packs = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => t(b) - t(a));
+                renderList();
+            }, (e) => {
+                console.error(e);
+                // Guru dinonaktifkan saat halaman terbuka → aturan menolak
+                if (e.code === 'permission-denied') {
+                    showMessage('Akses paket ditutup', 'Akun guru ini mungkin baru dinonaktifkan admin. Muat ulang halaman atau hubungi admin.');
+                } else {
+                    $('packList').innerHTML = `<div class="empty">Paket gagal dimuat. Periksa koneksi, lalu muat ulang halaman.</div>`;
+                }
+            });
+        }
+
+        const FILTERS = [['all', 'Semua'], ['draft', 'Draf'], ['scheduled', 'Terjadwal'], ['published', 'Terbit'], ['inactive', 'Nonaktif']];
+        function renderFilters() {
+            const counts = { all: packs.length };
+            packs.forEach((p) => { const s = packStatus(p); counts[s] = (counts[s] || 0) + 1; });
+            $('filters').innerHTML = FILTERS.map(([k, label]) =>
+                `<button type="button" role="tab" data-filter="${k}" class="${k === filter ? 'active' : ''}" aria-selected="${k === filter}">${label}<span class="n">${counts[k] || 0}</span></button>`).join('');
+        }
+        $('filters').addEventListener('click', (e) => {
+            const b = e.target.closest('button[data-filter]');
+            if (!b) return;
+            filter = b.dataset.filter;
+            renderList();
+        });
+        $('packSearch').addEventListener('input', renderList);
+
+        function packMeta(p) {
+            const n = Number(p.itemCount ?? (p.items || []).length) || 0;
+            return [packTypeLabel(p.type).split(' (')[0], packLevelLabel(p.level), p.tier ? `Level ${p.tier}` : null, `${n} soal`]
+                .filter(Boolean).join(', ');
+        }
+
+        function renderList() {
+            renderFilters();
+            if (packs.length === 0) {
+                $('packList').innerHTML = `<div class="empty">Belum ada paket. Tekan <b>Buat paket</b> untuk membuat paket pertama.</div>`;
+                return;
+            }
+            const term = $('packSearch').value.trim().toLowerCase();
+            const rows = packs.filter((p) => (filter === 'all' || packStatus(p) === filter)
+                && (!term || String(p.title || '').toLowerCase().includes(term)));
+            if (rows.length === 0) {
+                $('packList').innerHTML = `<div class="empty">Tidak ada paket yang cocok.</div>`;
+                return;
+            }
+            $('packList').innerHTML = rows.map((p) => {
+                const st = packStatus(p);
+                const id = escapeHtml(p.id);
+                const btn = (act, label, cls = 'secondary') => `<button class="btn ${cls}" type="button" data-act="${act}" data-id="${id}">${label}</button>`;
+                const actions = [btn('edit', 'Ubah')];
+                if (st === 'draft') actions.push(btn('publish', 'Terbitkan'));
+                if (st === 'published' || st === 'scheduled') actions.push(btn('deactivate', 'Nonaktifkan'));
+                if (st === 'inactive') actions.push(btn('activate', 'Aktifkan'));
+                // Hanya Draf & Nonaktif yang bisa dihapus (juga ditegakkan di firestore.rules)
+                if (st === 'draft' || st === 'inactive') actions.push(btn('delete', 'Hapus', 'danger'));
+                return `
+                <article class="pk ${st === 'draft' ? 'is-draft' : ''}">
+                    <div class="pk-top">
+                        <div style="min-width:0">
+                            <div class="pk-title">${escapeHtml(p.title || '(tanpa judul)')}</div>
+                            <div class="pk-meta">${escapeHtml(packMeta(p))}</div>
+                            ${st === 'scheduled' ? `<div class="pk-when">Terbit ${escapeHtml(fmtDate(p.publishedAt))}</div>` : ''}
+                        </div>
+                        <span class="st ${st}">${PACK_STATUS_LABEL[st]}</span>
+                    </div>
+                    <div class="actions">${actions.join('')}</div>
+                </article>`;
+            }).join('');
+        }
+
+        // Aksi di daftar paket
+        $('packList').addEventListener('click', async (e) => {
+            const b = e.target.closest('button[data-act]');
+            if (!b) return;
+            const p = packs.find((x) => x.id === b.dataset.id);
+            if (!p) return;
+            const act = b.dataset.act;
+            if (act === 'edit') { openForm(p); return; }
+            const ref = doc(db, 'questionPacks', p.id);
+            const name = p.title || 'paket ini';
+            try {
+                if (act === 'publish') {
+                    if (!confirm(`Terbitkan "${name}" sekarang?\n\nSiswa langsung melihat paket ini dan mendapat notifikasi.`)) return;
+                    b.disabled = true;
+                    await updateDoc(ref, { draft: false, active: true, publishedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                } else if (act === 'deactivate') {
+                    if (!confirm(`Nonaktifkan "${name}"?\n\nPaket hilang dari game siswa. Skor yang sudah tersimpan tetap ada.`)) return;
+                    b.disabled = true;
+                    await updateDoc(ref, { active: false, updatedAt: serverTimestamp() });
+                } else if (act === 'activate') {
+                    // Masih terjadwal → tetap menunggu jadwal; selain itu terbit sekarang (siswa mendapat notifikasi)
+                    b.disabled = true;
+                    await updateDoc(ref, { active: true, updatedAt: serverTimestamp(), publishedAt: isFuture(p.publishedAt) ? p.publishedAt : serverTimestamp() });
+                } else if (act === 'delete') {
+                    if (!confirm(`Hapus "${name}"?\n\nPaket dihapus permanen. Skor siswa yang sudah tersimpan tetap ada.`)) return;
+                    b.disabled = true;
+                    await deleteDoc(ref);
+                }
+            } catch (err) {
+                console.error(err);
+                alert(err?.code === 'permission-denied'
+                    ? 'Perubahan ditolak. Paket Terbit atau Terjadwal harus dinonaktifkan dulu sebelum dihapus, dan akun guru harus aktif.'
+                    : 'Gagal: ' + (err?.message || err));
+                b.disabled = false;
+            }
+        });
+
+        // ---------- Formulir paket ----------
+        const isFuture = (ts) => (ts?.toMillis?.() ?? 0) > Date.now();
+        function nextMondayMorning() {
+            const d = new Date();
+            d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));
+            d.setHours(7, 0, 0, 0);
+            return d;
+        }
+        function toLocalInput(d) {
+            const p = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+
+        $('fType').innerHTML = PACK_TYPES.map((t) => `<option value="${t.value}">${escapeHtml(t.label)}</option>`).join('');
+        $('fLevel').innerHTML = `<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>`
+            + LEVELS.map((l) => `<option value="${l.value}">${escapeHtml(l.label)}</option>`).join('');
+        $('fTier').innerHTML = PACK_TIERS.map((t) => `<option value="${t}">Level ${t}</option>`).join('');
+
+        function updateTypeHelp() {
+            const t = PACK_TYPES.find((x) => x.value === $('fType').value);
+            $('fHint').textContent = `${t.hint} Maks. ${MAX} soal.`;
+            $('fText').placeholder = 'Contoh:\n' + t.example;
+            $('fTypeNote').textContent = t.games ? `Dipakai di: ${t.games}` : ' ';
+            $('dailyNote').hidden = t.value !== 'kosakata';
+            checkText();
+        }
+        function checkText() {
+            const { items, errors } = parsePackText($('fType').value, $('fText').value, MAX);
+            $('fCount').innerHTML = items.length || errors.length
+                ? `<b>${items.length}</b> / ${MAX} soal siap` + (errors.length ? ` · <span class="bad">${errors.length} perlu diperbaiki</span>` : '')
+                : '';
+            $('fErrors').innerHTML = errors.slice(0, 8).map((e) => `<li>${escapeHtml(e)}</li>`).join('')
+                + (errors.length > 8 ? `<li>...dan ${errors.length - 8} lainnya</li>` : '');
+            return { items, errors };
+        }
+        $('fType').addEventListener('change', updateTypeHelp);
+        $('fText').addEventListener('input', checkText);
+
+        // Pilihan terbit. Paket baru/draf: Sekarang / Jadwalkan.
+        // Terbit: Tidak diubah / Sekarang (rilis ulang) / Jadwalkan. Nonaktif: tidak ditampilkan.
+        function setRelease(p) {
+            const st = p ? packStatus(p) : 'draft';
+            const opts = [];
+            if (st === 'published') opts.push(['keep', 'Tidak diubah']);
+            if (st === 'scheduled') opts.push(['keep', `Tetap ${fmtDate(p.publishedAt)}`]);
+            opts.push(['now', 'Sekarang'], ['schedule', 'Jadwalkan']);
+            $('fRelease').innerHTML = opts.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join('');
+            $('fRelease').value = st === 'published' || st === 'scheduled' ? 'keep' : 'now';
+            $('fWhen').value = toLocalInput(st === 'scheduled' ? p.publishedAt.toDate() : nextMondayMorning());
+            $('fRelease').closest('.release').hidden = st === 'inactive';
+            updateRelease();
+        }
+        function updateRelease() {
+            const v = $('fRelease').value;
+            $('fWhenField').hidden = v !== 'schedule';
+            $('fReleaseHint').textContent = v === 'now' ? 'Siswa langsung melihat paket dan mendapat notifikasi'
+                : v === 'schedule' ? 'Tersembunyi dari siswa sampai waktunya' : 'Tanggal terbit tetap, tanpa notifikasi ulang';
+            const st = editing ? packStatus(editing) : 'draft';
+            if (st === 'draft') $('saveBtn').textContent = v === 'schedule' ? 'Jadwalkan' : 'Terbitkan';
+        }
+        $('fRelease').addEventListener('change', updateRelease);
+
+        function setMsg(text, ok) {
+            $('formMsg').textContent = text;
+            $('formMsg').className = 'msg ' + (text ? (ok ? 'ok' : 'err') : '');
+        }
+
+        function openForm(p = null) {
+            editing = p;
+            const st = p ? packStatus(p) : 'draft';
+            $('packForm').reset();
+            $('formTitle').textContent = p ? 'Ubah paket' : 'Paket baru';
+            $('fTitle').value = p?.title || '';
+            $('fType').value = p?.type || 'kosakata';
+            $('fType').disabled = !!p; // jenis tidak bisa diubah setelah dibuat (agar skor lama tetap masuk akal)
+            $('fLevel').value = p?.level || PACK_ALL_LEVELS;
+            $('fTier').value = String(p?.tier || 1);
+            $('fText').value = p ? packToText(p.type, p.items) : '';
+            $('liveNote').hidden = !(st === 'published' || st === 'scheduled');
+            $('draftBtn').hidden = st !== 'draft';
+            $('saveBtn').textContent = st === 'draft' ? 'Terbitkan' : 'Simpan perubahan';
+            setRelease(p);
+            updateTypeHelp();
+            setMsg('', true);
+            $('listView').hidden = true;
+            $('formView').hidden = false;
+            window.scrollTo({ top: 0 });
+            $('fTitle').focus({ preventScroll: true });
+        }
+        function closeForm() {
+            editing = null;
+            $('formView').hidden = true;
+            $('listView').hidden = false;
+        }
+        $('newPackBtn').addEventListener('click', () => openForm(null));
+        $('cancelBtn').addEventListener('click', closeForm);
+
+        // asDraft: simpan sebagai draf (tidak terlihat siswa)
+        async function save(asDraft) {
+            const title = $('fTitle').value.trim();
+            const type = $('fType').value;
+            const level = $('fLevel').value;
+            const tier = Number($('fTier').value) || 1;
+            const { items, errors } = checkText();
+            if (!title) return setMsg('Judul paket wajib diisi.', false);
+            if (errors.length) return setMsg('Masih ada baris yang perlu diperbaiki (lihat daftar merah).', false);
+            if (items.length === 0) return setMsg('Isi minimal satu soal.', false);
+
+            const st = editing ? packStatus(editing) : 'draft';
+            const release = st === 'inactive' ? 'keep' : $('fRelease').value;
+            let publishedAt = null; // null = tidak diubah
+            if (!asDraft && release === 'schedule') {
+                const when = new Date($('fWhen').value);
+                if (!$('fWhen').value || isNaN(when)) return setMsg('Isi tanggal dan jam terbit.', false);
+                if (when <= new Date()) return setMsg('Waktu terbit harus setelah sekarang. Pilih "Sekarang" untuk langsung terbit.', false);
+                publishedAt = Timestamp.fromDate(when);
+            } else if (!asDraft && release === 'now') {
+                publishedAt = serverTimestamp();
+            }
+
+            const data = { title, level, tier, items, itemCount: items.length, updatedAt: serverTimestamp() };
+            if (st === 'draft' && !asDraft) Object.assign(data, { draft: false, active: true });
+            if (publishedAt) data.publishedAt = publishedAt;
+
+            $('saveBtn').disabled = $('draftBtn').disabled = true;
+            setMsg('Menyimpan...', true);
+            try {
+                if (editing) {
+                    await updateDoc(doc(db, 'questionPacks', editing.id), data);
+                } else {
+                    await addDoc(collection(db, 'questionPacks'), {
+                        ...data, type, ownerId: uid, createdAt: serverTimestamp(),
+                        active: !asDraft, draft: asDraft, publishedAt: asDraft ? null : publishedAt,
+                    });
+                }
+                const done = asDraft ? 'Draf disimpan. Belum terlihat siswa.'
+                    : release === 'schedule' ? `Paket dijadwalkan terbit ${fmtDate(publishedAt)}.`
+                    : st === 'draft' || release === 'now' ? 'Paket terbit. Siswa bisa memainkannya sekarang.'
+                    : 'Perubahan disimpan.';
+                closeForm();
+                flash(`"${title}": ${done}`);
+            } catch (err) {
+                console.error(err);
+                setMsg(err?.code === 'permission-denied'
+                    ? 'Penyimpanan ditolak. Pastikan akun guru masih aktif dan paket maks. 30 soal.'
+                    : 'Gagal menyimpan paket: ' + (err?.message || err), false);
+            } finally {
+                $('saveBtn').disabled = $('draftBtn').disabled = false;
+            }
+        }
+        $('packForm').addEventListener('submit', (e) => { e.preventDefault(); save(false); });
+        $('draftBtn').addEventListener('click', () => save(true));
+
+        // Pesan singkat di atas daftar setelah menyimpan
+        function flash(text) {
+            let box = $('flash');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'flash';
+                box.className = 'msg ok';
+                box.setAttribute('role', 'status');
+                $('listView').prepend(box);
+            }
+            box.textContent = text;
+            clearTimeout(box._t);
+            box._t = setTimeout(() => box.remove(), 6000);
+        }
     </script>
 </body>
 </html>

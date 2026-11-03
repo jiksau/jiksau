@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai di halaman game:
 //    1. Tambahkan sebelum </body>:
-//         <script type="module" src="game-scores.js?v=2026-11-03"></script>
+//         <script type="module" src="game-scores.js?v=2026-11-03-3"></script>
 //    2. Saat permainan selesai, panggil:
 //         window.saveGameScore?.({
 //           gameId: "kosakata-2", gameName: "Vocabulary Memorize",
@@ -31,7 +31,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js?v=2026-11-03";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js?v=2026-11-03-3";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -165,7 +165,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         console.error("Gagal menyimpan skor:", e);
         const denied = e?.code === "permission-denied";
         showToast(data.daily && denied ? "Tantangan hari ini sudah pernah disimpan."
-            : packId && denied ? "Skor gagal disimpan: paket ini sudah tidak aktif."
+            : packId && denied ? "Skor gagal disimpan: paket ini baru diubah atau dinonaktifkan. Muat ulang halaman lalu main lagi."
             : "Skor gagal disimpan. Coba lagi nanti.", true);
         return denied ? "denied" : "error";
     }
