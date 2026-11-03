@@ -36,6 +36,8 @@ Guru **bukan admin** dan tidak memakai akun admin. Akun guru dibuat admin di tab
 - Guru hanya **menghapus** paket miliknya yang **Draf atau Nonaktif**. Paket Terbit/Terjadwal harus dinonaktifkan dulu. Admin bisa menghapus semua.
 - **Draf tidak pernah aktif**: aturan menolak `active: true` bersamaan dengan `draft: true` (juga untuk admin), sehingga draf tidak bisa muncul di game, lonceng, Tantangan Harian, atau papan peringkat, dan skor dari draf ditolak.
 - Guru yang dinonaktifkan langsung tidak bisa membaca draf/nonaktif miliknya maupun menulis/menghapus paket. Paketnya yang sudah terbit tetap bisa dimainkan siswa sampai admin menonaktifkannya.
+- **Mode coba (Tahap 3):** di halaman game, akun guru melihat paket miliknya (semua status & jenjang) + paket terbit semua jenjang, dengan bilah "Mode coba: skor tidak disimpan". Hanya membaca; skor guru tidak dikirim dan juga ditolak aturan, jadi poin, lonceng, koin, tier, dan peringkat tidak berubah. Draf tetap hanya bisa dibaca pemiliknya. Lonceng, Beranda, dan Tantangan Harian guru tetap memakai daftar biasa.
+- **Hasil per paket (Tahap 3):** guru membaca `gameScores` dengan `packId` paketnya, hanya saat Hasil dibuka. Nama & jenjang diambil dari skor (tanpa membaca `users`, jadi email siswa tidak terbuka); semua isi skor ditampilkan sebagai teks biasa. Catatan: seperti siswa (untuk papan peringkat), guru aktif secara teknis bisa membaca skor lain; isinya nama, jenjang, dan nilai, tanpa email.
 - Semua judul & isi paket ditampilkan sebagai teks biasa (`escapeHtml` / `textContent`) di halaman siswa, admin, guru, lonceng, dan poster peringkat.
 
 ## Memasang aturan
@@ -123,7 +125,7 @@ Jika tab Pengumuman menampilkan "Gagal memuat pengumuman", aturan terbaru belum 
 - [ ] Siswa lama & baru tetap bisa main dan skornya masuk papan peringkat; Toko & hewan tetap berjalan
 - [ ] Admin: tab Siswa, Kode Kelas, Paket Soal, Pengumuman, Skor Game tetap berjalan
 
-Catatan: akun guru tidak punya jenjang, jadi di game ia hanya melihat paket "Semua jenjang". Ini akan diselesaikan di Tahap 3 (mode coba).
+Catatan: akun guru tidak punya jenjang. Sejak Tahap 3, di halaman game guru melihat paket miliknya di jenjang mana pun + paket terbit semua jenjang (mode coba).
 
 ## Uji paket guru – Tahap 2 (setelah memasang aturan terbaru)
 
@@ -145,6 +147,23 @@ Siapkan 2 akun guru (A dan B) dan 1 akun siswa SMP.
 - [ ] Admin menonaktifkan akun Guru A → halaman guru: "Akun guru nonaktif"; paket Guru A yang terbit tetap bisa dimainkan siswa
 - [ ] Judul paket `<b>tes</b>` → tampil apa adanya sebagai teks (guru, admin, game, lonceng)
 - [ ] Paket lama, skor, poin, Tantangan Harian, dan Toko siswa tetap berjalan
+
+## Uji hasil & mode coba – Tahap 3 (tidak ada perubahan aturan)
+
+Siapkan Guru A dengan paket kosakata SMP (terbit), paket draf jenjang SD, dan paket Kalimat; dua siswa SMP **bernama sama**.
+
+- [ ] Guru A → kartu kosakata → **Coba** → muncul 5 pilihan game → buka Kuis Kosakata: paket langsung terpilih, bilah "Mode coba: skor tidak disimpan" tampil
+- [ ] Main sampai selesai → pesan "Mode coba: skor tidak disimpan."; tidak ada skor baru di admin (tab Skor Game); peringkat, lonceng, koin, dan tier siswa tidak berubah
+- [ ] Kartu Kalimat → **Coba** → langsung membuka Susun Kalimat
+- [ ] Coba paket **draf SD** → bisa dimainkan guru (tag Draf); login sebagai siswa SD → draf tetap tidak muncul di game, lonceng, Beranda, Tantangan Harian
+- [ ] Di halaman game, akun guru melihat paketnya di jenjang mana pun + paket terbit semua jenjang; filter Paket saya / per jenjang berfungsi
+- [ ] Akun guru → Beranda/lonceng/Tantangan Harian tetap seperti biasa (tidak menampilkan draf)
+- [ ] Dua siswa bernama sama memainkan paket SMP → **Hasil**: muncul sebagai dua baris terpisah; jumlah Siswa, Permainan, nilai terbaik + nama game, jumlah main, terakhir main benar
+- [ ] Siswa menyelesaikan Hafalan Tanpa Salah → tampil "Tuntas, x salah", tidak masuk rata-rata; jika hanya ada Hafalan → rata-rata "–"
+- [ ] **Minggu ini** hanya menghitung skor minggu ini (Senin–Minggu); **Semua waktu** menghitung semuanya; berpindah pilihan tidak memuat ulang
+- [ ] Nama siswa yang sangat panjang tidak merusak tampilan di HP (maks. 2 baris)
+- [ ] Draf tidak punya tombol Hasil
+- [ ] Siswa & admin: game, skor, peringkat, Tantangan Harian, Toko, tab Paket Soal tetap berjalan
 
 ## Papan peringkat
 

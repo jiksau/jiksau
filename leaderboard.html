@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-3">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
     <style>
         body { visibility: hidden; } /* Tampil setelah login terverifikasi */
 
@@ -272,10 +272,10 @@
             firebaseConfig, ADMIN_EMAIL, LEVELS, levelLabel, escapeHtml,
             weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, shortName, weeklyPoints,
             rankPlayers, levelRanking, seasonKeyFor, seasonWeeks, seasonLabel, seasonRangeLabel, seasonRanking
-        } from "./ec-common.js?v=2026-11-03-3";
-        import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks, computeWeek } from "./weekly-results.js?v=2026-11-03-3";
-        import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-3";
-        import { petSvg, stageForTier, publicPet } from "./pets.js?v=2026-11-03-3";
+        } from "./ec-common.js?v=2026-11-03-5";
+        import { loadHistory, archiveFinishedWeeks, loadSeasonWeeks, computeWeek } from "./weekly-results.js?v=2026-11-03-5";
+        import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-5";
+        import { petSvg, stageForTier, publicPet } from "./pets.js?v=2026-11-03-5";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -652,6 +652,6 @@
         });
 
     </script>
-    <script type="module" src="notifications.js?v=2026-11-03-3"></script>
+    <script type="module" src="notifications.js?v=2026-11-03-5"></script>
 </body>
 </html>

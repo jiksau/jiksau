@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai di halaman game:
 //    1. Tambahkan sebelum </body>:
-//         <script type="module" src="game-scores.js?v=2026-11-03-3"></script>
+//         <script type="module" src="game-scores.js?v=2026-11-03-5"></script>
 //    2. Saat permainan selesai, panggil:
 //         window.saveGameScore?.({
 //           gameId: "kosakata-2", gameName: "Vocabulary Memorize",
@@ -18,6 +18,10 @@
 //         const hasil = await window.loadQuestionPacks("kosakata");
 //         // hasil.status: "ok" | "login" | "inactive" | "error"
 //         // hasil.packs: [{ id, title, type, level, items, itemCount }]
+//       Halaman game (word-source.js) memanggil dengan { forGame: true }:
+//       untuk akun guru hasilnya paket miliknya (semua status & jenjang,
+//       own: true) + paket terbit semua jenjang (mode coba, hasil.teacher).
+//       Lonceng, Beranda, dan Tantangan Harian memanggil tanpa opsi ini.
 //
 //    4. Paket yang pernah dimainkan siswa (game apa pun):
 //         const played = await window.loadPlayedPackIds(); // Set berisi packId
@@ -31,7 +35,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, scorePoints } from "./ec-common.js?v=2026-11-03-3";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, PACK_GAMES, scorePoints } from "./ec-common.js?v=2026-11-03-5";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -67,6 +71,23 @@ const authReady = new Promise((resolve) => {
         }
         resolve();
     });
+});
+
+// ---------- Mode coba (akun guru) ----------
+// Halaman game: semua game berpaket (PACK_GAMES) + Tantangan Harian.
+const GAME_PAGES = new Set([
+    ...Object.values(PACK_GAMES).flat().map((g) => decodeURIComponent(g.href)),
+    "harian.html",
+]);
+const pageFile = decodeURIComponent(location.pathname.split("/").pop() || "");
+authReady.then(() => {
+    if (!isTeacher || !GAME_PAGES.has(pageFile)) return;
+    const bar = document.createElement("div");
+    bar.className = "trial-bar";
+    bar.setAttribute("role", "status");
+    bar.textContent = "Mode coba: skor tidak disimpan";
+    const header = document.querySelector("header.topbar");
+    if (header) header.after(bar); else document.body.prepend(bar);
 });
 
 // ---------- Notifikasi kecil di pojok layar ----------
@@ -122,7 +143,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     }
 
     if (isTeacher) {
-        showToast('Akun guru: skor tidak disimpan.', true);
+        showToast('Mode coba: skor tidak disimpan.', true);
         return;
     }
 
@@ -222,10 +243,43 @@ window.loadDailyStatus = async function () {
 // Dua query terpisah agar sesuai aturan keamanan Firestore.
 // Dimuat sekali per halaman (lonceng & Beranda memakai hasil yang sama).
 let packsCache = null;
-window.loadQuestionPacks = async function (type) {
+let teacherPacksCache = null;
+
+// Mode coba (hanya akun guru, hanya halaman game): paket milik guru di
+// jenjang & status apa pun (own: true) + paket terbit semua jenjang.
+// Hanya membaca; tidak ada yang ditulis, jadi draf tetap tersembunyi dari siswa.
+async function loadTeacherGamePacks(type) {
+    teacherPacksCache ||= (async () => {
+        const [mine, active] = await Promise.all([
+            getDocs(query(collection(db, "questionPacks"), where("ownerId", "==", currentUser.uid))),
+            getDocs(query(collection(db, "questionPacks"), where("active", "==", true))),
+        ]);
+        const now = Date.now();
+        const byId = new Map();
+        active.docs.forEach((d) => {
+            const p = { id: d.id, ...d.data() };
+            if (!((p.publishedAt?.toMillis?.() ?? 0) > now)) byId.set(p.id, p); // terjadwal orang lain: belum tampil
+        });
+        mine.docs.forEach((d) => byId.set(d.id, { id: d.id, ...d.data(), own: true }));
+        return [...byId.values()].sort((a, b) => String(a.title).localeCompare(String(b.title), "id", { numeric: true }));
+    })();
+    try {
+        const packs = (await teacherPacksCache).filter((p) => !type || p.type === type);
+        return { status: "ok", packs, level: null, teacher: true };
+    } catch (e) {
+        teacherPacksCache = null;
+        console.error("Gagal memuat paket soal (mode coba):", e);
+        return { status: "error", packs: [], message: e?.message || String(e) };
+    }
+}
+
+// opts.forGame: dipanggil dari halaman game (word-source.js). Hanya di sana
+// akun guru mendapat daftar mode coba; tempat lain memakai daftar biasa.
+window.loadQuestionPacks = async function (type, opts = {}) {
     await authReady;
     if (!currentUser) return { status: "login", packs: [] };
     if (!hasProfile) return { status: "inactive", packs: [] };
+    if (opts.forGame && isTeacher) return loadTeacherGamePacks(type);
     packsCache ||= (async () => {
         const levels = currentLevel ? [currentLevel, PACK_ALL_LEVELS] : [PACK_ALL_LEVELS];
         const snaps = await Promise.all(levels.map((lvl) => getDocs(query(

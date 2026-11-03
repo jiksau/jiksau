@@ -17,8 +17,8 @@
 //    source.scoreInfo() -> { packId, packName, packTier } (kosong untuk latihan)
 // =====================================================================
 
-import "./game-scores.js?v=2026-11-03-3"; // window.loadQuestionPacks & window.saveGameScore
-import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03-3";
+import "./game-scores.js?v=2026-11-03-5"; // window.loadQuestionPacks & window.saveGameScore
+import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS, packStatus, PACK_STATUS_LABEL, packLevelLabel, LEVELS } from "./ec-common.js?v=2026-11-03-5";
 
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
@@ -52,10 +52,14 @@ export function formatClock(seconds) {
 }
 
 function tagsHtml(pack) {
-    return packTags(pack).map((t, i) => {
+    const tags = packTags(pack).map((t, i) => {
         const cls = i === 0 ? (pack.level === PACK_ALL_LEVELS ? " all" : "") : " lvl";
         return `<span class="tag${cls}">${escapeHtml(t)}</span>`;
-    }).join("");
+    });
+    // Mode coba guru: status paket miliknya yang belum/tidak terbit
+    const st = pack.own ? packStatus(pack) : "published";
+    if (st !== "published") tags.push(`<span class="tag st">${PACK_STATUS_LABEL[st]}</span>`);
+    return tags.join("");
 }
 
 // Tabel daftar kata (pratinjau & hasil). fields = PACK_FIELDS[...]
@@ -113,7 +117,8 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         pack: null,
         savedPackId: saved.packId || null,
         search: "",
-        scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"
+        scope: "all",   // "all" | "mine" (jenjangku) | "SEMUA"; guru: "own" (paket saya) | kode jenjang
+        teacher: false, // akun guru (mode coba): skor tidak disimpan, tanpa poin & titik merah
         tier: "all",
         played: null,   // Set packId yang pernah dimainkan (game apa pun)
         weekPoints: null, // Map packId -> poin terbaik minggu ini
@@ -151,8 +156,8 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
 
     function render() {
         root.querySelectorAll("[data-src]").forEach((b) => b.classList.toggle("active", b.dataset.src === state.mode));
-        $("[data-note]").textContent = state.mode === "pack"
-            ? "Poin dihitung dari hasil terbaik per paket setiap minggu."
+        $("[data-note]").textContent = state.teacher ? "Mode coba: skor tidak disimpan."
+            : state.mode === "pack" ? "Poin dihitung dari hasil terbaik per paket setiap minggu."
             : "Latihan bebas, tidak menambah poin.";
         $("[data-pack-area]").hidden = state.mode !== "pack";
         $("[data-own-area]").hidden = state.mode !== "own";
@@ -168,10 +173,20 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         const tiers = [...new Set(packs.map((p) => p.tier).filter(Boolean))].sort((a, b) => a - b);
 
         const scopeOpts = [`<option value="all">Semua paket</option>`];
-        if (myLevels.length) scopeOpts.push(`<option value="mine">${escapeHtml(packTags({ level: myLevels[0] })[0])}</option>`);
-        if (hasAll) scopeOpts.push(`<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>`);
+        if (state.teacher) {
+            // Guru tanpa jenjang: Paket saya + setiap jenjang yang ada
+            if (packs.some((p) => p.own)) scopeOpts.push(`<option value="own">Paket saya</option>`);
+            LEVELS.filter((l) => myLevels.includes(l.value))
+                .forEach((l) => scopeOpts.push(`<option value="${l.value}">${escapeHtml(packLevelLabel(l.value))}</option>`));
+            if (hasAll) scopeOpts.push(`<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>`);
+        } else {
+            if (myLevels.length) scopeOpts.push(`<option value="mine">${escapeHtml(packTags({ level: myLevels[0] })[0])}</option>`);
+            if (hasAll) scopeOpts.push(`<option value="${PACK_ALL_LEVELS}">Semua jenjang</option>`);
+        }
         $("[data-scope]").innerHTML = scopeOpts.join("");
         $("[data-scope]").hidden = scopeOpts.length <= 2;
+        $("[data-scope]").value = state.scope;
+        if ($("[data-scope]").value !== state.scope) state.scope = "all";
 
         $("[data-tier]").innerHTML = `<option value="all">Semua level</option>`
             + tiers.map((t) => `<option value="${t}">Level ${t}</option>`).join("");
@@ -187,14 +202,16 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
     function filteredPacks() {
         const term = state.search.trim().toLowerCase();
         return state.packs.filter((p) =>
-            (state.scope === "all" || (state.scope === "mine" ? p.level !== PACK_ALL_LEVELS : p.level === state.scope))
+            (state.scope === "all"
+                || (state.scope === "own" ? p.own === true
+                    : state.scope === "mine" ? p.level !== PACK_ALL_LEVELS : p.level === state.scope))
             && (state.tier === "all" || String(p.tier) === state.tier)
             && (!term || String(p.title).toLowerCase().includes(term)));
     }
 
     // Poin paket minggu ini: label di daftar & pratinjau
     function packPoints(p) {
-        if (!state.weekPoints) return null;
+        if (!state.weekPoints || state.teacher) return null; // guru: tanpa poin
         const max = packMaxPoints(p);
         const got = state.weekPoints.get(p.id) || 0;
         return { got, max, full: max > 0 && got >= max };
@@ -220,7 +237,8 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
             login: 'Masuk dulu untuk memakai paket guru. <a href="index.html">Masuk</a>',
             inactive: "Akun ini tidak aktif. Hubungi guru.",
             error: "Paket gagal dimuat. Periksa internet, lalu muat ulang halaman.",
-            empty: `Belum ada paket untuk jenjangmu. Coba tab ${type === "kalimat" ? "Kalimat" : "Kata"} Sendiri.`,
+            empty: state.teacher ? "Belum ada paket jenis ini."
+                : `Belum ada paket untuk jenjangmu. Coba tab ${type === "kalimat" ? "Kalimat" : "Kata"} Sendiri.`,
         };
         const status = state.packStatus === "ok" && !state.packs.length ? "empty" : state.packStatus;
         $("[data-pack-count]").textContent = "";
@@ -234,7 +252,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         } else {
             box.innerHTML = list.map((p) => `
                 <button type="button" class="pack-item${state.pack?.id === p.id ? " selected" : ""}" data-pack="${escapeHtml(p.id)}">
-                    <span class="info"><span class="t">${state.played && !state.played.has(p.id) ? '<span class="new-dot" title="Belum pernah dimainkan"></span>' : ""}${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}${pointsTag(p)}</span></span>
+                    <span class="info"><span class="t">${state.played && !state.teacher && !state.played.has(p.id) ? '<span class="new-dot" title="Belum pernah dimainkan"></span>' : ""}${escapeHtml(p.title)}</span><span class="tags">${tagsHtml(p)}${pointsTag(p)}</span></span>
                     <span class="n">${p.itemCount} ${unit}</span>
                 </button>`).join("");
         }
@@ -368,8 +386,10 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         if (state.mode === "pack") { renderPacks(); renderPreview(); }
     });
 
-    window.loadQuestionPacks(type).then((res) => {
+    // forGame: akun guru mendapat daftar mode coba (lihat game-scores.js)
+    window.loadQuestionPacks(type, { forGame: true }).then((res) => {
         state.packStatus = res.status;
+        state.teacher = res.teacher === true;
         // Urutan: level paling mudah dulu, lalu judul
         state.packs = (res.packs || []).sort((a, b) => (a.tier || 0) - (b.tier || 0)
             || String(a.title).localeCompare(String(b.title), "id", { numeric: true }));

@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai: taruh wadah kosong di header, lalu
 //      <span id="notif"></span>
-//      <script type="module" src="notifications.js?v=2026-11-03-3"></script>
+//      <script type="module" src="notifications.js?v=2026-11-03-5"></script>
 //  (taruh setelah script halaman yang memanggil initializeApp, jika ada)
 //  Tampilan mengikuti token warna di game-ui.css.
 //
@@ -14,11 +14,11 @@
 //  Membuka lonceng tidak menghapus angka; memainkan paketnya yang menghapus.
 // =====================================================================
 
-import "./game-scores.js?v=2026-11-03-3"; // window.loadQuestionPacks & loadPlayedPackIds
+import "./game-scores.js?v=2026-11-03-5"; // window.loadQuestionPacks & loadPlayedPackIds
 import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { escapeHtml, packTags, PACK_GAMES, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03-3";
+import { escapeHtml, packTags, PACK_GAMES, PACK_ALL_LEVELS } from "./ec-common.js?v=2026-11-03-5";
 
 const DAYS = 30;
 const MAX_ITEMS = 20;

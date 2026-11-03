@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Toko - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-3">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-5">
     <style>
         body { visibility: hidden; }
         .coin-ico { vertical-align: -4px; flex: none; }
@@ -92,10 +92,10 @@
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor } from "./ec-common.js?v=2026-11-03-3";
-        import { loadHistory, computeWeek } from "./weekly-results.js?v=2026-11-03-3";
-        import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-03-3";
-        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES, publicPet } from "./pets.js?v=2026-11-03-3";
+        import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor } from "./ec-common.js?v=2026-11-03-5";
+        import { loadHistory, computeWeek } from "./weekly-results.js?v=2026-11-03-5";
+        import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-03-5";
+        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES, publicPet } from "./pets.js?v=2026-11-03-5";
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -279,6 +279,6 @@
         $('content').addEventListener('click', onClick);
         $('bar').addEventListener('click', onClick);
     </script>
-    <script type="module" src="notifications.js?v=2026-11-03-3"></script>
+    <script type="module" src="notifications.js?v=2026-11-03-5"></script>
 </body>
 </html>
