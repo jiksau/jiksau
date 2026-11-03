@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai di halaman game:
 //    1. Tambahkan sebelum </body>:
-//         <script type="module" src="game-scores.js?v=2026-11-03-7"></script>
+//         <script type="module" src="game-scores.js?v=2026-11-03-9"></script>
 //    2. Saat permainan selesai, panggil:
 //         window.saveGameScore?.({
 //           gameId: "kosakata-2", gameName: "Vocabulary Memorize",
@@ -35,7 +35,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, PACK_GAMES, scorePoints, packMaxPoints } from "./ec-common.js?v=2026-11-03-7";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, PACK_GAMES, scorePoints, packMaxPoints } from "./ec-common.js?v=2026-11-03-9";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);

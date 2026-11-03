@@ -149,13 +149,11 @@
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th {
             text-align: left;
-            font-size: 11.5px;
-            text-transform: uppercase;
-            letter-spacing: .04em;
+            font-size: 12.5px;
             color: var(--muted);
             background: var(--soft);
             padding: 10px 12px;
-            font-weight: 700;
+            font-weight: 600;
         }
         th:first-child { border-radius: 10px 0 0 10px; }
         th:last-child { border-radius: 0 10px 10px 0; }
@@ -208,7 +206,7 @@
         .check-line input { width: 18px; height: 18px; accent-color: var(--accent); }
         .check-line[hidden], .news-preview[hidden] { display: none; }
         .news-preview { margin-top: 12px; padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--soft); font-size: 14.5px; line-height: 1.6; }
-        .news-preview .lbl { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+        .news-preview .lbl { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
         .news-preview h3 { margin: 0 0 6px; font-size: 17px; }
         .news-preview p { margin: 0 0 8px; }
         .news-preview ul { margin: 0 0 8px; padding-left: 20px; }
@@ -241,8 +239,7 @@
             table.responsive td { border: none; padding: 6px 10px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
             table.responsive td::before {
                 content: attr(data-label);
-                font-size: 11.5px;
-                text-transform: uppercase;
+                font-size: 12.5px;
                 color: var(--muted);
                 font-weight: 600;
                 flex-shrink: 0;
@@ -322,7 +319,7 @@
                             <th>Nama</th>
                             <th>Login</th>
                             <th>Jenjang</th>
-                            <th>Daftar Lewat</th>
+                            <th>Daftar lewat</th>
                             <th class="col-actions">Aksi</th>
                         </tr>
                     </thead>
@@ -555,8 +552,8 @@
                         <tr>
                             <th>Nama</th>
                             <th>Jenjang</th>
-                            <th>Total Latihan</th>
-                            <th>7 Hari</th>
+                            <th>Total latihan</th>
+                            <th>7 hari</th>
                             <th>Rata-rata</th>
                             <th>Terakhir</th>
                         </tr>
@@ -601,8 +598,8 @@
             loginIdToEmail, usernameFromEmail, isUsernameEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
             parsePackText, packToText, PACK_TIERS, announcementHtml, packStatus, PACK_STATUS_LABEL
-        } from "./ec-common.js?v=2026-11-03-7";
-        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03-7";
+        } from "./ec-common.js?v=2026-11-03-9";
+        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03-9";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Susun Kalimat - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-9">
 </head>
 <body>
     <header class="topbar">
@@ -70,8 +70,8 @@
     </main>
 
     <script type="module">
-        import { mountWordSource, mountPlaySettings, shuffled, formatClock, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js?v=2026-11-03-7";
-        import { escapeHtml } from "./ec-common.js?v=2026-11-03-7";
+        import { mountWordSource, mountPlaySettings, shuffled, formatClock, wordTableHtml, PACK_FIELDS, normalizeAnswer } from "./word-source.js?v=2026-11-03-9";
+        import { escapeHtml } from "./ec-common.js?v=2026-11-03-9";
 
         const $ = (id) => document.getElementById(id);
 
@@ -192,7 +192,7 @@
             if (placed.length && parts.end) placed.push(`<span class="last">${placed.pop()}<span class="end">${escapeHtml(parts.end)}</span></span>`);
             box.innerHTML = placed.length ? placed.join("") : '<span class="placeholder">Ketuk kata di bawah sesuai urutan.</span>';
             $("pool").innerHTML = tiles.map((t, i) =>
-                `<button type="button" class="tile${t.used ? " used" : ""}" data-tile="${i}"${t.used || checked ? " disabled" : ""}>${escapeHtml(t.text)}</button>`).join("");
+                `<button type="button" class="tile${t.used ? " used" : ""}" data-tile="${i}"${t.used || checked ? " disabled" : ""}${t.used ? ' tabindex="-1" aria-hidden="true"' : ""}>${escapeHtml(t.text)}</button>`).join("");
             $("clearBtn").disabled = checked || picked.length === 0;
             $("actionBtn").disabled = !checked && picked.length < tiles.length;
         }

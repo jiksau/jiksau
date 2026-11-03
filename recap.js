@@ -2,7 +2,7 @@
 //  recap.js - Rekap minggu lalu di Beranda (sekali tiap minggu)
 // ---------------------------------------------------------------------
 //  Cara pakai (user-dashboard.html, setelah announcements.js):
-//      <script type="module" src="recap.js?v=2026-11-03-7"></script>
+//      <script type="module" src="recap.js?v=2026-11-03-9"></script>
 //
 //  Saat siswa pertama kali membuka Beranda di minggu baru, muncul jendela:
 //  juara minggu lalu (Semua Jenjang + juara jenjang siswa), peringkat &
@@ -20,10 +20,10 @@ import {
     firebaseConfig, ADMIN_EMAIL, escapeHtml, levelLabel, shortName, levelRanking,
     weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
     seasonKeyFor, seasonLabel, seasonRanking, weekBonus
-} from "./ec-common.js?v=2026-11-03-7";
-import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-03-7";
-import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-7";
-import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-03-7";
+} from "./ec-common.js?v=2026-11-03-9";
+import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-03-9";
+import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-03-9";
+import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-03-9";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -60,7 +60,7 @@ const CSS = `
 .ec-recap .note { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--soft, #eef2f0); font-size: 14px; }
 .ec-recap .tier-up { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft, #e1f0e8); font-size: 14.5px; }
 .ec-recap .tier-up b { color: var(--accent, #1f6f4a); }
-.ec-recap .sec { margin: 18px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #66706b); }
+.ec-recap .sec { margin: 18px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--muted, #66706b); }
 .ec-recap .row { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line, #e2e7e4); }
 .ec-recap .row:first-of-type { border-top: 0; }
 .ec-recap .row .m { font-size: 18px; line-height: 1; }

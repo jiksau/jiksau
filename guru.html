@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Guru - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-7">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-03-9">
     <style>
         body { visibility: hidden; } /* Ditampilkan setelah akun guru terverifikasi */
         main.app { max-width: 760px; }
@@ -40,8 +40,21 @@
         .pk-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
         .pk-title { font-weight: 700; font-size: 15.5px; line-height: 1.3; min-width: 0; }
         .pk-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
-        .pk .actions { gap: 6px; }
-        .pk .actions > .btn { flex: 0 1 auto; min-height: 38px; padding: 6px 14px; font-size: 14px; }
+        /* Tombol kartu: kiri = utama (Ubah/Coba/Hasil), kanan = status (lebih ringan) */
+        .pk-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+        .pk-actions .main, .pk-actions .state { display: flex; gap: 6px; flex-wrap: wrap; }
+        .pk-actions .btn { min-height: 38px; padding: 6px 14px; font-size: 14px; }
+        .pk-actions .btn.quiet { background: transparent; border-color: transparent; color: var(--muted); padding: 6px 10px; }
+        .pk-actions .btn.quiet:hover { background: var(--soft); color: var(--text); }
+        .pk-actions .btn.quiet.del { color: var(--bad); }
+        .pk-actions .btn.quiet.del:hover { background: var(--bad-soft); }
+        .pk-actions .btn.go { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        .pk-actions .btn.go:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+        /* Baris filter: pudar di tepi yang masih punya pilihan tersembunyi */
+        .filters.more-right { -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
+        .filters.more-left { -webkit-mask-image: linear-gradient(to left, #000 85%, transparent); mask-image: linear-gradient(to left, #000 85%, transparent); }
+        .filters.more-left.more-right { -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
 
         .st {
             flex: none; display: inline-flex; align-items: center; height: 26px; padding: 0 10px;
@@ -109,6 +122,10 @@
             .grid3, .release { grid-template-columns: 1fr; }
             .form-buttons .btn { flex: 1 1 100%; }
             .res-row { padding: 12px 14px; }
+            /* HP: tombol utama sama lebar di baris pertama, status rata kanan di bawahnya */
+            .pk-actions .main { flex: 1 1 100%; }
+            .pk-actions .main .btn { flex: 1 1 0; padding: 6px 8px; }
+            .pk-actions .state { margin-left: auto; }
         }
     </style>
 </head>
@@ -236,7 +253,7 @@
             firebaseConfig, ADMIN_EMAIL, escapeHtml, LEVELS, PACK_TYPES, PACK_ALL_LEVELS, PACK_TIERS,
             packTypeLabel, packLevelLabel, parsePackText, packToText, packStatus, PACK_STATUS_LABEL,
             TEACHER_PACK_MAX_ITEMS, PACK_GAMES, weekKeyFor, levelLabel
-        } from "./ec-common.js?v=2026-11-03-7";
+        } from "./ec-common.js?v=2026-11-03-9";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -317,7 +334,17 @@
             packs.forEach((p) => { const s = packStatus(p); counts[s] = (counts[s] || 0) + 1; });
             $('filters').innerHTML = FILTERS.map(([k, label]) =>
                 `<button type="button" role="tab" data-filter="${k}" class="${k === filter ? 'active' : ''}" aria-selected="${k === filter}">${label}<span class="n">${counts[k] || 0}</span></button>`).join('');
+            updateFilterFade();
         }
+        // Tanda bisa digeser: hanya jika baris filter tidak muat
+        function updateFilterFade() {
+            const f = $('filters');
+            const more = f.scrollWidth - f.clientWidth;
+            f.classList.toggle('more-left', more > 2 && f.scrollLeft > 2);
+            f.classList.toggle('more-right', more > 2 && f.scrollLeft < more - 2);
+        }
+        $('filters').addEventListener('scroll', updateFilterFade, { passive: true });
+        window.addEventListener('resize', updateFilterFade);
         $('filters').addEventListener('click', (e) => {
             const b = e.target.closest('button[data-filter]');
             if (!b) return;
@@ -349,14 +376,16 @@
                 const st = packStatus(p);
                 const id = escapeHtml(p.id);
                 const btn = (act, label, cls = 'secondary') => `<button class="btn ${cls}" type="button" data-act="${act}" data-id="${id}">${label}</button>`;
-                const actions = [btn('edit', 'Ubah'), btn('try', 'Coba')];
+                // Kelompok utama (sering dipakai) dan kelompok status (lebih jarang)
+                const main = [btn('edit', 'Ubah'), btn('try', 'Coba')];
                 // Draf belum pernah bisa dimainkan siswa, jadi belum punya hasil
-                if (st !== 'draft') actions.push(btn('results', 'Hasil'));
-                if (st === 'draft') actions.push(btn('publish', 'Terbitkan'));
-                if (st === 'published' || st === 'scheduled') actions.push(btn('deactivate', 'Nonaktifkan'));
-                if (st === 'inactive') actions.push(btn('activate', 'Aktifkan'));
+                if (st !== 'draft') main.push(btn('results', 'Hasil'));
+                const state = [];
+                if (st === 'draft') state.push(btn('publish', 'Terbitkan', 'go')); // langkah berikutnya untuk draf
+                if (st === 'published' || st === 'scheduled') state.push(btn('deactivate', 'Nonaktifkan', 'quiet'));
+                if (st === 'inactive') state.push(btn('activate', 'Aktifkan', 'quiet'));
                 // Hanya Draf & Nonaktif yang bisa dihapus (juga ditegakkan di firestore.rules)
-                if (st === 'draft' || st === 'inactive') actions.push(btn('delete', 'Hapus', 'danger'));
+                if (st === 'draft' || st === 'inactive') state.push(btn('delete', 'Hapus', 'quiet del'));
                 return `
                 <article class="pk ${st === 'draft' ? 'is-draft' : ''}">
                     <div class="pk-top">
@@ -367,7 +396,10 @@
                         </div>
                         <span class="st ${st}">${PACK_STATUS_LABEL[st]}</span>
                     </div>
-                    <div class="actions">${actions.join('')}</div>
+                    <div class="pk-actions">
+                        <div class="main">${main.join('')}</div>
+                        <div class="state">${state.join('')}</div>
+                    </div>
                     ${tryOpen === p.id ? tryGamesHtml(p) : ''}
                 </article>`;
             }).join('');
@@ -443,6 +475,7 @@
             $('formView').hidden = name !== 'form';
             $('resultView').hidden = name !== 'result';
             window.scrollTo({ top: 0 });
+            if (name === 'list') updateFilterFade();
         }
 
         function openResults(p) {

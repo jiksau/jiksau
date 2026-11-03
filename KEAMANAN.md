@@ -176,6 +176,12 @@ Siapkan Guru A dengan paket kosakata SMP (terbit), paket draf jenjang SD, dan pa
 - [ ] Halaman masuk: label di atas setiap isian, tiga hewan tampil, tautan "Admin" kecil di bawah tetap membuka login admin; HP, PC, mode gelap
 - [ ] Beranda belum ada paket penuh → "Belum ada paket dengan poin penuh (0 dari n)"
 
+## Uji tampilan Paket B (tanpa perubahan aturan)
+
+- [ ] Beranda, Peringkat, rekap Senin, Tantangan Harian, admin: label kecil huruf biasa (tidak kapital); nama siswa & poster tetap kapital
+- [ ] Guru di HP: Ubah/Coba/Hasil sama lebar di baris pertama, tombol status di kanan bawah; draf: Terbitkan hijau; filter memudar di tepi saat bisa digeser
+- [ ] Susun Kalimat: kata yang dipakai menjadi kotak kosong bergaris putus-putus, tidak bisa diketuk; sisa kesempatan tetap 3 per kalimat; ketuk kata di susunan → kata kembali ke tempatnya
+
 ## Papan peringkat
 
 - Poin = jumlah jawaban benar dari **paket soal guru** dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB). Satu paket yang dimainkan berkali-kali hanya dihitung hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.
