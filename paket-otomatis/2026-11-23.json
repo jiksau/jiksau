@@ -1,0 +1,78 @@
+{
+  "week": "2026-11-23",
+  "theme": "Weather & Seasons",
+  "packs": [
+    {
+      "title": "Weather & Seasons · SD",
+      "type": "kosakata",
+      "level": "SD",
+      "tier": 1,
+      "items": [
+        { "q": "rain", "a": "hujan" },
+        { "q": "sun", "a": "matahari" },
+        { "q": "cloud", "a": "awan" },
+        { "q": "wind", "a": "angin" },
+        { "q": "hot", "a": "panas" },
+        { "q": "cold", "a": "dingin" },
+        { "q": "wet", "a": "basah" },
+        { "q": "dry", "a": "kering" },
+        { "q": "umbrella", "a": "payung" },
+        { "q": "sky", "a": "langit" }
+      ]
+    },
+    {
+      "title": "Weather & Seasons · SMP",
+      "type": "kosakata",
+      "level": "SMP",
+      "tier": 1,
+      "items": [
+        { "q": "rainy season", "a": "musim hujan" },
+        { "q": "dry season", "a": "musim kemarau" },
+        { "q": "thunder", "a": "guntur / petir" },
+        { "q": "lightning", "a": "kilat / petir" },
+        { "q": "flood", "a": "banjir" },
+        { "q": "cloudy", "a": "berawan / mendung" },
+        { "q": "sunny", "a": "cerah" },
+        { "q": "raincoat", "a": "jas hujan" },
+        { "q": "heavy rain", "a": "hujan deras / hujan lebat" },
+        { "q": "weather", "a": "cuaca" }
+      ]
+    },
+    {
+      "title": "Weather & Seasons · SMA",
+      "type": "kosakata",
+      "level": "SMA",
+      "tier": 1,
+      "items": [
+        { "q": "humid", "a": "lembap" },
+        { "q": "drizzle", "a": "gerimis" },
+        { "q": "forecast", "a": "ramalan / prakiraan" },
+        { "q": "temperature", "a": "suhu" },
+        { "q": "storm", "a": "badai" },
+        { "q": "climate", "a": "iklim" },
+        { "q": "drought", "a": "kekeringan" },
+        { "q": "breeze", "a": "angin sepoi-sepoi" },
+        { "q": "landslide", "a": "tanah longsor / longsor" },
+        { "q": "puddle", "a": "genangan air / genangan" }
+      ]
+    },
+    {
+      "title": "Weather & Seasons · Semua Jenjang",
+      "type": "kosakata",
+      "level": "SEMUA",
+      "tier": 1,
+      "items": [
+        { "q": "rainbow", "a": "pelangi" },
+        { "q": "fog", "a": "kabut" },
+        { "q": "warm", "a": "hangat" },
+        { "q": "cool", "a": "sejuk" },
+        { "q": "snow", "a": "salju" },
+        { "q": "season", "a": "musim" },
+        { "q": "windy", "a": "berangin" },
+        { "q": "rainy", "a": "hujan / berhujan" },
+        { "q": "sunrise", "a": "matahari terbit" },
+        { "q": "sunset", "a": "matahari terbenam" }
+      ]
+    }
+  ]
+}

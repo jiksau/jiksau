@@ -1,0 +1,25 @@
+# Unggah paket soal otomatis ke Firebase setiap ada file baru/berubah
+# di folder paket-otomatis/. Bisa juga dijalankan manual dari tab Actions.
+# Semua file diperiksa; paket yang sudah terbit dilewati (tidak diubah).
+name: Unggah paket soal otomatis
+
+on:
+  push:
+    branches: [main]
+    paths: ["paket-otomatis/*.json", "scripts/unggah-paket.mjs"]
+  workflow_dispatch:
+
+jobs:
+  unggah:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pasang firebase-admin
+        run: npm install --no-save --no-package-lock firebase-admin@13
+      - name: Periksa & unggah
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/unggah-paket.mjs
