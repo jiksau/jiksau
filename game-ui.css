@@ -721,3 +721,65 @@ a.item:hover { border-color: var(--line-strong); }
     font-weight: 600;
     text-align: center;
 }
+
+/* =====================================================================
+   Dekorasi musiman Musim Liburan (dekorasi.js menambah kelas di body).
+   Hanya halaman siswa yang memuat dekorasi.js; tanpa kelas = tidak ada efek.
+   ===================================================================== */
+:root { --deco-gold: #e2ad2b; --deco-snow: #adc9ba; }
+@media (prefers-color-scheme: dark) { :root { --deco-gold: #f0c255; --deco-snow: rgba(255,255,255,.5); } }
+
+/* Untaian lampu tipis di tepi bawah header (tidak bisa diketuk) */
+body.deco-liburan .topbar::after,
+body.deco-tahunbaru .topbar::after,
+body.deco-liburan .topbar::before,
+body.deco-tahunbaru .topbar::before {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 10px; pointer-events: none;
+}
+/* kabel + lampu hijau & merah */
+body.deco-liburan .topbar::after,
+body.deco-tahunbaru .topbar::after {
+    background:
+        radial-gradient(circle at 50% 6px, var(--accent) 0 2.6px, transparent 3.2px) 0 0 / 54px 10px repeat-x,
+        radial-gradient(circle at 50% 6px, var(--bad) 0 2.6px, transparent 3.2px) 18px 0 / 54px 10px repeat-x,
+        linear-gradient(var(--line-strong), var(--line-strong)) 0 3px / 100% 1px no-repeat;
+}
+/* lampu emas, berkedip pelan */
+body.deco-liburan .topbar::before,
+body.deco-tahunbaru .topbar::before {
+    background: radial-gradient(circle at 50% 6px, var(--deco-gold) 0 2.6px, transparent 3.2px) 36px 0 / 54px 10px repeat-x;
+    animation: decoTwinkle 3.2s ease-in-out infinite alternate;
+}
+@keyframes decoTwinkle { from { opacity: 1; } to { opacity: .35; } }
+
+/* Salju / kembang api di pita header Beranda: di belakang isi header
+   (logo, judul, lonceng tetap di depan), tidak bisa diketuk */
+.deco-scene { display: none; }
+body.deco-scene-on .topbar .deco-scene {
+    display: block; position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+}
+body.deco-scene-on .topbar-inner { position: relative; z-index: 1; }
+.deco-scene .flake {
+    position: absolute; top: -8px; border-radius: 50%; background: var(--deco-snow);
+    animation: decoSnow linear infinite;
+}
+@keyframes decoSnow {
+    0% { transform: translate(0, 0); opacity: 0; }
+    12% { opacity: 1; }
+    50% { transform: translate(var(--drift), 40px); }
+    85% { opacity: 1; }
+    100% { transform: translate(0, 84px); opacity: 0; }
+}
+.deco-scene .burst { position: absolute; width: 0; height: 0; }
+.deco-scene .burst i {
+    position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
+    background: currentColor; animation: decoBurst 1.4s ease-out forwards;
+}
+.deco-scene .fw-red { color: var(--bad); }
+.deco-scene .fw-gold { color: var(--deco-gold); }
+.deco-scene .fw-green { color: var(--accent); }
+@keyframes decoBurst {
+    0% { transform: rotate(var(--a)) translateY(0) scale(.6); opacity: 1; }
+    70% { opacity: .9; }
+    100% { transform: rotate(var(--a)) translateY(-26px) scale(1); opacity: 0; }
+}

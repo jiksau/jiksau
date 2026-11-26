@@ -400,6 +400,13 @@ export const HOLIDAY = {
     prize: "topi-santa-emas", // hadiah juara 1-3 Semua Jenjang (tidak dijual)
 };
 export const isHolidayTime = (now = Date.now()) => now >= HOLIDAY.start && now < HOLIDAY.end;
+// Dekorasi musiman (dekorasi.js): "liburan" 1-30 Des (salju), "tahunbaru"
+// 31 Des - 3 Jan (kembang api), null di luar event.
+HOLIDAY.newYear = Date.parse("2026-12-31T00:00:00+07:00");
+export function holidayPhase(now = Date.now()) {
+    if (!isHolidayTime(now)) return null;
+    return now >= HOLIDAY.newYear ? "tahunbaru" : "liburan";
+}
 export const isHolidaySeason = (season) => season === HOLIDAY.season;
 
 // "5 Okt – 1 Nov 2026" (Senin pertama sampai Minggu terakhir musim)
