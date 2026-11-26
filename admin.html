@@ -598,8 +598,8 @@
             loginIdToEmail, usernameFromEmail, isUsernameEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
             parsePackText, packToText, PACK_TIERS, announcementHtml, packStatus, PACK_STATUS_LABEL
-        } from "./ec-common.js?v=2026-11-26-2";
-        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-26-2";
+        } from "./ec-common.js?v=2026-11-26-4";
+        import { archiveFinishedWeeks, awardHolidayPrize } from "./weekly-results.js?v=2026-11-26-4";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -643,8 +643,13 @@
             document.body.style.visibility = 'visible';
             startStudents();
             startCodes();
-            // Bekukan hasil minggu yang sudah selesai (rekap & riwayat juara)
-            archiveFinishedWeeks().catch((e) => console.warn('Gagal menyimpan hasil mingguan:', e));
+            // Bekukan hasil minggu yang sudah selesai (rekap & riwayat juara),
+            // lalu berikan hadiah Juara Musim Liburan jika musimnya sudah selesai
+            archiveFinishedWeeks()
+                .catch((e) => console.warn('Gagal menyimpan hasil mingguan:', e))
+                .then(() => awardHolidayPrize())
+                .then((n) => { if (n) console.info(`Hadiah Juara Musim Liburan diberikan ke ${n} siswa.`); })
+                .catch((e) => console.warn('Gagal memberikan hadiah Musim Liburan:', e));
         });
         $('logoutButton').addEventListener('click', async () => {
             await signOut(auth);

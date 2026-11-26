@@ -131,12 +131,24 @@ export const SHOP_ITEMS = [
     { id: "latar-taman", slot: "bg", name: "Taman", price: 100 },
     { id: "latar-pantai", slot: "bg", name: "Pantai", price: 160 },
     { id: "latar-malam", slot: "bg", name: "Langit malam", price: 220, minTier: 3 },
+    // Edisi Liburan 2026 (HOLIDAY di ec-common.js): dijual hanya 1 Des 2026 -
+    // 3 Jan 2027 (juga dicek firestore.rules), setelah itu tetap dimiliki.
+    { id: "topi-santa", slot: "head", name: "Topi Santa", price: 120, edition: "liburan-2026" },
+    { id: "tanduk-rusa", slot: "head", name: "Tanduk rusa", price: 150, edition: "liburan-2026" },
+    { id: "syal-rajut", slot: "neck", name: "Syal rajut", price: 90, edition: "liburan-2026" },
+    { id: "latar-salju", slot: "bg", name: "Salju", price: 180, edition: "liburan-2026" },
+    { id: "latar-kembang-api", slot: "bg", name: "Kembang api Tahun Baru", price: 240, edition: "liburan-2026" },
+    // Hadiah (tidak dijual, harga 0 agar tidak mengurangi saldo): diberikan
+    // admin. Siswa tidak bisa menambahkannya sendiri (firestore.rules).
+    { id: "topi-santa-emas", slot: "head", name: "Topi Santa emas", price: 0, edition: "liburan-2026", prize: "Hadiah Juara 1–3 Musim Liburan" },
 ];
 export const SHOP_SLOTS = [
     { key: "head", name: "Kepala" }, { key: "face", name: "Wajah" },
     { key: "neck", name: "Leher" }, { key: "bg", name: "Latar" },
 ];
 export const itemById = (id) => SHOP_ITEMS.find((i) => i.id === id) || null;
+// Barang edisi terbatas hanya bisa dibeli dalam masa event; hadiah tidak pernah dijual.
+export const isForSale = (item, holidayNow) => !item.prize && (!item.edition || holidayNow);
 
 const OUT = 'stroke="#3b2f2a" stroke-width="1.6" stroke-linejoin="round"';
 
@@ -162,6 +174,14 @@ function drawHead(id, cx, cy, r) {
             <path d="M${cx} ${t - r * .42}L${cx + r * 1.05} ${t - r * .08}L${cx} ${t + r * .24}L${cx - r * 1.05} ${t - r * .08}z" fill="#3a4050" ${OUT}/>
             <path d="M${cx} ${t - r * .08}L${cx + r * .78} ${t + r * .05}v${r * .45}" fill="none" stroke="#f6cf4a" stroke-width="2.2"/>
             <rect x="${cx + r * .72}" y="${t + r * .45}" width="${r * .14}" height="${r * .3}" rx="2" fill="#f6cf4a"/>`;
+        case "topi-santa": return `<g transform="rotate(8 ${cx} ${t})"><path d="M${cx - r * .62} ${t + r * .2}Q${cx - r * .25} ${t - r * 1.05} ${cx + r * .78} ${t - r * .5}Q${cx + r * .3} ${t - r * .38} ${cx + r * .62} ${t + r * .2}z" fill="#d94848" stroke="#3b2f2a" stroke-width="1.6" stroke-linejoin="round"/>
+            <rect x="${cx - r * .78}" y="${t + r * .06}" width="${r * 1.56}" height="${r * .3}" rx="${r * .15}" fill="#fbfaf5" ${OUT}/>
+            <circle cx="${cx + r * .8}" cy="${t - r * .5}" r="${r * .17}" fill="#fbfaf5" ${OUT}/></g>`;
+        case "topi-santa-emas": return `<g transform="rotate(8 ${cx} ${t})"><path d="M${cx - r * .62} ${t + r * .2}Q${cx - r * .25} ${t - r * 1.05} ${cx + r * .78} ${t - r * .5}Q${cx + r * .3} ${t - r * .38} ${cx + r * .62} ${t + r * .2}z" fill="#f2c23e" stroke="#a87a0f" stroke-width="1.6" stroke-linejoin="round"/>
+            <rect x="${cx - r * .78}" y="${t + r * .06}" width="${r * 1.56}" height="${r * .3}" rx="${r * .15}" fill="#fbfaf5" ${OUT}/>
+            <circle cx="${cx + r * .8}" cy="${t - r * .5}" r="${r * .17}" fill="#fbfaf5" ${OUT}/></g>` + `<path d="M${cx - r * .1} ${t - r * .3}l1.4 2.9l3.1.4l-2.3 2.1l.6 3.1l-2.8-1.6l-2.8 1.6l.6-3.1l-2.3-2.1l3.1-.4z" fill="#fff6d6"/>`;
+        case "tanduk-rusa": return `<path d="M${cx - r * .85} ${cy - r * .35}Q${cx} ${t - r * .35} ${cx + r * .85} ${cy - r * .35}" fill="none" stroke="#6b4a2e" stroke-width="3.2" stroke-linecap="round"/>
+            ${[-1, 1].map((d) => `<path d="M${cx + d * r * .42} ${t + r * .02}Q${cx + d * r * .52} ${t - r * .4} ${cx + d * r * .78} ${t - r * .78}M${cx + d * r * .5} ${t - r * .3}L${cx + d * r * .9} ${t - r * .42}M${cx + d * r * .63} ${t - r * .56}L${cx + d * r * .5} ${t - r * .9}" fill="none" stroke="#8a5a32" stroke-width="4.2" stroke-linecap="round"/>`).join("")}`;
     }
     return "";
 }
@@ -191,6 +211,10 @@ function drawNeck(id, cx, ny, w) {
             <path d="M${cx + w * .35} ${ny + 4}l${w * .15} ${w * .9}l${w * .32} -${w * .1}l-${w * .12} -${w * .85}z" fill="#e05252" ${OUT}/>`;
         case "dasi-kupu": return `<path d="M${cx} ${ny + 2}l-${w * .62} -${w * .36}v${w * .72}z M${cx} ${ny + 2}l${w * .62} -${w * .36}v${w * .72}z" fill="#4a6fd8" ${OUT}/>
             <circle cx="${cx}" cy="${ny + 2}" r="${w * .17}" fill="#3557b8" ${OUT}/>`;
+        case "syal-rajut": return `<path d="M${cx - w} ${ny - 3}Q${cx} ${ny + 7} ${cx + w} ${ny - 3}l1 6Q${cx} ${ny + 14} ${cx - w - 1} ${ny + 3}z" fill="#3f8f5a" ${OUT}/>
+            <path d="M${cx - w * .8} ${ny + 1.5}Q${cx} ${ny + 10} ${cx + w * .8} ${ny + 1.5}" fill="none" stroke="#fbfaf5" stroke-width="1.8" stroke-dasharray="2.5 3"/>
+            <path d="M${cx + w * .35} ${ny + 4}l${w * .15} ${w * .9}l${w * .32} -${w * .1}l-${w * .12} -${w * .85}z" fill="#3f8f5a" ${OUT}/>
+            <path d="M${cx + w * .41} ${ny + 4 + w * .3}l${w * .34} -${w * .04}M${cx + w * .46} ${ny + 4 + w * .6}l${w * .34} -${w * .05}" stroke="#d94848" stroke-width="2"/>`;
         case "medali": return `<path d="M${cx - w * .7} ${ny - 4}L${cx} ${ny + w * .55}L${cx + w * .7} ${ny - 4}" fill="none" stroke="#4a6fd8" stroke-width="4"/>
             <circle cx="${cx}" cy="${ny + w * .78}" r="${w * .33}" fill="#f6cf4a" stroke="#c9961a" stroke-width="1.8"/>
             <path d="M${cx} ${ny + w * .62}l1.4 2.8l3 .4l-2.2 2.1l.6 3l-2.8 -1.5l-2.8 1.5l.6 -3l-2.2 -2.1l3 -.4z" fill="#fff6d6"/>`;
@@ -212,6 +236,16 @@ function drawBg(id) {
             <circle cx="92" cy="28" r="10" fill="#fff3c4"/><circle cx="96" cy="25" r="9" fill="#28305a"/>
             ${[[20, 22], [40, 40], [64, 16], [106, 54], [14, 60], [80, 46]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.4" fill="#fff"/>`).join("")}
             <path d="M0 98Q60 86 120 98V120H0z" fill="#3b4a7a"/></g>`;
+        case "latar-salju": return `<defs>${clip}</defs><g clip-path="url(#bgc)"><rect width="120" height="120" fill="#b9d6ee"/>
+            ${[[18, 18], [44, 30], [70, 14], [100, 24], [12, 50], [88, 46], [56, 52], [108, 64], [30, 70]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#fff"/>`).join("")}
+            ${[[22, 88], [100, 84]].map(([x, y]) => `<path d="M${x} ${y - 20}l9 16h-5l7 12h-22l7 -12h-5z" fill="#3f8f5a"/>`).join("")}
+            <path d="M0 92Q30 80 60 90T120 86V120H0z" fill="#fbfdff"/><path d="M0 106Q60 98 120 106V120H0z" fill="#e6f0f8"/></g>`;
+        case "latar-kembang-api": return `<defs>${clip}</defs><g clip-path="url(#bgc)"><rect width="120" height="120" fill="#1f2550"/>
+            ${[[34, 32, "#f6cf4a", 14], [86, 26, "#ff8fb8", 12], [64, 56, "#7fd1ff", 10]].map(([x, y, c, R]) => [...Array(10)].map((_, i) => {
+                const a = i * Math.PI / 5, x1 = x + Math.cos(a) * R * .35, y1 = y + Math.sin(a) * R * .35, x2 = x + Math.cos(a) * R, y2 = y + Math.sin(a) * R;
+                return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+            }).join("") + `<circle cx="${x}" cy="${y}" r="1.8" fill="${c}"/>`).join("")}
+            <path d="M0 120V96h14v-8h12v8h10v-14h14v14h12v-6h14v6h10v-10h16v10h18V120z" fill="#2c3570"/></g>`;
     }
     return "";
 }

@@ -2,7 +2,7 @@
 //  recap.js - Rekap minggu lalu di Beranda (sekali tiap minggu)
 // ---------------------------------------------------------------------
 //  Cara pakai (user-dashboard.html, setelah announcements.js):
-//      <script type="module" src="recap.js?v=2026-11-26-2"></script>
+//      <script type="module" src="recap.js?v=2026-11-26-4"></script>
 //
 //  Saat siswa pertama kali membuka Beranda di minggu baru, muncul jendela:
 //  juara minggu lalu (Semua Jenjang + juara jenjang siswa), peringkat &
@@ -19,11 +19,11 @@ import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.
 import {
     firebaseConfig, ADMIN_EMAIL, escapeHtml, levelLabel, shortName, levelRanking,
     weekKeyFor, previousWeekKey, weekEndMs, weekRangeLabel, FIRST_WEEK,
-    seasonKeyFor, seasonLabel, seasonRanking, weekBonus
-} from "./ec-common.js?v=2026-11-26-2";
-import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-26-2";
-import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-26-2";
-import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-26-2";
+    seasonKeyFor, seasonName, seasonRanking, weekBonus, isHolidaySeason, isHolidayTime
+} from "./ec-common.js?v=2026-11-26-4";
+import { getWeekResult, loadSeasonWeeks, loadHistory } from "./weekly-results.js?v=2026-11-26-4";
+import { tierFor, xpByUser, tierBadge } from "./tiers.js?v=2026-11-26-4";
+import { petSvg, stageForTier, STAGES } from "./pets.js?v=2026-11-26-4";
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -45,6 +45,15 @@ const CSS = `
 }
 @keyframes ecRecapPop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
 .ec-recap-body { padding: 20px 20px 4px; overflow-y: auto; }
+/* Musim Liburan: titik salju tipis di atas jendela rekap */
+.ec-recap.holiday .ec-recap-body {
+    background:
+        radial-gradient(circle at 62% 14px, var(--accent-soft, #e1f0e8) 0 3px, transparent 3.5px),
+        radial-gradient(circle at 74% 34px, var(--accent-soft, #e1f0e8) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 84% 12px, var(--accent-soft, #e1f0e8) 0 2.5px, transparent 3px),
+        radial-gradient(circle at 94% 40px, var(--accent-soft, #e1f0e8) 0 3px, transparent 3.5px);
+    background-repeat: no-repeat;
+}
 .ec-recap-tag { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; background: var(--accent-soft, #e1f0e8); color: var(--accent, #1f6f4a); }
 .ec-recap h3 { margin: 8px 0 2px; font-size: 21px; line-height: 1.25; font-weight: 700; }
 .ec-recap .wk { color: var(--muted, #66706b); font-size: 13px; }
@@ -84,13 +93,13 @@ function rowsHtml(list, uid, showLevel) {
         <span class="p">${r.points} poin</span></div>`).join("");
 }
 
-function show(html, onClose) {
+function show(html, onClose, holiday = false) {
     const style = document.createElement("style");
     style.textContent = CSS;
     document.head.appendChild(style);
     const overlay = document.createElement("div");
     overlay.className = "ec-recap-overlay";
-    overlay.innerHTML = `<div class="ec-recap" role="dialog" aria-modal="true" aria-labelledby="ecRecapTitle">
+    overlay.innerHTML = `<div class="ec-recap${holiday ? " holiday" : ""}" role="dialog" aria-modal="true" aria-labelledby="ecRecapTitle">
         <div class="ec-recap-body">${html}</div>
         <div class="ec-recap-foot"><button type="button">Mulai minggu baru</button></div></div>`;
     document.body.appendChild(overlay);
@@ -165,7 +174,7 @@ async function start(user) {
             mine += `<div class="tier-up">${grew ? petSvg(pet.species, st, 56, "pet-svg", profile.equipped || {}) : tierBadge(tAfter, 40)}<span>Naik tier ke <b>${escapeHtml(tAfter.label)}</b>!${grew
                 ? `<br>${escapeHtml(pet.name)} ${st === 1 ? "menetas" : `tumbuh jadi ${STAGES[st]}`}.` : ""}</span></div>`;
         }
-        if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonLabel(seasonKeyFor(lastWeek)).split(" ")[0])}.</div>`;
+        if (weekBonus(me.rank)) mine += `<div class="note">Kamu mendapat <b>+${weekBonus(me.rank)} poin bonus</b> untuk papan Musim ${escapeHtml(seasonName(seasonKeyFor(lastWeek)))}.</div>`;
     } else if (!isNew) {
         mine = `<div class="note">Kamu tidak bermain minggu lalu. Poin sudah kembali nol untuk semua, jadi ini kesempatanmu!</div>`;
     }
@@ -177,10 +186,13 @@ async function start(user) {
         const sRank = seasonRanking(await loadSeasonWeeks(lastSeason).catch(() => []), thisWeek);
         if (sRank.length) {
             const meS = sRank.find((r) => r.uid === uid);
-            const name = seasonLabel(lastSeason).split(" ")[0];
+            const name = seasonName(lastSeason);
             if (meS && meS.rank <= 3) title = `Selamat, kamu Juara ${meS.rank} Musim ${name}!`;
+
             seasonHtml = `<div class="sec">Juara Musim ${escapeHtml(name)}</div>${rowsHtml(sRank, uid, true)}`
-                + (meS && meS.rank > 3 ? `<div class="move">Kamu peringkat <b>#${meS.rank}</b> di musim ini dengan ${meS.points} poin.</div>` : "");
+                + (meS && meS.rank > 3 ? `<div class="move">Kamu peringkat <b>#${meS.rank}</b> di musim ini dengan ${meS.points} poin.</div>` : "")
+                // Hadiah Juara Musim Liburan (diberikan admin, lihat awardHolidayPrize)
+                + (meS && meS.rank <= 3 && isHolidaySeason(lastSeason) ? `<div class="note">Hadiahmu: <b>Topi Santa emas</b>. Barang ini akan masuk ke Toko, siap dipakai hewanmu.</div>` : "");
         }
     }
 
@@ -197,7 +209,8 @@ async function start(user) {
     // Tunggu jendela pengumuman ditutup lebih dulu
     await (window.ecNewsDone || Promise.resolve());
     if (seen()) return;
-    show(html, markSeen);
+    // Tema salju selama event dan untuk rekap akhir Musim Liburan
+    show(html, markSeen, isHolidayTime() || isHolidaySeason(lastSeason));
 }
 
 let started = false;

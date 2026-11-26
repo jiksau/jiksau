@@ -18,6 +18,8 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, koleksi lama `teachers`). Peran guru yang baru memakai profil di `users` (lihat bagian Guru).
 
+**Toko (barang):** siswa tidak bisa menambahkan barang hadiah sendiri (`topi-santa-emas`, `syal-kembang-api`; diberikan admin). Barang Edisi Liburan 2026 (`topi-santa`, `tanduk-rusa`, `syal-rajut`, `latar-salju`, `latar-kembang-api`) hanya bisa ditambahkan siswa antara 1 Des 2026 00.00 dan 3 Jan 2027 23.59 WIB (waktu server); setelah itu tetap dimiliki dan boleh dipakai. Hewan publik (`pets`) hanya boleh memakai barang yang ada di `users.items` pemiliknya. Pengecekan ini tidak menambah baca (profil sudah dibaca aturan). Keterbatasan lama tetap: harga & saldo koin dicek di browser.
+
 Siswa tidak bisa mengubah jenjang atau perannya sendiri, melihat data siswa lain, atau mendaftar tanpa kode kelas yang aktif.
 
 ## Guru
@@ -198,6 +200,20 @@ Pasang aturan dulu, lalu push kode segera. Di antara keduanya, skor paket dari h
 - [ ] Main offline Minggu malam, internet kembali sebelum Senin 01.00: skor masuk minggu lalu; lewat 01.00: ditolak
 - [ ] Tantangan Harian & latihan Kata Sendiri tetap tersimpan seperti biasa
 - [ ] Admin menghapus akun siswa: dokumen `packStarts` siswa itu ikut terhapus
+
+## Uji event Musim Liburan – Tahap 1 (setelah memasang aturan terbaru)
+
+Aturan ini digabung dengan aturan batas 2 minggu: tempel **sekali** (29 Nov). Aturan event aman dipasang sebelum kode event: kode lama tidak mengenal barang baru.
+
+- [ ] Sebelum 1 Des: Toko tidak menampilkan barang edisi liburan; Beranda tanpa tanda event; lewat konsol, menambah `topi-santa` ke `items` ditolak
+- [ ] Mulai 1 Des: Beranda menampilkan "Musim Liburan Akhir Tahun" (ketuk → Toko); Toko: catatan "dijual sampai 3 Januari", 5 barang edisi di depan tiap slot dengan tanda "Edisi Liburan 2026"; beli → saldo berkurang sesuai harga, barang langsung dipakai
+- [ ] Topi Santa emas tampil terkunci "Hadiah juara", tidak bisa dibeli; menambahkannya lewat konsol ditolak
+- [ ] Peringkat → Musim, 1–6 Des: "Musim November" + kalimat "Minggu terakhir Musim November. Musim Liburan mulai Senin 7 Desember."; total Musim November tidak berubah
+- [ ] Mulai 7 Des: tab Musim "Musim Liburan" (7 Des – 3 Jan, 4 kotak minggu) + kalimat hadiah; poster "Musim Liburan" dengan salju; rekap Senin bertema salju dan menyebut "papan Musim Liburan" untuk bonus
+- [ ] Hewan di Peringkat memakai barang edisi yang dibeli; mengisi `pets.equipped` dengan barang yang tidak dimiliki lewat konsol ditolak
+- [ ] Setelah 3 Jan: barang edisi tidak tampil bagi yang tidak memiliki; pemilik tetap bisa memakai/melepas; membeli lewat konsol ditolak
+- [ ] 4 Jan setelah 01.00: admin membuka `admin.html` → konsol "Hadiah Juara Musim Liburan diberikan ke n siswa"; juara 1–3 melihat Topi Santa emas "Dimiliki" di Toko (saldo tidak berkurang); rekap 4 Jan: "Juara Musim Liburan" + "Hadiahmu: Topi Santa emas"
+- [ ] HP & PC, mode terang & gelap: tanda Beranda, kartu musim, kartu Toko rapi
 
 ## Papan peringkat
 

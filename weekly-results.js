@@ -13,9 +13,9 @@
 
 import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-    getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp
+    getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, arrayUnion, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js?v=2026-11-26-2";
+import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, weekEndMs, seasonRanking, HOLIDAY, FIRST_WEEK } from "./ec-common.js?v=2026-11-26-4";
 
 const db = () => getFirestore(getApp());
 const slim = (r) => ({ uid: r.uid, name: r.name || "Siswa", level: r.level || null, points: r.points, packs: r.packs, rank: r.rank });
@@ -76,4 +76,26 @@ export async function archiveFinishedWeeks() {
         saved++;
     }
     return saved;
+}
+
+// Khusus admin: hadiah Juara Musim Liburan (HOLIDAY.prize, tidak dijual) untuk
+// juara 1-3 Semua Jenjang (peringkat kembar ikut). Berjalan setelah musim
+// selesai + 1 jam kelonggaran skor offline, sesudah archiveFinishedWeeks.
+// Aman dijalankan berkali-kali: siswa yang sudah punya barangnya dilewati;
+// setelah selesai ditandai di browser admin agar tidak dicek lagi.
+export async function awardHolidayPrize() {
+    const weeks = seasonWeeks(HOLIDAY.season);
+    if (Date.now() < weekEndMs(weeks[weeks.length - 1]) + 60 * 60 * 1000) return 0;
+    const mark = `ec-prize-${HOLIDAY.season}`;
+    try { if (localStorage.getItem(mark)) return 0; } catch { /* abaikan */ }
+    const winners = seasonRanking(await loadSeasonWeeks(HOLIDAY.season), weekKeyFor()).filter((r) => r.rank <= 3);
+    let given = 0;
+    for (const r of winners) {
+        const snap = await getDoc(doc(db(), "users", r.uid));
+        if (!snap.exists() || (snap.data().items || []).includes(HOLIDAY.prize)) continue;
+        await updateDoc(snap.ref, { items: arrayUnion(HOLIDAY.prize) });
+        given++;
+    }
+    try { localStorage.setItem(mark, "1"); } catch { /* abaikan */ }
+    return given;
 }

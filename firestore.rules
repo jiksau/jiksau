@@ -115,6 +115,21 @@ service cloud.firestore {
                 && (!('bg' in d.equipped) || d.equipped.bg in d.items)));
     }
 
+    // Barang yang baru ditambahkan siswa ke items (dibanding sebelumnya):
+    //  - Hadiah (tidak dijual) tidak bisa ditambahkan sendiri; hanya admin
+    //    yang memberikannya: topi-santa-emas (Juara 1-3 Musim Liburan),
+    //    syal-kembang-api (Tantangan bersama Musim Liburan).
+    //  - Barang Edisi Liburan 2026 hanya bisa ditambahkan (dibeli) antara
+    //    1 Des 2026 00.00 dan 3 Jan 2027 23.59 WIB (waktu server). Setelah itu
+    //    tetap dimiliki dan boleh dipakai.
+    function isValidNewItems(d, old) {
+      let added = d.get('items', []).toSet().difference(old.get('items', []).toSet());
+      return !added.hasAny(['topi-santa-emas', 'syal-kembang-api'])
+        && (!added.hasAny(['topi-santa', 'tanduk-rusa', 'syal-rajut', 'latar-salju', 'latar-kembang-api'])
+            || (request.time >= timestamp.date(2026, 11, 30) + duration.value(17, 'h')
+                && request.time < timestamp.date(2027, 1, 3) + duration.value(17, 'h')));
+    }
+
     // Kode kelas ada, aktif, dan jenjangnya sama dengan yang dipakai siswa.
     function isActiveCodeFor(code, level) {
       let path = /databases/$(database)/documents/classCodes/$(code);
@@ -157,7 +172,8 @@ service cloud.firestore {
                 || request.resource.data.announceSeenAt == request.time)
             && (!('pet' in request.resource.data.diff(resource.data).affectedKeys())
                 || isValidPet(request.resource.data.pet))
-            && isValidShop(request.resource.data));
+            && isValidShop(request.resource.data)
+            && isValidNewItems(request.resource.data, resource.data));
 
       allow delete: if isAdmin();
     }
@@ -419,7 +435,12 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 16
         && (!('equipped' in request.resource.data)
             || (request.resource.data.equipped is map
-                && request.resource.data.equipped.keys().hasOnly(['head', 'face', 'neck', 'bg'])));
+                && request.resource.data.equipped.keys().hasOnly(['head', 'face', 'neck', 'bg'])
+                // Hanya barang yang benar-benar dimiliki (users.items), agar
+                // hadiah juara tidak bisa dipamerkan tanpa memilikinya.
+                // Profil sudah dibaca isStudent(), jadi tanpa baca tambahan.
+                && request.resource.data.equipped.values().toSet()
+                     .difference(get(myUserPath()).data.get('items', []).toSet()).size() == 0));
       allow delete: if isAdmin() || isOwner(uid);
     }
 

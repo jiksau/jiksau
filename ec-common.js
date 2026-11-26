@@ -379,6 +379,29 @@ export function seasonLabel(season) {
     return new Date(Date.parse(season + "-01T00:00:00Z")).toLocaleDateString("id-ID", { month: "long", year: "numeric", timeZone: "UTC" });
 }
 
+// Nama musim untuk ditampilkan: "Oktober", atau nama khusus (SEASON_NAMES).
+export const SEASON_NAMES = { "2026-12": "Liburan" };
+export function seasonName(season) {
+    return SEASON_NAMES[season] || seasonLabel(season).split(" ")[0];
+}
+
+// ---------- Event Musim Liburan Akhir Tahun ----------
+// Event (tanda Beranda, barang edisi terbatas di Toko) berjalan start-end;
+// poin Musim Liburan = musim "2026-12" biasa (minggu Senin 7, 14, 21, 28 Des,
+// jadi 7 Des - 3 Jan). Hitungan musim tidak diubah: minggu 30 Nov - 6 Des
+// tetap milik Musim November. Waktu sama dengan firestore.rules (isValidNewItems).
+export const HOLIDAY = {
+    title: "Musim Liburan Akhir Tahun",
+    season: "2026-12",
+    start: Date.parse("2026-12-01T00:00:00+07:00"),
+    end: Date.parse("2027-01-04T00:00:00+07:00"), // 3 Jan 23.59 WIB
+    edition: "liburan-2026",
+    editionLabel: "Edisi Liburan 2026",
+    prize: "topi-santa-emas", // hadiah juara 1-3 Semua Jenjang (tidak dijual)
+};
+export const isHolidayTime = (now = Date.now()) => now >= HOLIDAY.start && now < HOLIDAY.end;
+export const isHolidaySeason = (season) => season === HOLIDAY.season;
+
 // "5 Okt – 1 Nov 2026" (Senin pertama sampai Minggu terakhir musim)
 export function seasonRangeLabel(season) {
     const weeks = seasonWeeks(season);
