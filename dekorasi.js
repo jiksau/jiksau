@@ -19,7 +19,7 @@
 //  "Kurangi animasi" di perangkat: salju & kembang api tidak dibuat, lampu diam.
 // =====================================================================
 
-import { holidayPhase } from "./ec-common.js?v=2026-11-26-9";
+import { holidayPhase } from "./ec-common.js?v=2026-11-26-10";
 
 const PREVIEW_KEY = "ec-pratinjau-dekorasi";
 const PHASES = ["liburan", "tahunbaru"];
@@ -61,25 +61,32 @@ function snow(scene) {
     scene.innerHTML = html;
 }
 
-// Kembang api: satu letupan kecil tiap 4-7 detik, berhenti saat tab tidak terlihat
+// Kembang api: letupan kecil tiap 2-4 detik (maks. 2 sekaligus), di dalam
+// kotak selebar kolom isi header (bukan selebar jendela). Berhenti saat tab
+// tidak terlihat.
 function fireworks(scene) {
     const COLORS = ["fw-red", "fw-gold", "fw-green"];
+    const box = document.createElement("span");
+    box.className = "fw-box";
+    scene.appendChild(box);
     let timer = null;
     const burst = () => {
+        if (box.childElementCount >= 2) return;
         const b = document.createElement("span");
         b.className = `burst ${COLORS[Math.floor(Math.random() * COLORS.length)]}`;
-        // Di HP hanya di sisi kanan (judul di kiri); di layar lebar juga di luar kolom isi
-        const narrow = window.innerWidth < 700;
-        b.style.left = `${(narrow ? 66 + Math.random() * 20 : (Math.random() < .5 ? 3 + Math.random() * 17 : 72 + Math.random() * 24)).toFixed(1)}%`;
-        b.style.top = `${(16 + Math.random() * 30).toFixed(0)}px`;
-        b.innerHTML = Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg"></i>`).join("");
-        scene.appendChild(b);
-        setTimeout(() => b.remove(), 1600);
+        // Sisi kanan kolom isi (judul di kiri, lonceng paling kanan)
+        const narrow = box.clientWidth < 500;
+        b.style.left = `${(narrow ? 62 + Math.random() * 20 : 46 + Math.random() * 40).toFixed(1)}%`;
+        b.style.top = `${(28 + Math.random() * 8).toFixed(0)}px`;
+        b.innerHTML = Array.from({ length: 12 }, (_, i) => `<i style="--a:${i * 30}deg"></i>`).join("")
+            + Array.from({ length: 6 }, (_, i) => `<i class="in" style="--a:${i * 60 + 15}deg"></i>`).join("");
+        box.appendChild(b);
+        setTimeout(() => b.remove(), 1700);
     };
     const next = () => {
-        timer = setTimeout(() => { if (!document.hidden) burst(); next(); }, 4000 + Math.random() * 3000);
+        timer = setTimeout(() => { if (!document.hidden) burst(); next(); }, 2000 + Math.random() * 2000);
     };
-    setTimeout(burst, 800);
+    setTimeout(burst, 600);
     next();
     document.addEventListener("visibilitychange", () => {
         clearTimeout(timer);

@@ -770,16 +770,25 @@ body.deco-scene-on .topbar-inner { position: relative; z-index: 1; }
     85% { opacity: 1; }
     100% { transform: translate(0, 84px); opacity: 0; }
 }
+/* Kotak kembang api selebar kolom isi header (topbar-inner = 640px) */
+.deco-scene .fw-box { position: absolute; top: 0; bottom: 0; left: 0; right: 0; max-width: 640px; margin: 0 auto; }
 .deco-scene .burst { position: absolute; width: 0; height: 0; }
 .deco-scene .burst i {
-    position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%;
-    background: currentColor; animation: decoBurst 1.4s ease-out forwards;
+    position: absolute; left: -2.5px; top: -2.5px; width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 6px currentColor;
+    --r: -25px; animation: decoBurst 1.6s ease-out forwards;
 }
+.deco-scene .burst i.in { width: 4px; height: 4px; left: -2px; top: -2px; --r: -13px; }
 .deco-scene .fw-red { color: var(--bad); }
 .deco-scene .fw-gold { color: var(--deco-gold); }
 .deco-scene .fw-green { color: var(--accent); }
 @keyframes decoBurst {
-    0% { transform: rotate(var(--a)) translateY(0) scale(.6); opacity: 1; }
-    70% { opacity: .9; }
-    100% { transform: rotate(var(--a)) translateY(-26px) scale(1); opacity: 0; }
+    0% { transform: rotate(var(--a)) translateY(0) scale(.5); opacity: 1; }
+    60% { opacity: 1; }
+    100% { transform: rotate(var(--a)) translateY(var(--r)) scale(1); opacity: 0; }
 }
+
+/* Navigasi bawah: tanpa lampu; penanda menu aktif diberi garis tepi tipis
+   merah (liburan) / emas (tahunbaru). Ikon & teks tidak berubah. */
+body.deco-liburan nav.tabs a.on::before { box-shadow: inset 0 0 0 1.5px var(--bad); }
+body.deco-tahunbaru nav.tabs a.on::before { box-shadow: inset 0 0 0 1.5px var(--deco-gold); }

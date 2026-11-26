@@ -7,7 +7,7 @@
 //  Ubah batas XP di TIERS bila terlalu cepat/lambat.
 // =====================================================================
 
-import { escapeHtml, weekBonus } from "./ec-common.js?v=2026-11-26-9";
+import { escapeHtml, weekBonus } from "./ec-common.js?v=2026-11-26-10";
 
 // Kelompok tier: warna lencana tetap sama di mode terang & gelap
 export const TIER_GROUPS = [
