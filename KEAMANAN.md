@@ -205,9 +205,9 @@ Pasang aturan dulu, lalu push kode segera. Di antara keduanya, skor paket dari h
 
 Aturan ini digabung dengan aturan batas 2 minggu: tempel **sekali** (29 Nov). Aturan event aman dipasang sebelum kode event: kode lama tidak mengenal barang baru.
 
-- [ ] Sebelum 1 Des: Toko menampilkan baris "Musim Liburan Akhir Tahun, 1 Des – 3 Jan. Kumpulkan koinmu dari sekarang." dan 5 barang edisi + Topi Santa emas terkunci "Segera hadir 1 Desember" (bisa dicoba, tanpa tombol Beli); Beranda tanpa tanda event; lewat konsol, menambah `topi-santa` ke `items` ditolak
+- [ ] Sebelum 1 Des: Toko menampilkan baris "Musim Liburan Akhir Tahun, 1 Des – 3 Jan. Kumpulkan koinmu dari sekarang." dan 5 barang edisi terkunci dengan harga + label "Mulai 1 Des" (bilah aksi "Segera hadir 1 Desember · x koin"; bisa dicoba, tanpa tombol Beli); Topi Santa emas terkunci "Hadiah juara"; Beranda tanpa tanda event; lewat konsol, menambah `topi-santa` ke `items` ditolak
 - [ ] Mulai 1 Des: Beranda menampilkan "Musim Liburan Akhir Tahun" (ketuk → Toko); Toko: catatan "dijual sampai 3 Januari", 5 barang edisi di depan tiap slot dengan tanda "Edisi Liburan 2026"; beli → saldo berkurang sesuai harga, barang langsung dipakai
-- [ ] Topi Santa emas tampil terkunci "Hadiah juara", tidak bisa dibeli; menambahkannya lewat konsol ditolak
+- [ ] Topi Santa emas tampil terkunci "Hadiah juara" (satu baris), bilah aksi "Hadiah Juara 1–3 Musim Liburan, tidak dijual", tidak bisa dibeli; menambahkannya lewat konsol ditolak
 - [ ] Peringkat → Musim, 1–6 Des: "Musim November" + kalimat "Minggu terakhir Musim November. Musim Liburan mulai Senin 7 Desember."; total Musim November tidak berubah
 - [ ] Mulai 7 Des: tab Musim "Musim Liburan" (7 Des – 3 Jan, 4 kotak minggu) + kalimat hadiah; poster "Musim Liburan" dengan salju; rekap Senin bertema salju dan menyebut "papan Musim Liburan" untuk bonus
 - [ ] Hewan di Peringkat memakai barang edisi yang dibeli; mengisi `pets.equipped` dengan barang yang tidak dimiliki lewat konsol ditolak
