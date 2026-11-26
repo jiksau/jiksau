@@ -17,8 +17,8 @@
 //    source.scoreInfo() -> { packId, packName, packTier } (kosong untuk latihan)
 // =====================================================================
 
-import "./game-scores.js?v=2026-11-03-9"; // window.loadQuestionPacks & window.saveGameScore
-import { escapeHtml, packTags, packMaxPoints, PACK_ALL_LEVELS, packStatus, PACK_STATUS_LABEL, packLevelLabel, LEVELS } from "./ec-common.js?v=2026-11-03-9";
+import "./game-scores.js?v=2026-11-26-2"; // window.loadQuestionPacks & window.saveGameScore
+import { escapeHtml, packTags, packMaxPoints, PRACTICE_TEXT, isPracticeWeek, nextWeekPointsText, PACK_ALL_LEVELS, packStatus, PACK_STATUS_LABEL, packLevelLabel, LEVELS } from "./ec-common.js?v=2026-11-26-2";
 
 const store = {
     get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
@@ -122,6 +122,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
         tier: "all",
         played: null,   // Set packId yang pernah dimainkan (game apa pun)
         weekPoints: null, // Map packId -> poin terbaik minggu ini
+        starts: null, // Map packId -> Senin minggu pertama main (batas 2 minggu)
         own: Array.isArray(saved.own) ? saved.own.filter(isComplete).slice(0, maxOwn) : [],
     };
 
@@ -157,7 +158,7 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
     function render() {
         root.querySelectorAll("[data-src]").forEach((b) => b.classList.toggle("active", b.dataset.src === state.mode));
         $("[data-note]").textContent = state.teacher ? "Mode coba: skor tidak disimpan."
-            : state.mode === "pack" ? "Poin dihitung dari hasil terbaik per paket setiap minggu."
+            : state.mode === "pack" ? "Poin dihitung dari hasil terbaik per paket setiap minggu, selama 2 minggu pertama kamu memainkannya."
             : "Latihan bebas, tidak menambah poin.";
         $("[data-pack-area]").hidden = state.mode !== "pack";
         $("[data-own-area]").hidden = state.mode !== "own";
@@ -212,19 +213,23 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
     // Poin paket minggu ini: label di daftar & pratinjau
     function packPoints(p) {
         if (!state.weekPoints || state.teacher) return null; // guru: tanpa poin
+        const start = state.starts?.get(p.id);
+        if (isPracticeWeek(start)) return { practice: true };
         const max = packMaxPoints(p);
         const got = state.weekPoints.get(p.id) || 0;
-        return { got, max, full: max > 0 && got >= max };
+        return { got, max, full: max > 0 && got >= max, start };
     }
     function pointsTag(p) {
         const r = packPoints(p);
+        if (r?.practice) return `<span class="tag practice">${PRACTICE_TEXT}</span>`;
         if (!r || !r.got) return "";
         return r.full ? '<span class="tag full">Poin penuh</span>' : `<span class="tag part">${r.got}/${r.max} poin</span>`;
     }
     function pointsNote(p) {
         const r = packPoints(p);
         if (!r) return "";
-        const text = r.full ? `Poin penuh minggu ini (${r.max}). Main lagi untuk berlatih; poin bisa didapat lagi Senin.`
+        if (r.practice) return `<p class="pack-points">${PRACTICE_TEXT}. Kamu tetap bisa memainkannya untuk berlatih.</p>`;
+        const text = r.full ? `Poin penuh minggu ini (${r.max}). Main lagi untuk berlatih. ${nextWeekPointsText(r.start)}`
             : r.got ? `Poin minggu ini: ${r.got} dari ${r.max}. Hasil terbaikmu yang dihitung.`
             : `Paket ini bernilai maks. ${r.max} poin minggu ini.`;
         return `<p class="pack-points${r.full ? " full" : ""}">${text}</p>`;
@@ -378,10 +383,14 @@ export function mountWordSource(root, { gameKey, type = "kosakata", maxOwn = 100
 
     // Titik merah: paket yang belum pernah dimainkan di game mana pun
     window.loadPlayedPackIds().then((set) => { state.played = set; if (state.mode === "pack") renderPacks(); });
-    window.loadWeekPackPoints().then((map) => { state.weekPoints = map; if (state.mode === "pack") { renderPacks(); renderPreview(); } });
+    Promise.all([window.loadWeekPackPoints(), window.loadPackStartWeeks()]).then(([map, starts]) => {
+        state.weekPoints = map; state.starts = starts;
+        if (state.mode === "pack") { renderPacks(); renderPreview(); }
+    });
     window.addEventListener("ec-pack-played", (e) => {
-        const { packId, points } = e.detail;
+        const { packId, points, packStart } = e.detail;
         state.played?.add(packId);
+        if (packStart && state.starts && !state.starts.has(packId)) state.starts.set(packId, packStart);
         state.weekPoints?.set(packId, Math.max(state.weekPoints.get(packId) || 0, points));
         if (state.mode === "pack") { renderPacks(); renderPreview(); }
     });

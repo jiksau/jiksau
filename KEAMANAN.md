@@ -12,8 +12,9 @@ File `firestore.rules` mengatur siapa boleh membaca dan mengubah data di databas
 | Kode kelas (`classCodes`) | Kode, jenjang, keterangan, aktif/nonaktif | Hanya bisa mengecek satu kode saat mendaftar | Semua | Hanya cek satu kode |
 | Paket soal (`questionPacks`) | Judul, jenis, jenjang, daftar soal, status (draf/terjadwal/terbit/nonaktif), pembuat (`ownerId`) | Membaca paket yang aktif | Semua | Tidak bisa |
 | Pengumuman (`announcements`) | Judul, isi, untuk jenjang, aktif/nonaktif | Membaca pengumuman yang aktif | Semua | Tidak bisa |
+| Minggu pertama main paket (`packStarts`) | Siswa, paket, Senin minggu pertama ia memainkan paket itu (dasar batas 2 minggu poin) | Membuat miliknya sekali (bersama skor pertama di paket itu), tidak bisa mengubah/menghapus; minggu tidak boleh di masa depan; membaca miliknya sendiri | Semua; ikut terhapus saat akun dihapus | Tidak bisa |
 | Hasil akhir mingguan (`weeklyResults`) | Peringkat akhir tiap minggu yang sudah selesai (nama, jenjang, poin) | Membaca (untuk rekap & riwayat juara) | Semua; tersimpan otomatis saat admin membuka halaman admin | Tidak bisa |
-| Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); nilai harus angka (`percent` 0–100, `points` bilangan bulat, `mode` teks pendek); skor berpaket hanya jika paketnya aktif, sesuai jenjang, dan jumlah soal sama; lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
+| Skor game (`gameScores`) | Nama, jenjang, game, nilai, paket soal, waktu, minggu | Simpan skor sendiri (tidak bisa mengubah); nilai harus angka (`percent` 0–100, `points` bilangan bulat, `mode` teks pendek); skor berpaket hanya jika paketnya aktif, sesuai jenjang, jumlah soal sama, dan `packStart` sama dengan catatan `packStarts`; `week` harus minggu ini (kelonggaran 1 jam setelah Senin 00.00 WIB untuk skor offline); lihat skor sendiri + skor siswa lain untuk papan peringkat | Semua, termasuk hapus | Tidak bisa |
 
 Semua koleksi lain ditolak, termasuk data lama (absensi, pendaftaran, kelas, koleksi lama `teachers`). Peran guru yang baru memakai profil di `users` (lihat bagian Guru).
 
@@ -182,9 +183,25 @@ Siapkan Guru A dengan paket kosakata SMP (terbit), paket draf jenjang SD, dan pa
 - [ ] Guru di HP: Ubah/Coba/Hasil sama lebar di baris pertama, tombol status di kanan bawah; draf: Terbitkan hijau; filter memudar di tepi saat bisa digeser
 - [ ] Susun Kalimat: kata yang dipakai menjadi kotak kosong bergaris putus-putus, tidak bisa diketuk; sisa kesempatan tetap 3 per kalimat; ketuk kata di susunan → kata kembali ke tempatnya
 
+## Uji batas 2 minggu per paket (setelah memasang aturan terbaru)
+
+Pasang aturan dulu, lalu push kode segera. Di antara keduanya, skor paket dari halaman lama ditolak dengan pesan "Muat ulang halaman lalu main lagi"; sebaiknya dilakukan saat sepi (mis. Minggu malam).
+
+- [ ] Siswa main paket yang **belum pernah** dimainkan: skor tersimpan, "+x poin"; di Firebase Console ada dokumen `packStarts/<uid>_<packId>` dengan `week` = Senin minggu ini, dan skornya punya `packStart` yang sama
+- [ ] Main lagi paket yang sama: tersimpan seperti biasa, tidak ada dokumen `packStarts` baru
+- [ ] Paket yang sudah dimainkan sebelum aturan ini: `packStarts.week` = minggu skor paling awal siswa di paket itu
+- [ ] Mulai 30 Nov: paket yang minggu pertamanya 16 Nov atau lebih awal bertanda "Latihan: poin paket ini sudah habis" di daftar paket & pratinjau; main sampai selesai, kartu hasil menampilkan kalimat yang sama; poin, jumlah Paket, koin, dan XP tidak bertambah
+- [ ] Paket yang minggu pertamanya 23 Nov masih berpoin di minggu 30 Nov, menjadi latihan mulai 7 Des
+- [ ] Beranda "Paket minggu ini" tidak menghitung paket latihan
+- [ ] Peringkat, Musim, tier, koin, rekap untuk minggu sebelum 30 Nov tidak berubah
+- [ ] Buka paket di HP B, lalu mainkan paket itu pertama kali di HP A, baru selesaikan di HP B: skor dari B tetap tersimpan (dikirim ulang otomatis)
+- [ ] Main offline Minggu malam, internet kembali sebelum Senin 01.00: skor masuk minggu lalu; lewat 01.00: ditolak
+- [ ] Tantangan Harian & latihan Kata Sendiri tetap tersimpan seperti biasa
+- [ ] Admin menghapus akun siswa: dokumen `packStarts` siswa itu ikut terhapus
+
 ## Papan peringkat
 
-- Poin = jumlah jawaban benar dari **paket soal guru** dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB). Satu paket yang dimainkan berkali-kali hanya dihitung hasil terbaiknya. Latihan dengan kata sendiri tidak menambah poin.
+- Poin = jumlah jawaban benar dari **paket soal guru** dalam satu minggu (Senin 00.00 – Minggu 23.59 WIB). Satu paket yang dimainkan berkali-kali hanya dihitung hasil terbaiknya. Mulai 30 Nov 2026 setiap paket memberi poin hanya di 2 minggu kalender pertama siswa memainkannya; setelah itu latihan tanpa poin. Keterbatasan (tanpa server): siswa yang sangat paham teknis bisa mencatat "minggu ini" sebagai minggu pertama untuk paket yang sudah lama ia mainkan, tetapi hanya sekali per paket (paling banyak 2 minggu tambahan). Latihan dengan kata sendiri tidak menambah poin.
 - Ada papan **Semua Jenjang** (tampilan awal) dan papan per jenjang.
 - Nama ditampilkan singkat (nama depan + inisial), misalnya "Aisyah P.".
 - Skor yang mencurigakan bisa dihapus admin di tab **Skor Game**; poinnya otomatis hilang dari peringkat.

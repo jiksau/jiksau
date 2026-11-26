@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 //  Cara pakai di halaman game:
 //    1. Tambahkan sebelum </body>:
-//         <script type="module" src="game-scores.js?v=2026-11-03-9"></script>
+//         <script type="module" src="game-scores.js?v=2026-11-26-2"></script>
 //    2. Saat permainan selesai, panggil:
 //         window.saveGameScore?.({
 //           gameId: "kosakata-2", gameName: "Vocabulary Memorize",
@@ -34,8 +34,8 @@
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, PACK_GAMES, scorePoints, packMaxPoints } from "./ec-common.js?v=2026-11-03-9";
+import { getFirestore, collection, addDoc, setDoc, doc, getDoc, getDocs, query, where, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { firebaseConfig, weekKeyFor, dayKeyFor, previousDayKey, PACK_ALL_LEVELS, PACK_GAMES, scorePoints, packMaxPoints, isPracticeWeek, nextWeekPointsText, PRACTICE_TEXT, FIRST_WEEK } from "./ec-common.js?v=2026-11-26-2";
 
 // Pakai app bawaan (default) agar status login dari halaman utama ikut terbaca.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -142,17 +142,63 @@ async function bestBefore(packId, week) {
         .reduce((m, x) => Math.max(m, scorePoints(x)), 0);
 }
 
+// Minggu pertama siswa ini memainkan satu paket (batas 2 minggu, lihat
+// isPracticeWeek di ec-common.js). Diambil dari riwayat yang sudah dimuat
+// (tanpa baca tambahan): packStart di skor yang sudah ada, atau untuk paket
+// yang dimainkan sebelum aturan ini, minggu skor paling awal. create = catatan
+// packStarts/{uid}_{packId} belum ada dan harus dibuat bersama skor ini.
+// Riwayat tidak tersedia -> baca catatannya langsung (1 baca).
+async function packStartFor(packId, week) {
+    const list = await Promise.race([loadMyPackScores(), new Promise((r) => setTimeout(() => r(null), 3000))]);
+    if (list && !myScoresFailed) {
+        const mine = list.filter((x) => x.packId === packId);
+        const saved = mine.find((x) => typeof x.packStart === "string")?.packStart;
+        if (saved) return { week: saved, create: false };
+        const first = mine.map((x) => x.week).filter((w) => typeof w === "string" && w.length === 10 && w <= week).sort()[0];
+        // Belum pernah main = minggu ini. Aturan menerima minggu mulai FIRST_WEEK.
+        return { week: !first ? week : first < FIRST_WEEK ? FIRST_WEEK : first, create: true };
+    }
+    try {
+        const snap = await getDoc(doc(db, "packStarts", `${currentUser.uid}_${packId}`));
+        if (snap.exists()) return { week: snap.data().week, create: false };
+    } catch (e) { console.warn("Gagal membaca minggu pertama paket:", e); }
+    return { week, create: true };
+}
+
 // Isi baris poin setelah skor berpaket TERSIMPAN.
 function packLine(el, data, prev) {
+    if (isPracticeWeek(data.packStart, data.week)) return scoreLine(el, "free", PRACTICE_TEXT);
     if (prev === null) return scoreLine(el, "info", "Skor tersimpan. Lihat poinmu di Beranda.");
     const now = scorePoints(data);
     const max = packMaxPoints({ itemCount: data.total, tier: data.packTier }, data.week);
     const after = Math.max(prev, now);
-    if (prev >= max && max > 0) return scoreLine(el, "full", "Poin penuh", "Poin bisa didapat lagi Senin.");
+    if (prev >= max && max > 0) return scoreLine(el, "full", "Poin penuh", nextWeekPointsText(data.packStart, data.week));
     if (now > prev) return scoreLine(el, "gain", `+${now - prev} poin`,
         after >= max && max > 0 ? "Poin penuh" : `Total paket ini minggu ini: ${after} dari ${max}`);
     if (prev === 0) return scoreLine(el, "same", "Belum dapat poin di paket ini");
     return scoreLine(el, "same", `Hasil terbaikmu masih ${prev} poin`);
+}
+
+// Kirim skor berpaket. Skor pertama sebuah paket: catatan minggu pertama
+// (packStarts) + skor dikirim bersamaan dalam satu kiriman; firestore.rules
+// mencocokkan packStart di skor dengan catatan itu.
+// Jika ditolak karena riwayat di halaman ini kedaluwarsa (mis. paket ini baru
+// dimainkan di HP lain), catatannya dibaca lalu skor dikirim sekali lagi.
+// Skor yang ditolak belum tersimpan, jadi tidak ada skor ganda.
+async function sendPackScore(start, startRef, data) {
+    try {
+        if (!start.create) return await addDoc(collection(db, "gameScores"), data);
+        const batch = writeBatch(db);
+        batch.set(startRef, { userId: data.userId, packId: data.packId, week: data.packStart, createdAt: serverTimestamp() });
+        batch.set(doc(collection(db, "gameScores")), data);
+        return await batch.commit();
+    } catch (e) {
+        if (e?.code !== "permission-denied") throw e;
+        const snap = await getDoc(startRef).catch(() => null);
+        if (!snap?.exists() || (!start.create && snap.data().week === data.packStart)) throw e;
+        data.packStart = snap.data().week;
+        return await addDoc(collection(db, "gameScores"), data);
+    }
 }
 
 // ---------- Fungsi utama ----------
@@ -222,6 +268,11 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         data.daily = String(daily);
     }
 
+    // Minggu pertama paket ini bagi siswa ini (batas 2 minggu poin)
+    const start = data.packId ? await packStartFor(data.packId, data.week) : null;
+    if (start) data.packStart = start.week;
+    const startRef = start ? doc(db, "packStarts", `${currentUser.uid}_${data.packId}`) : null;
+
     // Hasil terbaik SEBELUM skor ini (dibaca dari riwayat yang sudah dimuat)
     const prev = data.packId ? await bestBefore(data.packId, data.week) : null;
     const dailyId = data.daily ? `harian-${data.daily}-${currentUser.uid}` : null;
@@ -233,6 +284,7 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
         "Jangan tutup halaman ini, skor akan disimpan saat internet kembali."), 8000);
     try {
         if (dailyId) await setDoc(doc(db, "gameScores", dailyId), data);
+        else if (start) await sendPackScore(start, startRef, data);
         else await addDoc(collection(db, "gameScores"), data);
     } catch (e) {
         clearTimeout(slow);
@@ -267,7 +319,8 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     // yang sama menghitung kenaikan dari hasil terbaik terbaru.
     if (packId || data.daily) myScoresCache?.then((list) => list && list.push(data));
     if (packId) {
-        window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId, points: scorePoints(data) } }));
+        const practice = isPracticeWeek(data.packStart, data.week);
+        window.dispatchEvent(new CustomEvent("ec-pack-played", { detail: { packId: data.packId, points: scorePoints(data), practice, packStart: data.packStart } }));
         packLine(resultEl, data, prev);
     } else if (data.daily) {
         const pts = scorePoints(data);
@@ -275,7 +328,9 @@ window.saveGameScore = async function ({ gameId, gameName, correct, total, point
     } else {
         scoreLine(resultEl, "free", "Latihan bebas: tanpa poin");
     }
-    toast(packId || data.daily
+    toast(packId && isPracticeWeek(data.packStart, data.week)
+        ? `Skor ${correct}/${total} tersimpan. ${PRACTICE_TEXT}.`
+        : packId || data.daily
         ? `Skor ${correct}/${total} tersimpan (${scorePoints(data)} poin).`
         : `Skor ${correct}/${total} tersimpan (latihan, tanpa poin).`);
     return "ok";
@@ -306,6 +361,24 @@ function loadMyPackScores() {
 // Paket yang pernah dimainkan siswa ini (Set packId).
 window.loadPlayedPackIds = async function () {
     return new Set((await loadMyPackScores()).map((s) => s.packId).filter(Boolean));
+};
+
+// Minggu pertama siswa ini memainkan tiap paket (Map packId -> Senin),
+// dari riwayat yang sudah dimuat: packStart di skor, atau minggu skor paling awal.
+window.loadPackStartWeeks = async function () {
+    const first = new Map();
+    (await loadMyPackScores()).filter((s) => s.packId && typeof s.week === "string").forEach((s) => {
+        const w = typeof s.packStart === "string" ? s.packStart : s.week;
+        if (!first.has(s.packId) || w < first.get(s.packId)) first.set(s.packId, w);
+    });
+    return first;
+};
+
+// Paket yang minggu ini sudah menjadi latihan bagi siswa ini (Set packId):
+// lewat 2 minggu kalender sejak minggu pertama dimainkan (isPracticeWeek).
+window.loadPracticePackIds = async function () {
+    const week = weekKeyFor();
+    return new Set([...(await window.loadPackStartWeeks())].filter(([, w]) => isPracticeWeek(w, week)).map(([id]) => id));
 };
 
 // Poin terbaik siswa ini per paket minggu ini (Map packId -> poin, setelah bobot).

@@ -73,6 +73,19 @@ service cloud.firestore {
       return isStudent() || isTeacher();
     }
 
+    // Kunci minggu "YYYY-MM-DD" harus hari Senin (Senin 00.00 UTC selalu
+    // 4 hari + kelipatan 7 hari setelah 1 Jan 1970, yang jatuh hari Kamis).
+    // weekStart = waktu Senin 00.00 WIB minggu itu.
+    function isMondayKey(key) {
+      return key is string
+        && key.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && timestamp.date(int(key.split('-')[0]), int(key.split('-')[1]), int(key.split('-')[2])).toMillis() % 604800000 == 345600000;
+    }
+    function weekStart(key) {
+      let parts = key.split('-');
+      return timestamp.date(int(parts[0]), int(parts[1]), int(parts[2])) - duration.value(7, 'h');
+    }
+
     function isValidLevel(level) {
       return level in ['SD', 'SMP', 'SMA', 'S1', 'S2', 'UMUM'];
     }
@@ -285,7 +298,14 @@ service cloud.firestore {
           // Level paket di skor (dasar bobot poin) harus sama dengan level
           // paket sebenarnya; tanpa packTier dihitung level 1.
           && (!('packTier' in request.resource.data)
-              || request.resource.data.packTier == pack.get('tier', 1));
+              || request.resource.data.packTier == pack.get('tier', 1))
+          // Batas 2 minggu poin: minggu pertama siswa memainkan paket ini
+          // harus sama dengan catatan packStarts/{uid}_{packId}. Catatan
+          // boleh dibuat bersamaan dengan skor ini (satu kiriman), jadi
+          // memakai getAfter.
+          && request.resource.data.packStart is string
+          && getAfter(/databases/$(database)/documents/packStarts/$(request.auth.uid + '_' + request.resource.data.packId)).data.week
+               == request.resource.data.packStart;
       }
 
       // Tantangan Harian: sekali per hari. ID dokumen harus
@@ -321,10 +341,13 @@ service cloud.firestore {
         && (!('points' in request.resource.data) || request.resource.data.points is int)
         && (!('mode' in request.resource.data)
             || (request.resource.data.mode is string && request.resource.data.mode.size() <= 30))
-        // Waktu & minggu diisi apa adanya (tidak bisa dimundurkan/dimajukan)
+        // Waktu & minggu diisi apa adanya (tidak bisa dimundurkan/dimajukan).
+        // Minggu harus minggu ini (WIB), dengan kelonggaran 1 jam setelah
+        // Senin 00.00 untuk skor minggu lalu yang tertunda karena offline.
         && request.resource.data.timestamp == request.time
-        && request.resource.data.week is string
-        && request.resource.data.week.size() == 10
+        && isMondayKey(request.resource.data.week)
+        && request.time >= weekStart(request.resource.data.week)
+        && request.time < weekStart(request.resource.data.week) + duration.value(169, 'h')
         // Jenjang di skor harus sama dengan jenjang di profil siswa
         && (!('level' in request.resource.data)
             || request.resource.data.level == myProfile().get('level', null))
@@ -340,6 +363,34 @@ service cloud.firestore {
         || isMember();
 
       // Skor tidak bisa diubah siswa; admin boleh menghapus.
+      allow update, delete: if isAdmin();
+    }
+
+    // ---------- Minggu pertama main paket: packStarts/{uid}_{packId} ----------
+    // Dasar batas 2 minggu poin per paket (isPracticeWeek di ec-common.js).
+    // Dibuat siswa sekali saja, bersamaan dengan skor pertamanya di paket itu;
+    // tidak bisa diubah atau dihapus siswa, jadi hitungan 2 minggu tidak bisa
+    // diulang dari awal. Minggu boleh lebih awal dari minggu ini (paket yang
+    // sudah dimainkan sebelum aturan ini), tetapi tidak di masa depan.
+    match /packStarts/{startId} {
+      allow create: if isStudent()
+        && startId == request.auth.uid + '_' + request.resource.data.packId
+        && request.resource.data.keys().hasOnly(['userId', 'packId', 'week', 'createdAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.packId is string
+        && request.resource.data.packId.size() > 0
+        && request.resource.data.packId.size() <= 100
+        && request.resource.data.createdAt == request.time
+        && isMondayKey(request.resource.data.week)
+        && request.resource.data.week >= '2026-10-12'
+        && weekStart(request.resource.data.week) <= request.time;
+
+      // Pemilik (dilihat dari awal ID, agar catatan yang belum ada pun bisa
+      // dicek) dan admin.
+      allow read: if isAdmin()
+        || (isSignedIn() && startId.split('_')[0] == request.auth.uid);
+
+      // Hanya admin (mis. saat menghapus akun siswa).
       allow update, delete: if isAdmin();
     }
 

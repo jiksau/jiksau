@@ -598,8 +598,8 @@
             loginIdToEmail, usernameFromEmail, isUsernameEmail, CLASS_CODE_PATTERN, normalizeClassCode,
             escapeHtml, friendlyAuthError, PACK_TYPES, PACK_ALL_LEVELS, packTypeLabel, packLevelLabel,
             parsePackText, packToText, PACK_TIERS, announcementHtml, packStatus, PACK_STATUS_LABEL
-        } from "./ec-common.js?v=2026-11-03-9";
-        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-03-9";
+        } from "./ec-common.js?v=2026-11-26-2";
+        import { archiveFinishedWeeks } from "./weekly-results.js?v=2026-11-26-2";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -748,7 +748,9 @@
             if (!confirm(`Hapus akun "${name}" (${login})?\n\nProfil dan semua skor game siswa ini akan dihapus permanen dan tidak bisa dikembalikan.`)) return;
 
             const scoreSnap = await getDocs(query(collection(db, 'gameScores'), where('userId', '==', uid)));
-            const refs = scoreSnap.docs.map((d) => d.ref);
+            // Catatan minggu pertama per paket (batas 2 minggu poin) ikut dihapus
+            const startSnap = await getDocs(query(collection(db, 'packStarts'), where('userId', '==', uid))).catch(() => null);
+            const refs = [...scoreSnap.docs, ...(startSnap?.docs || [])].map((d) => d.ref);
             // Firestore membatasi 500 operasi per batch
             for (let i = 0; i < refs.length; i += 450) {
                 const batch = writeBatch(db);
@@ -757,7 +759,7 @@
             }
             await deleteDoc(doc(db, 'pets', uid)).catch(() => {}); // hewan publik (jika ada)
             await deleteDoc(doc(db, 'users', uid));
-            alert(`Akun "${name}" dihapus (${refs.length} skor ikut dihapus).`);
+            alert(`Akun "${name}" dihapus (${scoreSnap.size} skor ikut dihapus).`);
         }
 
         $('studentsBody').addEventListener('click', async (e) => {

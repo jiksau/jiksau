@@ -15,7 +15,7 @@ import { getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.j
 import {
     getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js?v=2026-11-03-9";
+import { weeklyPoints, rankPlayers, finishedWeeks, seasonWeeks, weekKeyFor, FIRST_WEEK } from "./ec-common.js?v=2026-11-26-2";
 
 const db = () => getFirestore(getApp());
 const slim = (r) => ({ uid: r.uid, name: r.name || "Siswa", level: r.level || null, points: r.points, packs: r.packs, rank: r.rank });
@@ -67,7 +67,9 @@ export async function loadSeasonWeeks(season) {
 export async function archiveFinishedWeeks() {
     const have = new Set((await getDocs(collection(db(), "weeklyResults"))).docs.map((d) => d.id));
     let saved = 0;
-    for (const key of finishedWeeks()) {
+    // Minggu lalu baru dibekukan 1 jam setelah Senin 00.00: skor yang tertunda
+    // karena offline masih boleh masuk selama 1 jam itu (lihat firestore.rules).
+    for (const key of finishedWeeks(new Date(Date.now() - 60 * 60 * 1000))) {
         if (have.has(key)) continue;
         const ranking = await computeWeek(key);
         await setDoc(doc(db(), "weeklyResults", key), { week: key, ranking, players: ranking.length, savedAt: serverTimestamp() });

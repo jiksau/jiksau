@@ -273,7 +273,31 @@ export function packMaxPoints(pack, week = weekKeyFor()) {
     if (!(week >= WEIGHT_FROM_WEEK)) return n;
     return n * (LEVEL_WEIGHT[pack.tier] || 1) * Math.max(...Object.values(GAME_WEIGHT));
 }
+// ---------- Batas 2 minggu per paket ----------
+// Setiap paket hanya memberi poin kepada seorang siswa di 2 minggu kalender
+// pertama ia memainkannya (minggu packStart dan minggu berikutnya). Minggu
+// ke-3 dan seterusnya = latihan: skor tersimpan, tetapi 0 poin (juga 0 koin
+// dan 0 XP, karena semuanya dari weeklyPoints). Berlaku untuk skor mulai
+// minggu PACK_LIMIT_FROM_WEEK; skor lama (atau tanpa packStart) tidak berubah.
+// packStart = Senin minggu pertama siswa memainkan paket itu (disimpan di
+// setiap skor berpaket, dicek firestore.rules lewat packStarts/{uid}_{packId}).
+export const PACK_LIMIT_FROM_WEEK = "2026-11-30";
+export const PACK_POINT_WEEKS = 2;
+export function nextWeekKey(key, n = 1) {
+    return new Date(Date.parse(key + "T00:00:00Z") + n * 7 * DAY_MS).toISOString().slice(0, 10);
+}
+export function isPracticeWeek(packStart, week = weekKeyFor()) {
+    return !!packStart && week >= PACK_LIMIT_FROM_WEEK && week >= nextWeekKey(packStart, PACK_POINT_WEEKS);
+}
+export const PRACTICE_TEXT = "Latihan: poin paket ini sudah habis";
+// Kalimat untuk paket yang sudah poin penuh minggu ini: minggu depan masih
+// berpoin -> "lagi Senin"; minggu ini minggu terakhirnya -> menjadi latihan.
+export function nextWeekPointsText(packStart, week = weekKeyFor()) {
+    return isPracticeWeek(packStart, nextWeekKey(week)) ? "Minggu depan paket ini menjadi latihan." : "Poin bisa didapat lagi Senin.";
+}
+
 export function scorePoints(s) {
+    if (s.packId && isPracticeWeek(s.packStart, s.week)) return 0;
     if (!(s.week >= WEIGHT_FROM_WEEK)) return Number(s.correct) || 0;
     return (Number(s.correct) || 0) * (LEVEL_WEIGHT[s.packTier] || 1) * (GAME_WEIGHT[s.gameId] || 1);
 }
@@ -283,6 +307,7 @@ export function scorePoints(s) {
 // (daily = tanggal, sekali per hari) yang dihitung.
 // Jika satu paket dimainkan berkali-kali dalam seminggu (di game mana pun),
 // yang dihitung hanya hasil terbaiknya (setelah bobot, lihat scorePoints).
+// Paket yang sudah lewat 2 minggu bagi siswa itu = latihan (isPracticeWeek).
 // Latihan dengan kata sendiri tidak menambah poin.
 // scores: array data dokumen gameScores. Hasil: array per siswa.
 export function weeklyPoints(scores) {
@@ -292,7 +317,8 @@ export function weeklyPoints(scores) {
         const key = s?.packId || (s?.daily && s.gameId === "harian" ? `harian:${s.daily}` : null);
         if (!key) return;
         const r = by[s.userId] ||= { uid: s.userId, name: s.userName, level: s.level || null, best: {}, points: 0, games: 0, last: 0 };
-        r.best[key] = Math.max(r.best[key] || 0, scorePoints(s));
+        // Latihan (paket lewat 2 minggu): tanpa poin & tidak menambah jumlah "Paket"
+        if (!(s.packId && isPracticeWeek(s.packStart, s.week))) r.best[key] = Math.max(r.best[key] || 0, scorePoints(s));
         r.games += 1;
         const t = s.timestamp?.toMillis?.() ?? Date.now();
         if (t >= r.last) { r.last = t; r.name = s.userName || r.name; r.level = s.level || r.level; }
