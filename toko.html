@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Toko - ExtraCourse</title>
-    <link rel="stylesheet" href="game-ui.css?v=2026-11-26-4">
+    <link rel="stylesheet" href="game-ui.css?v=2026-11-26-5">
     <style>
         body { visibility: hidden; }
         .coin-ico { vertical-align: -4px; flex: none; }
@@ -65,6 +65,8 @@
         .it .tag.on { background: var(--accent); color: var(--accent-ink); }
         .it.locked .thumb, .it.locked .nm { opacity: .55; }
         .it .tag.lock { background: var(--soft); color: var(--muted); }
+        /* Label terkunci panjang (mis. "Segera hadir 1 Desember") boleh turun baris di kartu sempit */
+        .it .tag.lock { display: inline-block; white-space: normal; line-height: 1.35; max-width: 100%; padding: 2px 8px; border-radius: 8px; text-align: center; }
         /* Edisi Liburan 2026: tanda edisi di bawah nama, catatan masa jual */
         .it .ed { font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.3; }
         .sale-note { margin: 0 2px; padding: 9px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
@@ -95,10 +97,10 @@
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor, HOLIDAY, isHolidayTime } from "./ec-common.js?v=2026-11-26-4";
-        import { loadHistory, computeWeek } from "./weekly-results.js?v=2026-11-26-4";
-        import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-26-4";
-        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES, publicPet, isForSale } from "./pets.js?v=2026-11-26-4";
+        import { firebaseConfig, ADMIN_EMAIL, escapeHtml, weekKeyFor, HOLIDAY, isHolidayTime } from "./ec-common.js?v=2026-11-26-5";
+        import { loadHistory, computeWeek } from "./weekly-results.js?v=2026-11-26-5";
+        import { TIERS, tierFor, xpByUser, coinsEarned, COIN_ICON } from "./tiers.js?v=2026-11-26-5";
+        import { SHOP_ITEMS, SHOP_SLOTS, itemById, itemSvg, petSvg, speciesOf, stageForTier, STAGES, publicPet, isForSale } from "./pets.js?v=2026-11-26-5";
 
         const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -116,7 +118,11 @@
         const forSale = (i) => isForSale(i, holidayNow());
         // Barang yang tampil di daftar: dijual sekarang, sudah dimiliki, atau
         // hadiah juara selama event (sebagai kartu terkunci)
-        const visible = (i) => st.items.includes(i.id) || forSale(i) || (i.prize && holidayNow());
+        // Sebelum 1 Des: barang edisi + hadiah tampil terkunci "Segera hadir"
+        const soon = () => Date.now() < HOLIDAY.start;
+        const SOON_TEXT = 'Segera hadir 1 Desember';
+        const isSoon = (i) => !!i.edition && soon();
+        const visible = (i) => st.items.includes(i.id) || forSale(i) || isSoon(i) || (i.prize && holidayNow());
 
         let started = false;
         onAuthStateChanged(auth, async (user) => {
@@ -184,7 +190,7 @@
                 } else if (owned) {
                     sub = 'Sudah dimiliki'; btn = `<button class="btn primary-wide" data-act="equip">Pakai</button>`;
                 } else if (notSold) {
-                    sub = sel.prize ? `${escapeHtml(sel.prize)}, tidak dijual` : 'Tidak dijual lagi';
+                    sub = isSoon(sel) ? SOON_TEXT : sel.prize ? `${escapeHtml(sel.prize)}, tidak dijual` : 'Tidak dijual lagi';
                 } else if (locked) {
                     sub = `Terbuka di tier ${escapeHtml(TIERS[sel.minTier].label)}`; subCls = 'bad';
                 } else if (balance() < sel.price) {
@@ -202,7 +208,7 @@
 
             // Selama event, barang edisi liburan tampil paling depan
             const slotItems = SHOP_ITEMS.filter((i) => i.slot === st.slot && visible(i))
-                .sort((a, b) => (holidayNow() ? !!b.edition - !!a.edition : 0)
+                .sort((a, b) => (holidayNow() || soon() ? !!b.edition - !!a.edition : 0)
                     || (a.minTier || 0) - (b.minTier || 0) || a.price - b.price);
             const slotName = SHOP_SLOTS.find((x) => x.key === st.slot).name.toLowerCase();
             const NONE_ICON = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M6 18 18 6"/></svg>';
@@ -216,14 +222,17 @@
                         ${stage === 0 ? '<p class="hint">Hewanmu masih telur. Barang terlihat setelah menetas.</p>' : !st.selected ? '<p class="hint">Ketuk barang untuk mencobanya.</p>' : ''}
                     </div>
                 </div>
-                ${holidayNow() ? '<p class="sale-note">Barang Edisi Liburan 2026 dijual sampai 3 Januari. Setelah itu tetap milikmu.</p>' : ''}
+                ${holidayNow() ? '<p class="sale-note">Barang Edisi Liburan 2026 dijual sampai 3 Januari. Setelah itu tetap milikmu.</p>'
+                    : soon() ? '<p class="sale-note">Musim Liburan Akhir Tahun, 1 Des – 3 Jan. Kumpulkan koinmu dari sekarang.</p>' : ''}
                 <div class="seg" role="tablist">${SHOP_SLOTS.map((x) => `<button role="tab" data-slot="${x.key}" class="${x.key === st.slot ? 'active' : ''}">${x.name}</button>`).join('')}</div>
                 <div class="grid">
                     <button class="it none${st.selected === `none:${st.slot}` ? ' sel' : ''}" data-none="${st.slot}"><span class="thumb">${NONE_ICON}</span><span class="nm">Tanpa ${slotName}</span>${!st.equipped[st.slot] ? '<span class="tag on">Dipakai</span>' : ''}</button>
                     ${slotItems.map((i) => {
                         const own = st.items.includes(i.id), isOn = st.equipped[i.slot] === i.id;
-                        const prize = i.prize && !own, lock = prize || (i.minTier || 0) > st.tier.index;
+                        const later = isSoon(i) && !own, prize = i.prize && !own;
+                        const lock = later || prize || (i.minTier || 0) > st.tier.index;
                         const tag = isOn ? '<span class="tag on">Dipakai</span>' : own ? '<span class="tag own">Dimiliki</span>'
+                            : later ? `<span class="tag lock">${LOCK}${SOON_TEXT}</span>`
                             : prize ? `<span class="tag lock">${LOCK}Hadiah juara</span>`
                             : lock ? `<span class="tag lock">${LOCK}${escapeHtml(TIERS[i.minTier].label)}</span>` : `<span class="pr">${COIN_ICON} ${fmt(i.price)}</span>`;
                         const ed = i.edition ? `<span class="ed">${escapeHtml(HOLIDAY.editionLabel)}</span>` : '';
@@ -298,6 +307,6 @@
         $('content').addEventListener('click', onClick);
         $('bar').addEventListener('click', onClick);
     </script>
-    <script type="module" src="notifications.js?v=2026-11-26-4"></script>
+    <script type="module" src="notifications.js?v=2026-11-26-5"></script>
 </body>
 </html>
